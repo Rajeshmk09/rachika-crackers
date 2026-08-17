@@ -37,6 +37,74 @@ import HomeImg37 from '../assets/home_img_37.png';
 import HomeImg38 from '../assets/home_img_38.png';
 import HomeImg39 from '../assets/home_img_39.png';
 import React from 'react';
+import ProductCard from '../components/ProductCard';
+
+const featuredProducts = [
+  {
+    id: "prod_1",
+    name: "4x4 Wheel (Ground Chakkara)",
+    price: 60,
+    original_price: 120,
+    unit: "1 Box",
+    category: "GROUND CHAKKARA SERIES"
+  },
+  {
+    id: "prod_2",
+    name: "Flower Pots Special",
+    price: 140,
+    original_price: 280,
+    unit: "1 Box",
+    category: "FLOWER POTS SERIES"
+  },
+  {
+    id: "prod_3",
+    name: "7 cm Sparklers",
+    price: 75,
+    original_price: 150,
+    unit: "1 Box",
+    category: "KIDS SPARKLERS SERIES"
+  },
+  {
+    id: "prod_4",
+    name: "12 cm Sparklers",
+    price: 100,
+    original_price: 200,
+    unit: "1 Box",
+    category: "KIDS SPARKLERS SERIES"
+  },
+  {
+    id: "prod_5",
+    name: "5 in 1 Mini Chottu Tri Colour Fountains",
+    price: 150,
+    original_price: 300,
+    unit: "1 Box",
+    category: "KIDS PINK COLOURFUL FOUNTAINS SERIES"
+  },
+  {
+    id: "prod_6",
+    name: "4\" Deluxe Colors Lakshmi",
+    price: 85,
+    original_price: 170,
+    unit: "1 Pkt",
+    category: "SINGLE SOUND SERIES"
+  },
+  {
+    id: "prod_7",
+    name: "6\" Mega Deluxe Colors Lakshmi",
+    price: 140,
+    original_price: 280,
+    unit: "1 Pkt",
+    category: "SINGLE SOUND SERIES"
+  },
+  {
+    id: "prod_8",
+    name: "Roller Coaster (Golden Spinkler)",
+    price: 180,
+    original_price: 360,
+    unit: "1 Box",
+    category: "ELITE WONDERFUL FOUNTAIN SERIES"
+  }
+];
 
 const Home = () => {
   return (
@@ -252,6 +320,23 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
 		</div>
 	</div>
 </div>	
+
+<div className="container py-5">
+  <div className="row justify-content-center mb-4">
+    <div className="col-lg-8 text-center">
+      <h2 className="acme clr bannerhead1" style={{ color: '#0a539f' }}>Featured Products</h2>
+      <p className="josefin text-muted" style={{ fontSize: '1.1rem' }}>Check out our top-selling crackers at Sivakasi wholesale prices with amazing discounts!</p>
+    </div>
+  </div>
+  <div className="row">
+    {featuredProducts.map(product => (
+      <div key={product.id} className="col-lg-3 col-md-6 col-12 mb-4">
+        <ProductCard product={product} />
+      </div>
+    ))}
+  </div>
+</div>
+
 <div className="container py-5">
 		<div className="row">
 			<div className="col-lg-6 col-md-12 col-12 align-self-center d-md-none d-lg-block">

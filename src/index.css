@@ -1668,3 +1668,40 @@ main {
         margin: 0 2px;
         border-radius: 5px;
     }*/
+
+/* Premium Product Cards Styling */
+.product-card-premium {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #fff;
+  border: 1px solid rgba(0,0,0,0.08) !important;
+}
+
+.product-card-premium:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12) !important;
+}
+
+.product-img-wrap-premium {
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  background: radial-gradient(circle, #ffffff 60%, #f4f6f9 100%);
+  position: relative;
+}
+
+.product-img-wrap-premium span {
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.product-card-premium:hover .product-img-wrap-premium span {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.btn-effect1 {
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-effect1:active {
+  transform: scale(0.98);
+}
