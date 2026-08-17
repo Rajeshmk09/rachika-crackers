@@ -38,7 +38,7 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
 <div className="container py-2">
 	<div className="row">
 		<div className="col-lg-4 col-md-12 col-12 text-center text-lg-left align-self-center">
-			<a href="#/"> 
+			<a href="/"> 
 				<img src={ContactImg1} className="img-fluid logo" alt="SETHU PYRO PARK RACHIKA CRACKERS" title="SETHU PYRO PARK RACHIKA CRACKERS" />
 			</a>
 		</div>
@@ -70,16 +70,16 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
 		<div id="myNavbar" className="collapse navbar-collapse navfont">
 			<ul className="navbar-nav mr-auto text-center">
 				<li className="nav-item px-3 ">
-					<a className="nav-link" href="#/"> Home </a>
+					<a className="nav-link" href="/"> Home </a>
 				</li>
 				<li className="nav-item px-3 ">
-					<a className="nav-link" href="#/about"> About </a>
+					<a className="nav-link" href="/about"> About </a>
 				</li>
 				<li className="nav-item px-3 ">
-					<a className="nav-link" href="#/products"> Products </a>
+					<a className="nav-link" href="/products"> Products </a>
 				</li>
 				<li className="nav-item px-3 ">
-					<a className="nav-link" href="#/safetytips">Safety Tips</a>
+					<a className="nav-link" href="/safetytips">Safety Tips</a>
 				</li>
 				<li className="nav-item px-3 active">
 					<a className="nav-link" href=".">Contact</a>
@@ -153,7 +153,7 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
         </a>
     </div>
 <div className="fixed point2">
-    <a href="#/products">
+    <a href="/products">
         <img src={ContactImg7} className="priceicn2 float-right blink" alt="SETHU PYRO PARK RACHIKA CRACKERS" title="SETHU PYRO PARK RACHIKA CRACKERS" />
     </a>
 </div>

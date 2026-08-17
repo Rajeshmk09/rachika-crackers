@@ -39,7 +39,7 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
 <div className="container py-2">
 	<div className="row">
 		<div className="col-lg-4 col-md-12 col-12 text-center text-lg-left align-self-center">
-			<a href="#/"> 
+			<a href="/"> 
 				<img src={ProductsImg1} className="img-fluid logo" alt="SETHU PYRO PARK RACHIKA CRACKERS" title="SETHU PYRO PARK RACHIKA CRACKERS" />
 			</a>
 		</div>
@@ -71,19 +71,19 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
 		<div id="myNavbar" className="collapse navbar-collapse navfont">
 			<ul className="navbar-nav mr-auto text-center">
 				<li className="nav-item px-3 ">
-					<a className="nav-link" href="#/"> Home </a>
+					<a className="nav-link" href="/"> Home </a>
 				</li>
 				<li className="nav-item px-3 ">
-					<a className="nav-link" href="#/about"> About </a>
+					<a className="nav-link" href="/about"> About </a>
 				</li>
 				<li className="nav-item px-3 active">
 					<a className="nav-link" href="."> Products </a>
 				</li>
 				<li className="nav-item px-3 ">
-					<a className="nav-link" href="#/safetytips">Safety Tips</a>
+					<a className="nav-link" href="/safetytips">Safety Tips</a>
 				</li>
 				<li className="nav-item px-3 ">
-					<a className="nav-link" href="#/contact">Contact</a>
+					<a className="nav-link" href="/contact">Contact</a>
 				</li>
 				<li className="nav-item px-3">
 					<a className="nav-link" href="https://www.metturtransports.com/">Track Your Order</a>
@@ -7032,15 +7032,15 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
 				<p className="josefin">We "SETHU PYRO PARK RACHIKA CRACKERS" acknowledged as the renowned super stockist &amp; wholesale supplier of an exclusive range of firecrackers. </p>
 				<div className="acme heading4 pb-3 clr">Quick Links</div>
 				<div className="tagcloud">
-					<a href="#/" className="josefin">Home</a>
-					<a href="#/about" className="josefin">About SETHU PYRO PARK RACHIKA CRACKERS</a>
+					<a href="/" className="josefin">Home</a>
+					<a href="/about" className="josefin">About SETHU PYRO PARK RACHIKA CRACKERS</a>
 					<a href="." className="josefin">Quick Purchase</a>
-					<a href="#/safetytips" className="josefin">Safetytips</a>
-					<a href="#/contact" className="josefin">Contact us</a>
+					<a href="/safetytips" className="josefin">Safetytips</a>
+					<a href="/contact" className="josefin">Contact us</a>
 				</div>
 			</div>
             <div className="col-lg-4 col-md-6 col-12 text-center align-self-center">
-                <a href="#/">
+                <a href="/">
                     <img src={ProductsImg1} className="img-fluid w-100 mx-auto d-block" alt="SETHU PYRO PARK RACHIKA CRACKERS" title="SETHU PYRO PARK RACHIKA CRACKERS" />
                 </a>
             </div>

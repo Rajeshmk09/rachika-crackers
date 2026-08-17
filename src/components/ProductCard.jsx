@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Heart } from 'lucide-react';
 
 export default function ProductCard({ product }) {
   const [qty, setQty] = useState(0);
@@ -15,8 +16,22 @@ export default function ProductCard({ product }) {
   return (
     <div className="card product-card-premium h-100 shadow-sm border-0" style={{ borderRadius: '16px', overflow: 'hidden' }}>
       {product.image && (
-        <div className="p-3 text-center" style={{ backgroundColor: '#f5f5f7', borderRadius: '16px', margin: '8px 8px 0 8px' }}>
-          <div style={{ height: '160px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+        <div className="position-relative p-3 text-center" style={{ backgroundColor: '#f5f5f7', borderRadius: '16px', margin: '8px 8px 0 8px' }}>
+          <button 
+            className="btn btn-light rounded-circle shadow-sm p-0 d-flex align-items-center justify-content-center"
+            style={{ 
+              position: 'absolute', 
+              top: '15px', 
+              right: '15px', 
+              width: '36px', 
+              height: '36px', 
+              border: 'none',
+              zIndex: 10
+            }}
+          >
+            <Heart size={18} fill="#ff4d4f" color="#ff4d4f" />
+          </button>
+          <div style={{ height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
             <img src={product.image} alt={product.name} className="img-fluid" style={{ maxHeight: '100%', objectFit: 'contain' }} />
           </div>
         </div>
@@ -30,9 +45,12 @@ export default function ProductCard({ product }) {
             -{discount}% OFF
           </span>
         </div>
-        <h5 className="card-title acme mb-3" style={{ fontSize: '1.1rem', color: '#1a1a1a', fontWeight: 'bold' }}>
+        <h5 className="card-title acme mb-1" style={{ fontSize: '1.1rem', color: '#1a1a1a', fontWeight: 'bold' }}>
           {product.name}
         </h5>
+        <div className="text-muted small josefin mb-3">
+          {product.unit}
+        </div>
         
         <div className="mt-auto">
           <div className="d-flex align-items-center justify-content-between">
@@ -44,9 +62,6 @@ export default function ProductCard({ product }) {
                 <span className="text-muted small ml-2 josefin" style={{ textDecoration: 'line-through', fontSize: '0.85rem' }}>
                   ₹{product.original_price}
                 </span>
-              </div>
-              <div className="text-muted small josefin" style={{ marginTop: '-4px' }}>
-                {product.unit}
               </div>
             </div>
 

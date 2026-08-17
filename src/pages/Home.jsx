@@ -36,7 +36,7 @@ import HomeImg36 from '../assets/home_img_36.png';
 import HomeImg37 from '../assets/home_img_37.png';
 import HomeImg38 from '../assets/home_img_38.png';
 import HomeImg39 from '../assets/home_img_39.png';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import ProductCard from '../components/ProductCard';
 
 const featuredProducts = [
@@ -115,6 +115,39 @@ const featuredProducts = [
 ];
 
 const Home = () => {
+  const [featuredProductsList, setFeaturedProductsList] = useState([]);
+
+  useEffect(() => {
+    const fetchFeatured = async () => {
+      try {
+        const response = await fetch("https://iplfsscpeixfxzbouhlp.supabase.co/rest/v1/products?limit=8&order=product_code.asc", {
+          headers: {
+            "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwbGZzc2NwZWl4Znh6Ym91aGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NDQwNzksImV4cCI6MjEwMjUyMDA3OX0.nr2an5w0nX_L37C3g03HgzpFitueRNeOJ346TYvakZ8",
+            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwbGZzc2NwZWl4Znh6Ym91aGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NDQwNzksImV4cCI6MjEwMjUyMDA3OX0.nr2an5w0nX_L37C3g03HgzpFitueRNeOJ346TYvakZ8"
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const mapped = data.map(p => {
+            let img = HomeImg15;
+            if (p.category.toLowerCase().includes('pots')) img = HomeImg16;
+            else if (p.category.toLowerCase().includes('sparkler') || p.category.toLowerCase().includes('stars')) img = HomeImg17;
+            else if (p.category.toLowerCase().includes('sound') || p.category.toLowerCase().includes('bomb')) img = HomeImg18;
+            else if (p.category.toLowerCase().includes('fountain') || p.category.toLowerCase().includes('peacock')) img = HomeImg19;
+            return {
+              ...p,
+              image: img
+            };
+          });
+          setFeaturedProductsList(mapped);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    fetchFeatured();
+  }, []);
+
   return (
     <>
       
@@ -145,7 +178,7 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
 <div className="container py-2">
 	<div className="row">
 		<div className="col-lg-4 col-md-12 col-12 text-center text-lg-left align-self-center">
-			<a href="#/"> 
+			<a href="/"> 
 				<img src={HomeImg1} className="img-fluid logo" alt="SETHU PYRO PARK RACHIKA CRACKERS" title="SETHU PYRO PARK RACHIKA CRACKERS" />
 			</a>
 		</div>
@@ -177,19 +210,19 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
 		<div id="myNavbar" className="collapse navbar-collapse navfont">
 			<ul className="navbar-nav mr-auto text-center">
 				<li className="nav-item px-3 active">
-					<a className="nav-link" href="#/"> Home </a>
+					<a className="nav-link" href="/"> Home </a>
 				</li>
 				<li className="nav-item px-3 ">
-					<a className="nav-link" href="#/about"> About </a>
+					<a className="nav-link" href="/about"> About </a>
 				</li>
 				<li className="nav-item px-3 ">
-					<a className="nav-link" href="#/products"> Products </a>
+					<a className="nav-link" href="/products"> Products </a>
 				</li>
 				<li className="nav-item px-3 ">
-					<a className="nav-link" href="#/safetytips">Safety Tips</a>
+					<a className="nav-link" href="/safetytips">Safety Tips</a>
 				</li>
 				<li className="nav-item px-3 ">
-					<a className="nav-link" href="#/contact">Contact</a>
+					<a className="nav-link" href="/contact">Contact</a>
 				</li>
 				<li className="nav-item px-3">
 					<a className="nav-link" href="https://www.metturtransports.com/">Track Your Order</a>
@@ -217,11 +250,11 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
 							<img src={HomeImg4} onclick="window.open(&quot;products.php&quot;,&quot;_self&quot;)" style={{cursor: 'pointer'}} className="img-fluid w-100 d-block" alt="SETHU PYRO PARK RACHIKA CRACKERS" title="SETHU PYRO PARK RACHIKA CRACKERS" />
 						</div>
 			</div>
-		<a className="carousel-control-prev" href="#/" role="button" data-slide="prev">
+		<a className="carousel-control-prev" href="/" role="button" data-slide="prev">
 		<span className="carousel-control-prev-icon" aria-hidden="true"></span>
 		<span className="sr-only">Previous</span>
 	</a>
-	<a className="carousel-control-next" href="#/" role="button" data-slide="next">
+	<a className="carousel-control-next" href="/" role="button" data-slide="next">
 		<span className="carousel-control-next-icon" aria-hidden="true"></span>
 		<span className="sr-only">Next</span>
 	</a>
@@ -243,11 +276,11 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
 							<img src={HomeImg7} className="img-fluid w-100 d-block" alt="SETHU PYRO PARK RACHIKA CRACKERS" title="SETHU PYRO PARK RACHIKA CRACKERS" />
 						</div>
 			</div>
-		<a className="carousel-control-prev" href="#/" role="button" data-slide="prev">
+		<a className="carousel-control-prev" href="/" role="button" data-slide="prev">
 		<span className="carousel-control-prev-icon" aria-hidden="true"></span>
 		<span className="sr-only">Previous</span>
 	</a>
-	<a className="carousel-control-next" href="#/" role="button" data-slide="next">
+	<a className="carousel-control-next" href="/" role="button" data-slide="next">
 		<span className="carousel-control-next-icon" aria-hidden="true"></span>
 		<span className="sr-only">Next</span>
 	</a>
@@ -329,16 +362,16 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
 	</div>
 </div>	
 
-<div className="container-fluid py-5" style={{ paddingLeft: '20px', paddingRight: '20px' }}>
+<div className="container-fluid py-5 px-lg-5 px-md-4 px-2" style={{ marginLeft: '50px', marginRight: '50px', width: 'calc(100% - 100px)' }}>
   <div className="row justify-content-center mb-4">
     <div className="col-lg-8 text-center">
       <h2 className="acme clr bannerhead1" style={{ color: '#0a539f' }}>Featured Products</h2>
       <p className="josefin text-muted" style={{ fontSize: '1.1rem' }}>Check out our top-selling crackers at Sivakasi wholesale prices with amazing discounts!</p>
     </div>
   </div>
-  <div className="row mx-n1">
-    {featuredProducts.map(product => (
-      <div key={product.id} className="col-lg-3 col-md-6 col-12 mb-4 px-1">
+  <div className="row mx-n3">
+    {featuredProductsList.map(product => (
+      <div key={product.id} className="col-lg-3 col-md-6 col-12 mb-4 px-3">
         <ProductCard product={product} />
       </div>
     ))}
@@ -425,7 +458,7 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
 		<div className="col-lg-4 col-md-6 secpad text-center">
 			<div className="image-feature img-bottom">
 				<figure className="wp-caption box-bg">
-					<a href="#/products">
+					<a href="/products">
 						<img className="img-fluid" src={HomeImg15} alt="buy online crackers" title="buy online crackers" />
 					</a>
 					<figcaption className="widget-image-caption wp-caption-text">
@@ -439,7 +472,7 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
 		<div className="col-lg-4 col-md-6 secpad text-center">
 			<div className="image-feature">
 				<figure className="wp-caption box-bg">
-					<a href="#/products">
+					<a href="/products">
 						<img className="img-fluid" src={HomeImg16} alt="crackers collection 2025" title="crackers collection 2025" />
 					</a>
 					<figcaption className="widget-image-caption wp-caption-text">
@@ -453,7 +486,7 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
 		<div className="col-lg-4 col-md-6 secpad text-center">
 			<div className="image-feature">
 				<figure className="wp-caption box-bg">
-					<a href="#/products">
+					<a href="/products">
 						<img className="img-fluid" src={HomeImg17} alt="online crackers sale" title="online crackers sale" />
 					</a>
 					<figcaption className="widget-image-caption wp-caption-text">
@@ -467,7 +500,7 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
 		<div className="col-lg-6 col-md-6 secpad text-center">
 			<div className="image-feature">
 				<figure className="wp-caption box-bg">
-					<a href="#/products">
+					<a href="/products">
 						<img src={HomeImg18} className="img-fluid w-100" alt="biggest diwali sale" title="biggest diwali sale" />
 					</a>
 					<figcaption className="widget-image-caption wp-caption-text">
@@ -481,7 +514,7 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
 		<div className="col-lg-6 col-md-6 secpad text-center">
 			<div className="image-feature">
 				<figure className="wp-caption box-bg">
-					<a href="#/products">
+					<a href="/products">
 						<img src={HomeImg19} className="img-fluid w-100" alt="diwali shopping" title="diwali shopping" />
 					</a>
 					<figcaption className="widget-image-caption wp-caption-text">
@@ -503,56 +536,13 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
 				<div className="arial text-white heading1 fnt21">We are one of the leading sellers <br /> of Sivakasi Firecrackers</div>
 				<p className="helvetica text-white">We are available On 24 x 7 Support. Order and let's Purchase</p>
 				<div className="mt-4">
-					<a href="#/contact" className="btn1 arial">Contact Now</a>
+					<a href="/contact" className="btn1 arial">Contact Now</a>
 				</div>
 			</div>
 		</div>
 	</div>
 </div>
-<div className="container py-5">
-	<div className="row justify-content-center">
-        <div className="col-lg-12 text-center align-self-center">
-            <h1 className="acme clr bannerhead1">Brands We Handle</h1>
-			<p className="josefin">We provide all top branded deepavali crackers &amp; other occasional Fire crackers...</p>
-        </div>   
-		  <div className="owl-carousel owl-theme align-items-center owl-loaded owl-drag">
-        
-        
-        
-        
-        
-        
-    <div className="owl-stage-outer"><div className="owl-stage" style={{transform: 'translate3d(-1715px, 0px, 0px)', transition: '0.25s', width: '3430px'}}><div className="owl-item cloned" style={{width: '225px', marginRight: '20px'}}><div className="item text-center">
-            <img src={HomeImg20} className="img-fluid w-75 mx-auto" alt="Vadivel Brand" />
-        </div></div><div className="owl-item cloned" style={{width: '225px', marginRight: '20px'}}><div className="item text-center">
-            <img src={HomeImg21} className="img-fluid w-75 mx-auto" alt="SETHU PYRO PARK RACHIKA CRACKERS Brand" />
-        </div></div><div className="owl-item cloned" style={{width: '225px', marginRight: '20px'}}><div className="item text-center">
-            <img src={HomeImg22} className="img-fluid w-75 mx-auto" alt="Standard Brand" />
-        </div></div><div className="owl-item cloned" style={{width: '225px', marginRight: '20px'}}><div className="item text-center">
-            <img src={HomeImg23} className="img-fluid w-75 mx-auto" alt="Anil Brand" />
-        </div></div><div className="owl-item" style={{width: '225px', marginRight: '20px'}}><div className="item text-center">
-            <img src={HomeImg24} className="img-fluid w-75 mx-auto" alt="Ananda Brand" />
-        </div></div><div className="owl-item" style={{width: '225px', marginRight: '20px'}}><div className="item text-center">
-            <img src={HomeImg25} className="img-fluid w-75 mx-auto" alt="Elephant Brand" />
-        </div></div><div className="owl-item" style={{width: '225px', marginRight: '20px'}}><div className="item text-center">
-            <img src={HomeImg26} className="img-fluid w-75 mx-auto" alt="Vadivel Brand" />
-        </div></div><div className="owl-item active" style={{width: '225px', marginRight: '20px'}}><div className="item text-center">
-            <img src={HomeImg27} className="img-fluid w-75 mx-auto" alt="SETHU PYRO PARK RACHIKA CRACKERS Brand" />
-        </div></div><div className="owl-item active" style={{width: '225px', marginRight: '20px'}}><div className="item text-center">
-            <img src={HomeImg28} className="img-fluid w-75 mx-auto" alt="Standard Brand" />
-        </div></div><div className="owl-item active" style={{width: '225px', marginRight: '20px'}}><div className="item text-center">
-            <img src={HomeImg29} className="img-fluid w-75 mx-auto" alt="Anil Brand" />
-        </div></div><div className="owl-item cloned active" style={{width: '225px', marginRight: '20px'}}><div className="item text-center">
-            <img src={HomeImg30} className="img-fluid w-75 mx-auto" alt="Ananda Brand" />
-        </div></div><div className="owl-item cloned" style={{width: '225px', marginRight: '20px'}}><div className="item text-center">
-            <img src={HomeImg31} className="img-fluid w-75 mx-auto" alt="Elephant Brand" />
-        </div></div><div className="owl-item cloned" style={{width: '225px', marginRight: '20px'}}><div className="item text-center">
-            <img src={HomeImg32} className="img-fluid w-75 mx-auto" alt="Vadivel Brand" />
-        </div></div><div className="owl-item cloned" style={{width: '225px', marginRight: '20px'}}><div className="item text-center">
-            <img src={HomeImg33} className="img-fluid w-75 mx-auto" alt="SETHU PYRO PARK RACHIKA CRACKERS Brand" />
-        </div></div></div></div><div className="owl-nav"><button type="button" role="presentation" className="owl-prev"><span aria-label="Previous">‹</span></button><button type="button" role="presentation" className="owl-next"><span aria-label="Next">›</span></button></div><div className="owl-dots"><button role="button" className="owl-dot active"><span></span></button><button role="button" className="owl-dot"><span></span></button></div></div>
-	</div>
-</div>
+
 <div className="top-bg2">
 	<div className="container py-5">
 		<div className="row">
@@ -561,7 +551,7 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
 				<p className="pt-2 text-white josefin pb-3">We offer the best quality products at best price. Make celebrations more memorable with superior quality of our crackers all over India </p>
 			</div>
 			<div className="col-md-5 text-center align-self-center">
-				<a href="#/products" className="font-weight-bold btn-effect1"> Check Now </a>	
+				<a href="/products" className="font-weight-bold btn-effect1"> Check Now </a>	
 			</div>
 		</div>
 	</div>
@@ -611,15 +601,15 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
 				<p className="josefin">We "SETHU PYRO PARK RACHIKA CRACKERS" acknowledged as the renowned super stockist &amp; wholesale supplier of an exclusive range of firecrackers. </p>
 				<div className="acme heading4 pb-3 clr">Quick Links</div>
 				<div className="tagcloud">
-					<a href="#/" className="josefin">Home</a>
-					<a href="#/about" className="josefin">About SETHU PYRO PARK RACHIKA CRACKERS</a>
-					<a href="#/products" className="josefin">Quick Purchase</a>
-					<a href="#/safetytips" className="josefin">Safetytips</a>
-					<a href="#/contact" className="josefin">Contact us</a>
+					<a href="/" className="josefin">Home</a>
+					<a href="/about" className="josefin">About SETHU PYRO PARK RACHIKA CRACKERS</a>
+					<a href="/products" className="josefin">Quick Purchase</a>
+					<a href="/safetytips" className="josefin">Safetytips</a>
+					<a href="/contact" className="josefin">Contact us</a>
 				</div>
 			</div>
             <div className="col-lg-4 col-md-6 col-12 text-center align-self-center">
-                <a href="#/">
+                <a href="/">
                     <img src={HomeImg1} className="img-fluid w-100 mx-auto d-block" alt="SETHU PYRO PARK RACHIKA CRACKERS" title="SETHU PYRO PARK RACHIKA CRACKERS" />
                 </a>
             </div>
@@ -667,7 +657,7 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
 				</a>
 			</div>
 				<div className="fixed point2">
-			<a href="#/products">
+			<a href="/products">
 				<img src={HomeImg39} className="priceicn2 float-right blink" alt="SETHU PYRO PARK RACHIKA CRACKERS" title="SETHU PYRO PARK RACHIKA CRACKERS" />
 			</a>
 		</div>
