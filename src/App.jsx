@@ -1,35 +1,22 @@
-import './index.css';
-import MarqueeBar from './components/MarqueeBar';
-import Header from './components/Header';
-import Navbar from './components/Navbar';
-import HeroCarousel from './components/HeroCarousel';
-import FeaturesRow from './components/FeaturesRow';
-import AboutSection from './components/AboutSection';
-import ProductCategories from './components/ProductCategories';
-import ParallaxCTA from './components/ParallaxCTA';
-import BrandsWeHandle from './components/BrandsWeHandle';
-import PricelistCTA from './components/PricelistCTA';
-import WhyChooseUs from './components/WhyChooseUs';
-import Footer from './components/Footer';
-import FloatingButtons from './components/FloatingButtons';
+import React from 'react';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from './pages/Home';
+import About from './pages/About';
+import Products from './pages/Products';
+import Contact from './pages/Contact';
+import SafetyTips from './pages/SafetyTips';
 
 function App() {
   return (
-    <>
-      <MarqueeBar />
-      <Header />
-      <Navbar />
-      <HeroCarousel />
-      <FeaturesRow />
-      <AboutSection />
-      <ProductCategories />
-      <ParallaxCTA />
-      <BrandsWeHandle />
-      <PricelistCTA />
-      <WhyChooseUs />
-      <Footer />
-      <FloatingButtons />
-    </>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/products" element={<Products />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/safetytips" element={<SafetyTips />} />
+      </Routes>
+    </Router>
   );
 }
 
