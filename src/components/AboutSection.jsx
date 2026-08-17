@@ -28,63 +28,62 @@ function Counter({ target, suffix = '' }) {
 function AboutSection() {
   return (
     <div className="container py-5">
-      <div className="row justify-content-center">
-        <div className="col-lg-10 col-12">
-          <div className="row justify-content-center text-center">
+      <div className="row align-items-center">
+
+        {/* Left image column - visible on large screens */}
+        <div className="col-lg-5 d-none d-lg-block">
+          <img
+            src="https://sparkstarcrackers.com/images/count-side.webp"
+            className="img-fluid"
+            alt="festival crackers shop"
+          />
+        </div>
+
+        {/* Right content column */}
+        <div className="col-lg-7 col-12">
+          <div className="row justify-content-center">
             
             <div className="col-lg-12 mb-4">
-              <h1 className="acme clr1 display-5 fw-bold">Rachika Crackers</h1>
-              <div className="heading5 acme mt-1 text-secondary">
+              <h1 className="acme clr-orange display-5 fw-bold mb-1">Rachika Crackers</h1>
+              <div className="heading5 fw-bold text-dark mt-1" style={{ fontSize: '1.2rem' }}>
                 We're providing the best quality crackers in town.
               </div>
-              <div className="title title-border mx-auto my-3"></div>
-              <p className="josefin text-muted">
+              <div className="thin-line my-3"></div>
+              <p className="josefin text-secondary py-2" style={{ fontSize: '0.95rem' }}>
                 Discover an extensive selection of firecrackers to illuminate your celebrations with dazzling displays.
               </p>
             </div>
 
-            {/* Since */}
-            <div className="col-lg-4 col-md-4 col-12 my-3">
-              <div className="count-box">
-                <ul id="counter" className="fullpad list-unstyled m-0">
-                  <li className="mb-2">
-                    <span style={{ fontSize: '2rem' }}>❤️</span>
-                  </li>
-                  <li>
-                    <Counter target={2014} />
-                  </li>
-                  <p className="acme josefin txt-danger mb-0">SINCE</p>
-                </ul>
+            {/* Since Card */}
+            <div className="col-md-6 col-12 my-4">
+              <div className="custom-count-card">
+                <div className="card-top-icon">❤️</div>
+                <div className="card-body-content">
+                  <Counter target={2014} />
+                  <div className="card-label">SINCE</div>
+                </div>
               </div>
             </div>
 
-            {/* Happy Clients */}
-            <div className="col-lg-4 col-md-4 col-12 my-3">
-              <div className="count-box">
-                <ul id="counter" className="fullpad list-unstyled m-0">
-                  <li className="mb-2">
-                    <span style={{ fontSize: '2rem' }}>👥</span>
-                  </li>
-                  <li>
-                    <Counter target={500} suffix="+" />
-                  </li>
-                  <p className="acme josefin txt-danger mb-0">HAPPY CLIENTS</p>
-                </ul>
+            {/* Happy Clients Card */}
+            <div className="col-md-6 col-12 my-4">
+              <div className="custom-count-card">
+                <div className="card-top-icon">👤</div>
+                <div className="card-body-content">
+                  <Counter target={500} suffix="+" />
+                  <div className="card-label">HAPPY CLIENTS</div>
+                </div>
               </div>
             </div>
 
-            {/* Satisfaction */}
-            <div className="col-lg-4 col-md-4 col-12 my-3">
-              <div className="count-box">
-                <ul id="counter" className="fullpad list-unstyled m-0">
-                  <li className="mb-2">
-                    <span style={{ fontSize: '2rem' }}>👍</span>
-                  </li>
-                  <li>
-                    <Counter target={100} suffix="%" />
-                  </li>
-                  <p className="acme josefin txt-danger mb-0">SATISFACTION</p>
-                </ul>
+            {/* Satisfaction Card */}
+            <div className="col-md-6 col-12 my-4">
+              <div className="custom-count-card">
+                <div className="card-top-icon">👤</div>
+                <div className="card-body-content">
+                  <Counter target={100} suffix="%" />
+                  <div className="card-label">SATISFACTION</div>
+                </div>
               </div>
             </div>
 
