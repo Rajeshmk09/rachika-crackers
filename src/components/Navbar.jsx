@@ -1,40 +1,50 @@
-import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart } from 'lucide-react';
-import { useCart } from '../context/CartContext';
-
-const NAV_LINKS = [
-  { label: 'Home', to: '/' },
-  { label: 'Products', to: '/#products' },
-  { label: 'Admin Panel', to: '/admin' },
-];
-
-export default function Navbar() {
-  const { totalItems, setIsCartOpen } = useCart();
-  const location = useLocation();
-  const isHome = location.pathname === '/';
-
-  // On home page we show a sticky minimal navbar on scroll, on other pages always show
+function Navbar() {
   return (
-    <nav className={`main-nav ${isHome ? 'home-nav' : ''}`}>
-      <div className="main-nav-inner">
-        <Link to="/" className="nav-brand">🎆 Rachika Crackers</Link>
-        <div className="nav-links">
-          {NAV_LINKS.map(l => (
-            <Link
-              key={l.to}
-              to={l.to}
-              className={`nav-link-item ${location.pathname === l.to ? 'active' : ''}`}
-            >
-              {l.label}
-            </Link>
-          ))}
-        </div>
-        <button className="cart-btn" onClick={() => setIsCartOpen(true)}>
-          <ShoppingCart size={20} />
-          {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
-          {totalItems > 0 && <span className="cart-count-text">Cart ({totalItems})</span>}
+    <nav className="navbar navbar-expand-lg navbar-light navbg navfont">
+      <div className="container">
+        <button
+          type="button"
+          className="navbar-toggler mx-auto"
+          data-bs-toggle="collapse"
+          data-bs-target="#myNavbar"
+          aria-controls="myNavbar"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span className="text-white">☰ Menu</span>
         </button>
+        <div id="myNavbar" className="collapse navbar-collapse navfont">
+          <ul className="navbar-nav mr-auto text-center">
+            <li className="nav-item px-3 active">
+              <a className="nav-link" href="/">Home</a>
+            </li>
+            <li className="nav-item px-3">
+              <a className="nav-link" href="/about">About</a>
+            </li>
+            <li className="nav-item px-3">
+              <a className="nav-link" href="/products">Products</a>
+            </li>
+            <li className="nav-item px-3">
+              <a className="nav-link" href="/safety-tips">Safety Tips</a>
+            </li>
+            <li className="nav-item px-3">
+              <a className="nav-link" href="/contact">Contact</a>
+            </li>
+            <li className="nav-item px-3">
+              <a className="nav-link" href="https://www.metturtransports.com" target="_blank" rel="noreferrer">
+                Track Your Order
+              </a>
+            </li>
+            <li className="nav-item px-3 text-center">
+              <a className="pricelist_pdf blink" href="/pricelist">
+                Download Pricelist
+              </a>
+            </li>
+          </ul>
+        </div>
       </div>
     </nav>
   );
 }
+
+export default Navbar;

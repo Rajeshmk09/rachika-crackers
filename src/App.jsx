@@ -1,55 +1,36 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
-import { CartProvider } from './context/CartContext';
+import './index.css';
+import MarqueeBar from './components/MarqueeBar';
+import Header from './components/Header';
 import Navbar from './components/Navbar';
-import Cart from './components/Cart';
-import Home from './pages/Home';
-import Order from './pages/Order';
-import AdminLayout from './pages/admin/AdminLayout';
-import Dashboard from './pages/admin/Dashboard';
-import Products from './pages/admin/Products';
-import Orders from './pages/admin/Orders';
+import HeroCarousel from './components/HeroCarousel';
+import FeaturesRow from './components/FeaturesRow';
+import AboutSection from './components/AboutSection';
+import ProductCategories from './components/ProductCategories';
+import ParallaxCTA from './components/ParallaxCTA';
+import BrandsWeHandle from './components/BrandsWeHandle';
+import PricelistCTA from './components/PricelistCTA';
+import WhyChooseUs from './components/WhyChooseUs';
+import Footer from './components/Footer';
+import FloatingButtons from './components/FloatingButtons';
 
-export default function App() {
+function App() {
   return (
-    <BrowserRouter>
-      <CartProvider>
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            style: {
-              background: '#1a1a2e',
-              color: '#fff',
-              border: '1px solid #ff6b35',
-              borderRadius: '12px',
-            }
-          }}
-        />
-        <Routes>
-          {/* Shop Routes */}
-          <Route path="/" element={
-            <>
-              <Navbar />
-              <Cart />
-              <Home />
-            </>
-          } />
-          <Route path="/order" element={
-            <>
-              <Navbar />
-              <Cart />
-              <Order />
-            </>
-          } />
-
-          {/* Admin Routes */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="products" element={<Products />} />
-            <Route path="orders" element={<Orders />} />
-          </Route>
-        </Routes>
-      </CartProvider>
-    </BrowserRouter>
+    <>
+      <MarqueeBar />
+      <Header />
+      <Navbar />
+      <HeroCarousel />
+      <FeaturesRow />
+      <AboutSection />
+      <ProductCategories />
+      <ParallaxCTA />
+      <BrandsWeHandle />
+      <PricelistCTA />
+      <WhyChooseUs />
+      <Footer />
+      <FloatingButtons />
+    </>
   );
 }
+
+export default App;

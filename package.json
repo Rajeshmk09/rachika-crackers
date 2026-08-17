@@ -11,13 +11,12 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",
-    "@tailwindcss/vite": "^4.3.3",
+    "bootstrap": "^5.3.8",
     "lucide-react": "^1.31.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-hot-toast": "^2.6.0",
-    "react-router-dom": "^7.18.2",
-    "tailwindcss": "^4.3.3"
+    "react-router-dom": "^7.18.2"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
