@@ -13,7 +13,14 @@ export default function ProductCard({ product }) {
   };
 
   return (
-    <div className="card product-card-premium h-100 shadow-sm border-0">
+    <div className="card product-card-premium h-100 shadow-sm border-0" style={{ borderRadius: '16px', overflow: 'hidden' }}>
+      {product.image && (
+        <div className="p-3 text-center" style={{ backgroundColor: '#f5f5f7', borderRadius: '16px', margin: '8px 8px 0 8px' }}>
+          <div style={{ height: '160px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            <img src={product.image} alt={product.name} className="img-fluid" style={{ maxHeight: '100%', objectFit: 'contain' }} />
+          </div>
+        </div>
+      )}
       <div className="card-body d-flex flex-column p-3">
         <div className="d-flex align-items-center justify-content-between mb-1">
           <span className="text-muted small josefin font-weight-bold" style={{ textTransform: 'uppercase', letterSpacing: '0.5px' }}>
@@ -23,15 +30,9 @@ export default function ProductCard({ product }) {
             -{discount}% OFF
           </span>
         </div>
-        <h5 className="card-title acme mb-3" style={{ fontSize: '1.1rem', color: '#1a1a1a' }}>
+        <h5 className="card-title acme mb-3" style={{ fontSize: '1.1rem', color: '#1a1a1a', fontWeight: 'bold' }}>
           {product.name}
         </h5>
-        
-        {product.image && (
-          <div className="text-center my-3 bg-light rounded p-2" style={{ height: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-            <img src={product.image} alt={product.name} className="img-fluid" style={{ maxHeight: '100%', objectFit: 'contain' }} />
-          </div>
-        )}
         
         <div className="mt-auto">
           <div className="d-flex align-items-center justify-content-between">
