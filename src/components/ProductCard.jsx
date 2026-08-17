@@ -1,11 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export default function ProductCard({ product }) {
+  const [qty, setQty] = useState(0);
   const discount = Math.round(((product.original_price - product.price) / product.original_price) * 100);
 
-  const handleOrder = () => {
-    // Redirect to products page
-    window.location.hash = '/products';
+  const increment = () => {
+    setQty(prev => prev + 1);
+  };
+
+  const decrement = () => {
+    setQty(prev => (prev > 0 ? prev - 1 : 0));
   };
 
   return (
@@ -37,13 +41,33 @@ export default function ProductCard({ product }) {
               {product.unit}
             </span>
           </div>
-          <button
-            onClick={handleOrder}
-            className="btn btn-danger btn-block font-weight-bold acme rounded-pill py-2 btn-effect1"
-            style={{ fontSize: '0.95rem' }}
-          >
-            Buy Now
-          </button>
+          {qty === 0 ? (
+            <button
+              onClick={increment}
+              className="btn btn-danger btn-block font-weight-bold acme rounded-pill py-2 btn-effect1"
+              style={{ fontSize: '0.95rem' }}
+            >
+              Add to Cart
+            </button>
+          ) : (
+            <div className="d-flex align-items-center justify-content-between bg-light rounded-pill p-1 border" style={{ height: '38px' }}>
+              <button
+                onClick={decrement}
+                className="btn btn-danger rounded-circle p-0 d-flex align-items-center justify-content-center"
+                style={{ width: '28px', height: '28px', fontSize: '1.1rem', fontWeight: 'bold', lineHeight: '28px' }}
+              >
+                -
+              </button>
+              <span className="font-weight-bold josefin px-3" style={{ fontSize: '1.05rem', color: '#1a1a1a' }}>{qty}</span>
+              <button
+                onClick={increment}
+                className="btn btn-danger rounded-circle p-0 d-flex align-items-center justify-content-center"
+                style={{ width: '28px', height: '28px', fontSize: '1.1rem', fontWeight: 'bold', lineHeight: '28px' }}
+              >
+                +
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
