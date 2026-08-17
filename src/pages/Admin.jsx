@@ -88,21 +88,21 @@ export function AdminLogin() {
           </div>
           <div className="login-title">Admin Sign In</div>
           <div className="login-desc">Enter your credentials to access the dashboard</div>
-          {error && <div className="err-box">{error}</div>}
+          {error && <div className="adm-err-box">{error}</div>}
           <form onSubmit={handleLogin}>
-            <div className="form-group">
-              <label className="form-lbl">Email Address</label>
-              <div className="inp-wrap">
-                <Mail className="inp-icon" />
-                <input className="form-input" type="email" placeholder="admin@example.com" value={email} onChange={e=>setEmail(e.target.value)} required />
+            <div className="adm-form-group">
+              <label className="adm-form-lbl">Email Address</label>
+              <div className="adm-inp-wrap">
+                <Mail className="adm-inp-icon" />
+                <input className="adm-form-input" type="email" placeholder="admin@example.com" value={email} onChange={e=>setEmail(e.target.value)} required />
               </div>
             </div>
-            <div className="form-group">
-              <label className="form-lbl">Password</label>
-              <div className="inp-wrap">
-                <Lock className="inp-icon" />
-                <input className="form-input" type={showPw?'text':'password'} placeholder="Enter password" value={password} onChange={e=>setPassword(e.target.value)} required />
-                <button type="button" className="inp-eye" onClick={()=>setShowPw(!showPw)}>
+            <div className="adm-form-group">
+              <label className="adm-form-lbl">Password</label>
+              <div className="adm-inp-wrap">
+                <Lock className="adm-inp-icon" />
+                <input className="adm-form-input" type={showPw?'text':'password'} placeholder="Enter password" value={password} onChange={e=>setPassword(e.target.value)} required />
+                <button type="button" className="adm-inp-eye" onClick={()=>setShowPw(!showPw)}>
                   {showPw ? <EyeOff style={{width:16,height:16}} /> : <Eye style={{width:16,height:16}} />}
                 </button>
               </div>
@@ -212,7 +212,7 @@ export function AdminLayout() {
                 </button>
               </div>
               <div className="hdr-right">
-                <button className="btn btn-secondary btn-sm" onClick={fetchAll} disabled={loading}>
+                <button className="adm-btn adm-btn-secondary adm-btn-sm" onClick={fetchAll} disabled={loading}>
                   <RefreshCw style={{width:14,height:14}} className={loading?'spinning':''} />
                   {loading?'Loading...':'Refresh'}
                 </button>
@@ -255,7 +255,7 @@ export function AdminDashboard() {
     { label:'Total Orders',   value:orders.length,     icon:ShoppingCart,color:'purple',trend:`${orders.filter(o=>o.status==='Pending').length} pending` },
   ];
 
-  if (loading) return <div className="loading">Loading data from Supabase...</div>;
+  if (loading) return <div className="adm-loading">Loading data from Supabase...</div>;
 
   return (
     <>
@@ -274,10 +274,10 @@ export function AdminDashboard() {
         ))}
       </div>
       <div className="db-grid">
-        <div className="card">
-          <div className="card-hdr">
-            <div><div className="card-title">Recent Orders</div><div className="card-sub">Latest 5 customer orders</div></div>
-            <button className="btn btn-secondary btn-sm" onClick={()=>navigate('/admin/orders')}>
+        <div className="adm-card">
+          <div className="adm-card-hdr">
+            <div><div className="adm-card-title">Recent Orders</div><div className="adm-card-sub">Latest 5 customer orders</div></div>
+            <button className="adm-btn adm-btn-secondary adm-btn-sm" onClick={()=>navigate('/admin/orders')}>
               View All <ArrowUpRight style={{width:12,height:12}} />
             </button>
           </div>
@@ -296,7 +296,7 @@ export function AdminDashboard() {
                       <td><div style={{fontWeight:600,color:'#1e293b'}}>{o.name||'—'}</div><div style={{fontSize:11,color:'#94a3b8'}}>{o.phone||''}</div></td>
                       <td style={{fontSize:12}}>{fmtDate(o.created_at)}</td>
                       <td style={{fontWeight:600,color:'#ff6b35'}}>{fmt(total)}</td>
-                      <td><span className="badge" style={{background:cfg.bg,color:cfg.color,border:`1px solid ${cfg.color}33`}}><span className="dot" style={{background:cfg.color}} />{o.status||'Pending'}</span></td>
+                      <td><span className="adm-badge" style={{background:cfg.bg,color:cfg.color,border:`1px solid ${cfg.color}33`}}><span className="adm-dot" style={{background:cfg.color}} />{o.status||'Pending'}</span></td>
                     </tr>
                   );
                 })}
@@ -304,9 +304,9 @@ export function AdminDashboard() {
             </table>
           </div>
         </div>
-        <div className="card">
-          <div className="card-hdr"><div><div className="card-title">Product Breakdown</div><div className="card-sub">Active products per category</div></div></div>
-          <div className="card-body" style={{paddingTop:12}}>
+        <div className="adm-card">
+          <div className="adm-card-hdr"><div><div className="adm-card-title">Product Breakdown</div><div className="adm-card-sub">Active products per category</div></div></div>
+          <div className="adm-card-body" style={{paddingTop:12}}>
             {breakdown.length===0 ? <div style={{textAlign:'center',color:'#94a3b8',fontSize:13,padding:'24px 0'}}>No active products</div>
             : breakdown.map(b=>(
               <div key={b.name} className="bd-item">
@@ -329,7 +329,7 @@ export function AdminCategories() {
   const navigate = useNavigate();
   const colors = ['#ff6b35','#3b82f6','#10b981','#8b5cf6','#f59e0b','#ec4899','#14b8a6','#f97316'];
 
-  if (loading) return <div className="loading">Loading...</div>;
+  if (loading) return <div className="adm-loading">Loading...</div>;
 
   return (
     <>
@@ -363,19 +363,19 @@ export function AdminCategories() {
 ══════════════════════════════════════════════════ */
 function ConfirmDialog({ title, message, onConfirm, onCancel }) {
   return (
-    <div className="modal-ov">
-      <div className="modal modal-sm">
-        <div className="modal-hdr">
-          <div className="modal-title" style={{color:'#ef4444'}}>⚠ Confirm Delete</div>
-          <button className="close-btn" onClick={onCancel}><X style={{width:16,height:16}} /></button>
+    <div className="adm-modal-ov">
+      <div className="adm-modal adm-modal-sm">
+        <div className="adm-modal-hdr">
+          <div className="adm-modal-title" style={{color:'#ef4444'}}>⚠ Confirm Delete</div>
+          <button className="adm-close-btn" onClick={onCancel}><X style={{width:16,height:16}} /></button>
         </div>
-        <div className="modal-body">
+        <div className="adm-modal-body">
           <div style={{fontSize:16,fontWeight:700,color:'#0f172a',marginBottom:8}}>{title}</div>
           <div style={{fontSize:13,color:'#64748b',lineHeight:1.6}}>{message}</div>
         </div>
-        <div className="modal-ftr">
-          <button className="btn btn-secondary" onClick={onCancel}>Cancel</button>
-          <button className="btn btn-danger" onClick={onConfirm}>Yes, Delete</button>
+        <div className="adm-modal-ftr">
+          <button className="adm-btn adm-btn-secondary" onClick={onCancel}>Cancel</button>
+          <button className="adm-btn adm-btn-danger" onClick={onConfirm}>Yes, Delete</button>
         </div>
       </div>
     </div>
@@ -422,70 +422,70 @@ function ProductModal({ product, categories, onClose, onSaved }) {
   };
 
   return (
-    <div className="modal-ov">
-      <div className="modal">
-        <div className="modal-hdr">
-          <div className="modal-title">{isEdit ? '✏ Edit Product' : '＋ Add New Product'}</div>
-          <button className="close-btn" onClick={onClose}><X style={{width:16,height:16}} /></button>
+    <div className="adm-modal-ov">
+      <div className="adm-modal">
+        <div className="adm-modal-hdr">
+          <div className="adm-modal-title">{isEdit ? '✏ Edit Product' : '＋ Add New Product'}</div>
+          <button className="adm-close-btn" onClick={onClose}><X style={{width:16,height:16}} /></button>
         </div>
-        <div className="modal-body">
-          {err && <div className="err-box" style={{marginBottom:16}}>{err}</div>}
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-lbl">Product Code *</label>
-              <input className="form-input" placeholder="e.g. A001" value={form.product_code} onChange={e=>set('product_code',e.target.value)} />
+        <div className="adm-modal-body">
+          {err && <div className="adm-err-box" style={{marginBottom:16}}>{err}</div>}
+          <div className="adm-form-row">
+            <div className="adm-form-group">
+              <label className="adm-form-lbl">Product Code *</label>
+              <input className="adm-form-input" placeholder="e.g. A001" value={form.product_code} onChange={e=>set('product_code',e.target.value)} />
             </div>
-            <div className="form-group">
-              <label className="form-lbl">Category *</label>
-              <select className="form-select" value={form.category} onChange={e=>set('category',e.target.value)}>
+            <div className="adm-form-group">
+              <label className="adm-form-lbl">Category *</label>
+              <select className="adm-form-select" value={form.category} onChange={e=>set('category',e.target.value)}>
                 {categories.map(c=><option key={c} value={c}>{c}</option>)}
               </select>
             </div>
           </div>
-          <div className="form-group">
-            <label className="form-lbl">Product Name *</label>
-            <input className="form-input" placeholder="e.g. Premium Sparklers 4 inch" value={form.name} onChange={e=>set('name',e.target.value)} />
+          <div className="adm-form-group">
+            <label className="adm-form-lbl">Product Name *</label>
+            <input className="adm-form-input" placeholder="e.g. Premium Sparklers 4 inch" value={form.name} onChange={e=>set('name',e.target.value)} />
           </div>
-          <div className="form-row-3">
-            <div className="form-group">
-              <label className="form-lbl">MRP Price (₹)</label>
-              <input className="form-input" type="number" placeholder="0" value={form.mrp} onChange={e=>set('mrp',e.target.value)} />
+          <div className="adm-form-row-3">
+            <div className="adm-form-group">
+              <label className="adm-form-lbl">MRP Price (₹)</label>
+              <input className="adm-form-input" type="number" placeholder="0" value={form.mrp} onChange={e=>set('mrp',e.target.value)} />
             </div>
-            <div className="form-group">
-              <label className="form-lbl">Discount (%)</label>
-              <input className="form-input" type="number" placeholder="0" min="0" max="100" value={form.discount} onChange={e=>set('discount',e.target.value)} />
+            <div className="adm-form-group">
+              <label className="adm-form-lbl">Discount (%)</label>
+              <input className="adm-form-input" type="number" placeholder="0" min="0" max="100" value={form.discount} onChange={e=>set('discount',e.target.value)} />
             </div>
-            <div className="form-group">
-              <label className="form-lbl">Selling Price (₹)</label>
-              <input className="form-input" type="number" placeholder="Auto-calculated" value={form.price} onChange={e=>set('price',e.target.value)} style={{background:'#f8fafc'}} />
+            <div className="adm-form-group">
+              <label className="adm-form-lbl">Selling Price (₹)</label>
+              <input className="adm-form-input" type="number" placeholder="Auto-calculated" value={form.price} onChange={e=>set('price',e.target.value)} style={{background:'#f8fafc'}} disabled />
             </div>
           </div>
           {form.mrp && form.discount && (
-            <div className="price-calc">
+            <div className="adm-price-calc">
               Auto-calc: ₹{form.mrp} × (1 − {form.discount}%) = <strong style={{color:'#ff6b35'}}>₹{form.price}</strong>
             </div>
           )}
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-lbl">Unit / Pack Size</label>
-              <input className="form-input" placeholder="e.g. 1 Box, 10 Pcs" value={form.unit} onChange={e=>set('unit',e.target.value)} />
+          <div className="adm-form-row">
+            <div className="adm-form-group">
+              <label className="adm-form-lbl">Unit / Pack Size</label>
+              <input className="adm-form-input" placeholder="e.g. 1 Box, 10 Pcs" value={form.unit} onChange={e=>set('unit',e.target.value)} />
             </div>
-            <div className="form-group">
-              <label className="form-lbl">Image URL</label>
-              <input className="form-input" placeholder="https://..." value={form.image_url} onChange={e=>set('image_url',e.target.value)} />
+            <div className="adm-form-group">
+              <label className="adm-form-lbl">Image URL</label>
+              <input className="adm-form-input" placeholder="https://..." value={form.image_url} onChange={e=>set('image_url',e.target.value)} />
             </div>
           </div>
-          <div className="form-group">
-            <label className="form-lbl">Status</label>
-            <select className="form-select" value={form.is_active?'true':'false'} onChange={e=>set('is_active',e.target.value==='true')}>
+          <div className="adm-form-group">
+            <label className="adm-form-lbl">Status</label>
+            <select className="adm-form-select" value={form.is_active?'true':'false'} onChange={e=>set('is_active',e.target.value==='true')}>
               <option value="true">Active</option>
               <option value="false">Inactive</option>
             </select>
           </div>
         </div>
-        <div className="modal-ftr">
-          <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={save} disabled={saving}>
+        <div className="adm-modal-ftr">
+          <button className="adm-btn adm-btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="adm-btn adm-btn-primary" onClick={save} disabled={saving}>
             <Save style={{width:14,height:14}} />
             {saving ? 'Saving...' : isEdit ? 'Update Product' : 'Add Product'}
           </button>
@@ -528,7 +528,7 @@ export function AdminProducts() {
     setConfirm(null);
   };
 
-  if (loading) return <div className="loading">Loading products...</div>;
+  if (loading) return <div className="adm-loading">Loading products...</div>;
 
   return (
     <>
@@ -540,32 +540,32 @@ export function AdminProducts() {
         <div className="pg-sub">{products.length} products in catalog</div>
       </div>
 
-      <div className="search-bar">
-        <div className="search-wrap">
+      <div className="adm-search-bar">
+        <div className="adm-search-wrap">
           <Search className="si" />
-          <input className="form-input" placeholder="Search by name or product code..." value={search} onChange={e=>setSearch(e.target.value)} />
+          <input className="adm-form-input" placeholder="Search by name or product code..." value={search} onChange={e=>setSearch(e.target.value)} />
         </div>
         <div style={{position:'relative',minWidth:220}}>
           <Filter style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',width:15,height:15,color:'#94a3b8',pointerEvents:'none'}} />
-          <select className="form-select" value={catFilter} onChange={e=>setCatFilter(e.target.value)} style={{paddingLeft:36}}>
+          <select className="adm-form-select" value={catFilter} onChange={e=>setCatFilter(e.target.value)} style={{paddingLeft:36}}>
             <option value="">All Categories</option>
             {categories.map(c=><option key={c} value={c}>{c}</option>)}
           </select>
         </div>
-        <button className="btn btn-primary" onClick={()=>setModalProd(false)}><Plus />Add Product</button>
+        <button className="adm-btn adm-btn-primary" onClick={()=>setModalProd(false)}><Plus />Add Product</button>
       </div>
 
       <div style={{marginBottom:12,fontSize:13,color:'#64748b'}}>
         Showing {filtered.length} of {products.length} products{catFilter&&<span> in <strong style={{color:'#ff6b35'}}>{catFilter}</strong></span>}
       </div>
 
-      <div className="card">
+      <div className="adm-card">
         <div style={{overflowX:'auto'}}>
           <table className="adm-table">
             <thead><tr><th>#</th><th>Product</th><th>Category</th><th>MRP</th><th>Discount</th><th>Price</th><th>Unit</th><th>Status</th><th style={{textAlign:'right'}}>Actions</th></tr></thead>
             <tbody>
               {filtered.length===0 ? (
-                <tr><td colSpan={9}><div className="empty-state"><Package /><p>No products found</p></div></td></tr>
+                <tr><td colSpan={9}><div className="adm-empty-state"><Package /><p>No products found</p></div></td></tr>
               ) : filtered.map((p, idx) => (
                 <tr key={p.id}>
                   <td style={{color:'#94a3b8',fontFamily:'monospace',fontSize:11}}>{idx+1}</td>
@@ -587,8 +587,8 @@ export function AdminProducts() {
                   </td>
                   <td>
                     <div style={{display:'flex',gap:6,justifyContent:'flex-end'}}>
-                      <button className="btn btn-secondary btn-icon btn-sm" onClick={()=>setModalProd(p)} title="Edit"><Edit2 style={{width:14,height:14}} /></button>
-                      <button className="btn btn-danger btn-icon btn-sm" onClick={()=>setConfirm(p)} title="Delete"><Trash2 style={{width:14,height:14}} /></button>
+                      <button className="adm-btn adm-btn-secondary adm-btn-icon adm-btn-sm" onClick={()=>setModalProd(p)} title="Edit"><Edit2 style={{width:14,height:14}} /></button>
+                      <button className="adm-btn adm-btn-danger adm-btn-icon adm-btn-sm" onClick={()=>setConfirm(p)} title="Delete"><Trash2 style={{width:14,height:14}} /></button>
                     </div>
                   </td>
                 </tr>
@@ -625,7 +625,7 @@ export function AdminOrders() {
     setUpdatingStatus(null);
   };
 
-  if (loading) return <div className="loading">Loading orders...</div>;
+  if (loading) return <div className="adm-loading">Loading orders...</div>;
 
   return (
     <>
@@ -634,12 +634,12 @@ export function AdminOrders() {
         <div className="pg-sub">{orders.length} total orders</div>
       </div>
 
-      <div className="search-bar">
-        <div className="search-wrap">
+      <div className="adm-search-bar">
+        <div className="adm-search-wrap">
           <Search className="si" />
-          <input className="form-input" placeholder="Search by name or phone..." value={search} onChange={e=>setSearch(e.target.value)} />
+          <input className="adm-form-input" placeholder="Search by name or phone..." value={search} onChange={e=>setSearch(e.target.value)} />
         </div>
-        <select className="form-select" value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} style={{minWidth:160}}>
+        <select className="adm-form-select" value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} style={{minWidth:160}}>
           <option value="">All Statuses</option>
           {Object.keys(STATUS_CONFIG).map(s=><option key={s} value={s}>{s}</option>)}
         </select>
@@ -648,7 +648,7 @@ export function AdminOrders() {
       <div style={{marginBottom:12,fontSize:13,color:'#64748b'}}>{filtered.length} orders{statusFilter&&` with status "${statusFilter}"`}</div>
 
       {filtered.length===0 ? (
-        <div className="empty-state"><ShoppingCart /><p>No orders found</p></div>
+        <div className="adm-empty-state"><ShoppingCart /><p>No orders found</p></div>
       ) : filtered.map(o => {
         const items = renderItems(o.items);
         const total = items.reduce((a,i)=>a+((i.price||0)*(i.quantity||1)),0);
@@ -666,16 +666,16 @@ export function AdminOrders() {
                 </div>
                 {o.phone&&(
                   <div className="order-contact">
-                    <a href={`tel:${o.phone}`} className="chip chip-phone"><Phone style={{width:12,height:12}} />{o.phone}</a>
-                    <a href={`https://wa.me/${ph}`} target="_blank" rel="noreferrer" className="chip chip-wa"><MessageCircle style={{width:12,height:12}} />WhatsApp</a>
+                    <a href={`tel:${o.phone}`} className="adm-chip adm-chip-phone"><Phone style={{width:12,height:12}} />{o.phone}</a>
+                    <a href={`https://wa.me/${ph}`} target="_blank" rel="noreferrer" className="adm-chip adm-chip-wa"><MessageCircle style={{width:12,height:12}} />WhatsApp</a>
                   </div>
                 )}
               </div>
               <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:8}}>
-                <span className="badge" style={{background:cfg.bg,color:cfg.color,border:`1px solid ${cfg.color}33`}}>
-                  <span className="dot" style={{background:cfg.color}} />{o.status||'Pending'}
+                <span className="adm-badge" style={{background:cfg.bg,color:cfg.color,border:`1px solid ${cfg.color}33`}}>
+                  <span className="adm-dot" style={{background:cfg.color}} />{o.status||'Pending'}
                 </span>
-                <select className="status-sel" value={o.status||'Pending'} onChange={e=>updateStatus(o.id,e.target.value)} disabled={updatingStatus===o.id}>
+                <select className="adm-status-sel" value={o.status||'Pending'} onChange={e=>updateStatus(o.id,e.target.value)} disabled={updatingStatus===o.id}>
                   {Object.keys(STATUS_CONFIG).map(s=><option key={s}>{s}</option>)}
                 </select>
               </div>
