@@ -1,4 +1,4 @@
-import ProductsImg1 from '../assets/products_img_1.webp';
+import ProductsImg1 from '../assets/websitelogo.png';
 import ProductsImg2 from '../assets/products_img_2.jpeg';
 import ProductsImg3 from '../assets/products_img_3.png';
 import ProductsImg4 from '../assets/products_img_4.jpeg';

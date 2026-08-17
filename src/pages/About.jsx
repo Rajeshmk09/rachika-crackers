@@ -1,4 +1,4 @@
-import AboutImg1 from '../assets/about_img_1.webp';
+import AboutImg1 from '../assets/websitelogo.png';
 import AboutImg2 from '../assets/about_img_2.jpeg';
 import AboutImg3 from '../assets/about_img_3.jpeg';
 import AboutImg4 from '../assets/about_img_4.png';

@@ -1,4 +1,4 @@
-import ContactImg1 from '../assets/contact_img_1.webp';
+import ContactImg1 from '../assets/websitelogo.png';
 import ContactImg2 from '../assets/contact_img_2.jpeg';
 import ContactImg3 from '../assets/contact_img_3.jpeg';
 import ContactImg4 from '../assets/contact_img_4.png';

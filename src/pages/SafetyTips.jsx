@@ -1,4 +1,4 @@
-import SafetyTipsImg1 from '../assets/safetytips_img_1.webp';
+import SafetyTipsImg1 from '../assets/websitelogo.png';
 import SafetyTipsImg2 from '../assets/safetytips_img_2.jpeg';
 import SafetyTipsImg3 from '../assets/safetytips_img_3.webp';
 import SafetyTipsImg4 from '../assets/safetytips_img_4.png';

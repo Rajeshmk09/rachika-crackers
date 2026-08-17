@@ -1,4 +1,4 @@
-import HomeImg1 from '../assets/home_img_1.webp';
+import HomeImg1 from '../assets/websitelogo.png';
 import HomeImg2 from '../assets/home_img_2.jpeg';
 import HomeImg3 from '../assets/home_img_3.webp';
 import HomeImg4 from '../assets/home_img_4.webp';
