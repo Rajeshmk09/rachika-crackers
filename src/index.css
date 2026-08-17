@@ -1679,7 +1679,6 @@ main {
 }
 
 .product-card-premium:hover {
-  transform: translateY(-5px);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12) !important;
 }
 
@@ -1691,11 +1690,6 @@ main {
 
 .product-img-wrap-premium span {
   display: inline-block;
-  transition: transform 0.3s ease;
-}
-
-.product-card-premium:hover .product-img-wrap-premium span {
-  transform: scale(1.1) rotate(5deg);
 }
 
 .btn-effect1 {
