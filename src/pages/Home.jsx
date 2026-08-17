@@ -329,7 +329,7 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
 	</div>
 </div>	
 
-<div className="container-fluid py-5 px-lg-5 px-md-4 px-2">
+<div className="container-fluid py-5" style={{ paddingLeft: '20px', paddingRight: '20px' }}>
   <div className="row justify-content-center mb-4">
     <div className="col-lg-8 text-center">
       <h2 className="acme clr bannerhead1" style={{ color: '#0a539f' }}>Featured Products</h2>
