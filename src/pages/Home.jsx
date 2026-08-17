@@ -46,7 +46,8 @@ const featuredProducts = [
     price: 60,
     original_price: 120,
     unit: "1 Box",
-    category: "GROUND CHAKKARA SERIES"
+    category: "GROUND CHAKKARA SERIES",
+    image: HomeImg15
   },
   {
     id: "prod_2",
@@ -54,7 +55,8 @@ const featuredProducts = [
     price: 140,
     original_price: 280,
     unit: "1 Box",
-    category: "FLOWER POTS SERIES"
+    category: "FLOWER POTS SERIES",
+    image: HomeImg16
   },
   {
     id: "prod_3",
@@ -62,7 +64,8 @@ const featuredProducts = [
     price: 75,
     original_price: 150,
     unit: "1 Box",
-    category: "KIDS SPARKLERS SERIES"
+    category: "KIDS SPARKLERS SERIES",
+    image: HomeImg17
   },
   {
     id: "prod_4",
@@ -70,7 +73,8 @@ const featuredProducts = [
     price: 100,
     original_price: 200,
     unit: "1 Box",
-    category: "KIDS SPARKLERS SERIES"
+    category: "KIDS SPARKLERS SERIES",
+    image: HomeImg17
   },
   {
     id: "prod_5",
@@ -78,7 +82,8 @@ const featuredProducts = [
     price: 150,
     original_price: 300,
     unit: "1 Box",
-    category: "KIDS PINK COLOURFUL FOUNTAINS SERIES"
+    category: "KIDS PINK COLOURFUL FOUNTAINS SERIES",
+    image: HomeImg16
   },
   {
     id: "prod_6",
@@ -86,7 +91,8 @@ const featuredProducts = [
     price: 85,
     original_price: 170,
     unit: "1 Pkt",
-    category: "SINGLE SOUND SERIES"
+    category: "SINGLE SOUND SERIES",
+    image: HomeImg18
   },
   {
     id: "prod_7",
@@ -94,7 +100,8 @@ const featuredProducts = [
     price: 140,
     original_price: 280,
     unit: "1 Pkt",
-    category: "SINGLE SOUND SERIES"
+    category: "SINGLE SOUND SERIES",
+    image: HomeImg18
   },
   {
     id: "prod_8",
@@ -102,7 +109,8 @@ const featuredProducts = [
     price: 180,
     original_price: 360,
     unit: "1 Box",
-    category: "ELITE WONDERFUL FOUNTAIN SERIES"
+    category: "ELITE WONDERFUL FOUNTAIN SERIES",
+    image: HomeImg19
   }
 ];
 

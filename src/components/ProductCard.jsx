@@ -27,6 +27,12 @@ export default function ProductCard({ product }) {
           {product.name}
         </h5>
         
+        {product.image && (
+          <div className="text-center my-3 bg-light rounded p-2" style={{ height: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            <img src={product.image} alt={product.name} className="img-fluid" style={{ maxHeight: '100%', objectFit: 'contain' }} />
+          </div>
+        )}
+        
         <div className="mt-auto">
           <div className="d-flex align-items-center justify-content-between">
             <div>
