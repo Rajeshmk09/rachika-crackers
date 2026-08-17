@@ -30,44 +30,51 @@ export default function ProductCard({ product }) {
           {product.name}
         </h5>
         <div className="mt-auto">
-          <div className="d-flex align-items-baseline mb-2">
-            <span className="h5 mb-0 font-weight-bold text-danger josefin">
-              ₹{product.price}
-            </span>
-            <span className="text-muted small ml-2 josefin" style={{ textDecoration: 'line-through' }}>
-              ₹{product.original_price}
-            </span>
-            <span className="text-muted small ml-auto josefin">
-              {product.unit}
-            </span>
-          </div>
-          {qty === 0 ? (
-            <button
-              onClick={increment}
-              className="btn btn-danger btn-block font-weight-bold acme rounded-pill py-2 btn-effect1"
-              style={{ fontSize: '0.95rem' }}
-            >
-              Add to Cart
-            </button>
-          ) : (
-            <div className="d-flex align-items-center justify-content-between bg-light rounded-pill p-1 border" style={{ height: '38px' }}>
-              <button
-                onClick={decrement}
-                className="btn btn-danger rounded-circle p-0 d-flex align-items-center justify-content-center"
-                style={{ width: '28px', height: '28px', fontSize: '1.1rem', fontWeight: 'bold', lineHeight: '28px' }}
-              >
-                -
-              </button>
-              <span className="font-weight-bold josefin px-3" style={{ fontSize: '1.05rem', color: '#1a1a1a' }}>{qty}</span>
-              <button
-                onClick={increment}
-                className="btn btn-danger rounded-circle p-0 d-flex align-items-center justify-content-center"
-                style={{ width: '28px', height: '28px', fontSize: '1.1rem', fontWeight: 'bold', lineHeight: '28px' }}
-              >
-                +
-              </button>
+          <div className="d-flex align-items-center justify-content-between mt-3">
+            <div>
+              <div className="d-flex align-items-baseline">
+                <span className="font-weight-bold text-dark josefin" style={{ fontSize: '1.35rem' }}>
+                  ₹{product.price}
+                </span>
+                <span className="text-muted small ml-2 josefin" style={{ textDecoration: 'line-through', fontSize: '0.85rem' }}>
+                  ₹{product.original_price}
+                </span>
+              </div>
+              <div className="text-muted small josefin" style={{ marginTop: '-4px' }}>
+                {product.unit}
+              </div>
             </div>
-          )}
+
+            <div style={{ width: '130px' }}>
+              {qty === 0 ? (
+                <button
+                  onClick={increment}
+                  className="btn btn-block font-weight-bold acme rounded-pill text-white py-2 btn-effect1"
+                  style={{ backgroundColor: '#ff7011', border: 'none', fontSize: '0.9rem', boxShadow: 'none' }}
+                >
+                  Add to Cart
+                </button>
+              ) : (
+                <div className="d-flex align-items-center justify-content-between rounded-pill p-1" style={{ backgroundColor: '#ff7011', height: '38px' }}>
+                  <button
+                    onClick={decrement}
+                    className="btn btn-link text-white p-0 d-flex align-items-center justify-content-center"
+                    style={{ width: '28px', height: '28px', fontSize: '1.2rem', fontWeight: 'bold', textDecoration: 'none', boxShadow: 'none' }}
+                  >
+                    -
+                  </button>
+                  <span className="font-weight-bold josefin text-white px-2" style={{ fontSize: '1.1rem' }}>{qty}</span>
+                  <button
+                    onClick={increment}
+                    className="btn btn-link text-white p-0 d-flex align-items-center justify-content-center"
+                    style={{ width: '28px', height: '28px', fontSize: '1.2rem', fontWeight: 'bold', textDecoration: 'none', boxShadow: 'none' }}
+                  >
+                    +
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
