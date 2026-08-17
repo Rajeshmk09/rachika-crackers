@@ -5,7 +5,7 @@ import About from './pages/About';
 import Products from './pages/Products';
 import Contact from './pages/Contact';
 import SafetyTips from './pages/SafetyTips';
-import Admin from './pages/Admin';
+import AdminLayout, { AdminLogin, AdminDashboard, AdminCategories, AdminProducts, AdminOrders } from './pages/Admin';
 function App() {
   return (
     <Router>
@@ -15,7 +15,13 @@ function App() {
         <Route path="/products" element={<Products />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/safetytips" element={<SafetyTips />} />
-        <Route path="/admin" element={<Admin />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="categories" element={<AdminCategories />} />
+          <Route path="products" element={<AdminProducts />} />
+          <Route path="orders" element={<AdminOrders />} />
+        </Route>
       </Routes>
     </Router>
   );
