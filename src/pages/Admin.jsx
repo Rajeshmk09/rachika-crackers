@@ -49,6 +49,162 @@ export const getCategoryIcon = (name = '') => {
 export const AdminCtx = createContext(null);
 export const useAdmin = () => useContext(AdminCtx);
 
+/* ── Skeletons ────────────────────────────────────── */
+export function DashboardSkeleton() {
+  return (
+    <>
+      <div style={{marginBottom:24}}>
+        <div className="adm-skeleton" style={{width:120,height:24,marginBottom:8}} />
+        <div className="adm-skeleton" style={{width:240,height:14}} />
+      </div>
+      <div className="stats-grid">
+        {[1,2,3,4].map(i => (
+          <div key={i} className="adm-sk-stat-card">
+            <div className="adm-skeleton" style={{width:40,height:40,borderRadius:10}} />
+            <div className="adm-skeleton" style={{width:100,height:32}} />
+            <div className="adm-skeleton" style={{width:120,height:14}} />
+            <div className="adm-skeleton" style={{width:80,height:12}} />
+          </div>
+        ))}
+      </div>
+      <div className="db-grid">
+        <div className="adm-card">
+          <div className="adm-card-hdr">
+            <div>
+              <div className="adm-skeleton" style={{width:140,height:18,marginBottom:6}} />
+              <div className="adm-skeleton" style={{width:180,height:12}} />
+            </div>
+          </div>
+          <div style={{padding:20}}>
+            {[1,2,3,4,5].map(i => (
+              <div key={i} className="adm-sk-space-between" style={{padding:'14px 0',borderBottom:i===5?'none':'1px solid #f1f5f9'}}>
+                <div className="adm-sk-flex">
+                  <div className="adm-skeleton" style={{width:32,height:32,borderRadius:'50%'}} />
+                  <div>
+                    <div className="adm-skeleton" style={{width:120,height:14,marginBottom:6}} />
+                    <div className="adm-skeleton" style={{width:80,height:10}} />
+                  </div>
+                </div>
+                <div className="adm-skeleton" style={{width:70,height:20,borderRadius:20}} />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="adm-card">
+          <div className="adm-card-hdr">
+            <div>
+              <div className="adm-skeleton" style={{width:150,height:18,marginBottom:6}} />
+              <div className="adm-skeleton" style={{width:200,height:12}} />
+            </div>
+          </div>
+          <div className="adm-card-body" style={{paddingTop:12}}>
+            {[1,2,3,4,5].map(i => (
+              <div key={i} className="adm-sk-space-between" style={{padding:'12px 0',borderBottom:i===5?'none':'1px solid #f1f5f9'}}>
+                <div className="adm-skeleton" style={{width:100,height:14}} />
+                <div className="adm-skeleton" style={{width:30,height:14}} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+export function CategoriesSkeleton() {
+  return (
+    <>
+      <div style={{marginBottom:24}}>
+        <div className="adm-skeleton" style={{width:120,height:24,marginBottom:8}} />
+        <div className="adm-skeleton" style={{width:200,height:14}} />
+      </div>
+      <div className="adm-skeleton" style={{width:150,height:14,marginBottom:20}} />
+      <div className="cats-grid">
+        {[1,2,3,4,5,6,7,8].map(i => (
+          <div key={i} className="cat-card" style={{pointerEvents:'none'}}>
+            <div className="adm-skeleton" style={{width:48,height:48,borderRadius:12,marginBottom:14}} />
+            <div className="adm-skeleton" style={{width:120,height:16,marginBottom:8}} />
+            <div className="adm-skeleton" style={{width:140,height:12}} />
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+export function ProductsSkeleton() {
+  return (
+    <>
+      <div style={{marginBottom:24}}>
+        <div className="adm-skeleton" style={{width:100,height:24,marginBottom:8}} />
+        <div className="adm-skeleton" style={{width:180,height:14}} />
+      </div>
+      <div className="adm-search-bar">
+        <div className="adm-skeleton" style={{flex:1,height:40,borderRadius:9}} />
+        <div className="adm-skeleton" style={{width:220,height:40,borderRadius:9}} />
+        <div className="adm-skeleton" style={{width:130,height:40,borderRadius:9}} />
+      </div>
+      <div className="adm-skeleton" style={{width:180,height:14,marginBottom:12}} />
+      <div className="adm-card">
+        {[1,2,3,4,5].map(i => (
+          <div key={i} className="adm-sk-table-row">
+            <div className="adm-sk-flex" style={{flex:1}}>
+              <div className="adm-skeleton" style={{width:44,height:44,borderRadius:8}} />
+              <div>
+                <div className="adm-skeleton" style={{width:180,height:14,marginBottom:6}} />
+                <div className="adm-skeleton" style={{width:100,height:10}} />
+              </div>
+            </div>
+            <div className="adm-skeleton" style={{width:120,height:14,marginRight:30}} />
+            <div className="adm-skeleton" style={{width:60,height:14,marginRight:30}} />
+            <div className="adm-skeleton" style={{width:40,height:14,marginRight:30}} />
+            <div className="adm-skeleton" style={{width:28,height:28,borderRadius:'50%'}} />
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+export function OrdersSkeleton() {
+  return (
+    <>
+      <div style={{marginBottom:24}}>
+        <div className="adm-skeleton" style={{width:90,height:24,marginBottom:8}} />
+        <div className="adm-skeleton" style={{width:150,height:14}} />
+      </div>
+      <div className="adm-search-bar">
+        <div className="adm-skeleton" style={{flex:1,height:40,borderRadius:9}} />
+        <div className="adm-skeleton" style={{width:160,height:40,borderRadius:9}} />
+      </div>
+      <div className="adm-skeleton" style={{width:150,height:14,marginBottom:12}} />
+      {[1,2,3].map(i => (
+        <div key={i} className="adm-sk-order-card">
+          <div className="adm-sk-space-between" style={{marginBottom:12}}>
+            <div>
+              <div className="adm-skeleton" style={{width:80,height:12,marginBottom:8}} />
+              <div className="adm-skeleton" style={{width:180,height:18,marginBottom:8}} />
+              <div className="adm-skeleton" style={{width:240,height:12}} />
+            </div>
+            <div className="adm-sk-flex" style={{flexDirection:'column',alignItems:'flex-end'}}>
+              <div className="adm-skeleton" style={{width:80,height:22,borderRadius:20,marginBottom:8}} />
+              <div className="adm-skeleton" style={{width:100,height:32,borderRadius:8}} />
+            </div>
+          </div>
+          <div className="adm-sk-flex" style={{gap:8,marginBottom:12}}>
+            <div className="adm-skeleton" style={{width:110,height:28,borderRadius:20}} />
+            <div className="adm-skeleton" style={{width:110,height:28,borderRadius:20}} />
+          </div>
+          <div style={{background:'#f8fafc',borderRadius:8,padding:14}}>
+            <div className="adm-sk-space-between" style={{marginBottom:8}}><div className="adm-skeleton" style={{width:150,height:12}} /><div className="adm-skeleton" style={{width:40,height:12}} /></div>
+            <div className="adm-sk-space-between" style={{borderTop:'1px solid #e2e8f0',paddingTop:8}}><div className="adm-skeleton" style={{width:60,height:14}} /><div className="adm-skeleton" style={{width:50,height:14}} /></div>
+          </div>
+        </div>
+      ))}
+    </>
+  );
+}
+
 /* ══════════════════════════════════════════════════
    LOGIN PAGE  →  /admin/login
 ══════════════════════════════════════════════════ */
@@ -255,7 +411,7 @@ export function AdminDashboard() {
     { label:'Total Orders',   value:orders.length,     icon:ShoppingCart,color:'purple',trend:`${orders.filter(o=>o.status==='Pending').length} pending` },
   ];
 
-  if (loading) return <div className="adm-loading">Loading data from Supabase...</div>;
+  if (loading) return <DashboardSkeleton />;
 
   return (
     <>
@@ -329,7 +485,7 @@ export function AdminCategories() {
   const navigate = useNavigate();
   const colors = ['#ff6b35','#3b82f6','#10b981','#8b5cf6','#f59e0b','#ec4899','#14b8a6','#f97316'];
 
-  if (loading) return <div className="adm-loading">Loading...</div>;
+  if (loading) return <CategoriesSkeleton />;
 
   return (
     <>
@@ -528,7 +684,7 @@ export function AdminProducts() {
     setConfirm(null);
   };
 
-  if (loading) return <div className="adm-loading">Loading products...</div>;
+  if (loading) return <ProductsSkeleton />;
 
   return (
     <>
@@ -625,7 +781,7 @@ export function AdminOrders() {
     setUpdatingStatus(null);
   };
 
-  if (loading) return <div className="adm-loading">Loading orders...</div>;
+  if (loading) return <OrdersSkeleton />;
 
   return (
     <>
