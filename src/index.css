@@ -99,58 +99,27 @@ body {
 }
 
 /* ── ABOUT SECTION ── */
-.clr-orange {
-  color: #e35a2d !important; /* Orange/Red header color matching screenshot */
+.title-border {
+  width: 50px;
+  height: 3px;
+  background: #d62b2b;
+  margin-bottom: 1rem;
 }
-.thin-line {
-  height: 1px;
-  background-color: #dfc8c0; /* Separator line matching screenshot */
-  width: 100%;
-}
-.custom-count-card {
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08); /* Subtle soft shadow */
-  position: relative;
+.count-box {
+  background: #0a539f;
+  border-radius: 10px;
+  padding: 1.5rem;
   text-align: center;
-  padding: 2.5rem 1.5rem 1.5rem 1.5rem;
-  border: 1px solid rgba(0,0,0,0.02);
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(10,83,159,0.2);
 }
-.card-top-icon {
-  width: 52px;
-  height: 52px;
-  background-color: #e35a2d; /* Orange/red matching circle fill */
-  border: 3px solid #3b629c; /* Dark blue matching border ring */
-  border-radius: 50%;
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.3rem;
-  position: absolute;
-  top: -26px;
-  left: 50%;
-  transform: translateX(-50%);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-}
-.card-body-content {
-  margin-top: 0.5rem;
-}
+.count-box ul { list-style: none; padding: 0; margin: 0; }
 .counttext {
-  font-size: 2.8rem; /* Large thick font matching screenshot */
-  font-weight: 800;
-  color: #4a4a4a;
+  font-size: 2.2rem;
+  font-weight: bold;
   display: block;
-  line-height: 1.2;
 }
-.card-label {
-  color: #1e1e1e;
-  font-weight: 800;
-  font-size: 0.85rem;
-  letter-spacing: 0.05em;
-  margin-top: 0.8rem;
-  text-transform: uppercase;
-}
+.txt-danger { color: #ffc107 !important; margin-top: 0.5rem; font-weight: bold; font-size: 0.9rem; }
 
 /* ── PRODUCT CATEGORIES ── */
 .product-shape img { max-width: 80px; opacity: 0.8; }
