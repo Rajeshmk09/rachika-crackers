@@ -329,16 +329,16 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
 	</div>
 </div>	
 
-<div className="container py-5">
+<div className="container py-5 px-md-3 px-1">
   <div className="row justify-content-center mb-4">
     <div className="col-lg-8 text-center">
       <h2 className="acme clr bannerhead1" style={{ color: '#0a539f' }}>Featured Products</h2>
       <p className="josefin text-muted" style={{ fontSize: '1.1rem' }}>Check out our top-selling crackers at Sivakasi wholesale prices with amazing discounts!</p>
     </div>
   </div>
-  <div className="row">
+  <div className="row mx-n1">
     {featuredProducts.map(product => (
-      <div key={product.id} className="col-lg-3 col-md-6 col-12 mb-4">
+      <div key={product.id} className="col-lg-3 col-md-6 col-12 mb-4 px-1">
         <ProductCard product={product} />
       </div>
     ))}
