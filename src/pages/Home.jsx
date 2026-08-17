@@ -32,7 +32,6 @@ import HomeImg31 from '../assets/home_img_31.png';
 import HomeImg32 from '../assets/home_img_32.png';
 import HomeImg33 from '../assets/home_img_33.png';
 import HomeImg34 from '../assets/home_img_34.webp';
-import HomeImg35 from '../assets/home_img_35.webp';
 import HomeImg36 from '../assets/home_img_36.png';
 import HomeImg37 from '../assets/home_img_37.png';
 import HomeImg38 from '../assets/home_img_38.png';
@@ -528,7 +527,7 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
 			</div>
             <div className="col-lg-4 col-md-6 col-12 text-center align-self-center">
                 <a href="#/">
-                    <img src={HomeImg35} className="img-fluid w-100 mx-auto d-block" alt="SETHU PYRO PARK RACHIKA CRACKERS" title="SETHU PYRO PARK RACHIKA CRACKERS" />
+                    <img src={HomeImg1} className="img-fluid w-100 mx-auto d-block" alt="SETHU PYRO PARK RACHIKA CRACKERS" title="SETHU PYRO PARK RACHIKA CRACKERS" />
                 </a>
             </div>
             <div className="col-lg-4 col-md-6 col-12">
