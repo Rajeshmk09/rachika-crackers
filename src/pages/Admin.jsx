@@ -11,8 +11,8 @@ import {
 import './Admin.css';
 
 /* ── Supabase ─────────────────────────────────────── */
-const SUPABASE_URL = 'https://iplfsscpeixfxzbouhlp.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwbGZzc2NwZWl4Znh6Ym91aGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NDQwNzksImV4cCI6MjEwMjUyMDA3OX0.nr2an5w0nX_L37C3g03HgzpFitueRNeOJ346TYvakZ8';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://iplfsscpeixfxzbouhlp.supabase.co';
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwbGZzc2NwZWl4Znh6Ym91aGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NDQwNzksImV4cCI6MjEwMjUyMDA3OX0.nr2an5w0nX_L37C3g03HgzpFitueRNeOJ346TYvakZ8';
 const headers = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' };
 export const api = async (path, options = {}) => {
   const res = await fetch(`${SUPABASE_URL}/rest/v1${path}`, { headers, ...options });
@@ -437,7 +437,7 @@ export function AdminDashboard() {
               View All <ArrowUpRight style={{width:12,height:12}} />
             </button>
           </div>
-          <div style={{overflowX:'auto'}}>
+          <div className="adm-table-wrap">
             <table className="adm-table">
               <thead><tr><th>Customer</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead>
               <tbody>
@@ -553,6 +553,49 @@ function ProductModal({ product, categories, onClose, onSaved }) {
   });
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
+  const [uploading, setUploading] = useState(false);
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+    const preset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+    if (!cloudName || !preset) {
+      alert('Cloudinary config (VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET) is missing in .env file.');
+      return;
+    }
+
+    setUploading(true);
+    setErr('');
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', preset);
+
+    try {
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error?.message || 'Failed to upload image');
+      }
+
+      const data = await res.json();
+      if (data.secure_url) {
+        set('image_url', data.secure_url);
+      }
+    } catch (err) {
+      console.error(err);
+      setErr(`Upload failed: ${err.message}`);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const set = (k, v) => setForm(f => {
     const next = { ...f, [k]: v };
@@ -627,8 +670,15 @@ function ProductModal({ product, categories, onClose, onSaved }) {
               <input className="adm-form-input" placeholder="e.g. 1 Box, 10 Pcs" value={form.unit} onChange={e=>set('unit',e.target.value)} />
             </div>
             <div className="adm-form-group">
-              <label className="adm-form-lbl">Image URL</label>
-              <input className="adm-form-input" placeholder="https://..." value={form.image_url} onChange={e=>set('image_url',e.target.value)} />
+              <label className="adm-form-lbl">Product Image</label>
+              <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                <input className="adm-form-input" placeholder="https://... or upload file" value={form.image_url} onChange={e=>set('image_url',e.target.value)} style={{flex:1}} />
+                <label className="adm-btn adm-btn-secondary" style={{cursor:'pointer',display:'inline-flex',alignItems:'center',gap:6,margin:0,padding:'10px 14px',height:'40px',lineHeight:'normal'}}>
+                  <Plus style={{width:14,height:14}} />
+                  {uploading ? '...' : 'Upload'}
+                  <input type="file" accept="image/*" onChange={handleImageUpload} style={{display:'none'}} disabled={uploading} />
+                </label>
+              </div>
             </div>
           </div>
           <div className="adm-form-group">
@@ -716,7 +766,7 @@ export function AdminProducts() {
       </div>
 
       <div className="adm-card">
-        <div style={{overflowX:'auto'}}>
+        <div className="adm-table-wrap">
           <table className="adm-table">
             <thead><tr><th>#</th><th>Product</th><th>Category</th><th>MRP</th><th>Discount</th><th>Price</th><th>Unit</th><th>Status</th><th style={{textAlign:'right'}}>Actions</th></tr></thead>
             <tbody>

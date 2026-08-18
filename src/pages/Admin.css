@@ -1,14 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 .adm * { box-sizing: border-box; margin: 0; padding: 0; }
-.adm { font-family: 'Inter', sans-serif; background: #f1f5f9; color: #1e293b; }
+.adm { font-family: 'Inter', sans-serif; background: #f1f5f9; color: #1e293b; min-height: 100vh; width: 100%; }
 .adm ::-webkit-scrollbar { width: 6px; height: 6px; }
 .adm ::-webkit-scrollbar-track { background: #f1f5f9; }
 .adm ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
 .adm ::-webkit-scrollbar-thumb:hover { background: #ff6b35; }
 
 /* Layout */
-.adm-layout { display: flex; }
+.adm-layout { display: flex; min-height: 100vh; width: 100%; position: relative; }
 .adm-sidebar {
   width: 260px; background: #ffffff; border-right: 1px solid #e2e8f0;
   display: flex; flex-direction: column; position: fixed; top: 0; left: 0;
@@ -16,7 +16,7 @@
   box-shadow: 2px 0 12px rgba(0,0,0,0.05);
 }
 .adm-sidebar.sb-open { transform: translateX(0); }
-.adm-main { margin-left: 260px; flex: 1; min-height: 100vh; display: flex; flex-direction: column; }
+.adm-main { margin-left: 260px; flex: 1; min-height: 100vh; width: calc(100% - 260px); min-width: 0; display: flex; flex-direction: column; }
 
 /* Sidebar */
 .sb-logo { padding: 22px 20px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px; }
@@ -46,10 +46,11 @@
 .adm-role { font-size: 11px; color: #94a3b8; }
 
 /* Content */
-.adm-content { padding: 24px; flex: 1; }
+.adm-content { padding: 24px; flex: 1; width: 100%; box-sizing: border-box; }
+.adm-table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
 /* Cards */
-.adm-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+.adm-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); overflow: hidden; }
 .adm-card-hdr { padding: 18px 22px 14px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; }
 .adm-card-title { font-size: 15px; font-weight: 700; color: #0f172a; }
 .adm-card-sub { font-size: 12px; color: #94a3b8; margin-top: 2px; }
@@ -108,13 +109,13 @@
 .adm-form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
 
 /* Modal */
-.adm-modal-ov { position: fixed; inset: 0; background: rgba(15,23,42,0.5); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; animation: admFadeIn 0.2s; }
-.adm-modal { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 18px; width: 100%; max-width: 640px; max-height: 90vh; overflow-y: auto; animation: admSlideUp 0.25s ease; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+.adm-modal-ov { position: fixed; inset: 0; background: rgba(15,23,42,0.5); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; animation: admFadeIn 0.2s; overflow-y: auto; }
+.adm-modal { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 18px; width: 100%; max-width: 640px; max-height: calc(100vh - 40px); display: flex; flex-direction: column; overflow: hidden; animation: admSlideUp 0.25s ease; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
 .adm-modal-sm { max-width: 420px; }
-.adm-modal-hdr { padding: 22px 26px 18px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: #ffffff; z-index: 1; border-radius: 18px 18px 0 0; }
+.adm-modal-hdr { padding: 22px 26px 18px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; background: #ffffff; z-index: 1; border-radius: 18px 18px 0 0; flex-shrink: 0; }
 .adm-modal-title { font-size: 17px; font-weight: 700; color: #0f172a; }
-.adm-modal-body { padding: 24px 26px; }
-.adm-modal-ftr { padding: 18px 26px; border-top: 1px solid #f1f5f9; display: flex; gap: 10px; justify-content: flex-end; }
+.adm-modal-body { padding: 24px 26px; overflow-y: auto; flex: 1; }
+.adm-modal-ftr { padding: 18px 26px; border-top: 1px solid #f1f5f9; display: flex; gap: 10px; justify-content: flex-end; background: #ffffff; flex-shrink: 0; }
 .adm-close-btn { background: #f8fafc; border: none; color: #94a3b8; border-radius: 8px; padding: 7px; cursor: pointer; transition: all 0.2s; display: flex; }
 .adm-close-btn:hover { background: #f1f5f9; color: #475569; }
 
