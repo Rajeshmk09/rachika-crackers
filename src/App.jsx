@@ -13,7 +13,7 @@ import Contact from './pages/Contact';
 import SafetyTips from './pages/SafetyTips';
 import Wishlist from './pages/Wishlist';
 import Cart from './pages/Cart';
-import AdminLayout, { AdminLogin, AdminDashboard, AdminCategories, AdminProducts, AdminOrders, AdminAnnouncement, AdminHeroBanners } from './pages/Admin';
+import AdminLayout, { AdminLogin, AdminCategories, AdminProducts, AdminAnnouncement, AdminHeroBanners, AdminSettings } from './pages/Admin';
 
 // Global query client — staleTime=5min means cached data shows instantly on navigation
 const queryClient = new QueryClient({
@@ -45,12 +45,13 @@ function App() {
             <Route path="/safetytips" element={<SafetyTips />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<AdminDashboard />} />
+
               <Route path="categories" element={<AdminCategories />} />
               <Route path="products" element={<AdminProducts />} />
-              <Route path="orders" element={<AdminOrders />} />
+
               <Route path="banners" element={<AdminHeroBanners />} />
               <Route path="announcement" element={<AdminAnnouncement />} />
+              <Route path="settings" element={<AdminSettings />} />
             </Route>
           </Routes>
         </Router>

@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useCallback, createContext, useContext, useRef } from 'react';
 import { Outlet, NavLink, useNavigate, Navigate } from 'react-router-dom';
 import {
-  LayoutDashboard, Package, Tag, ShoppingCart, LogOut, Menu, X,
-  Search, Plus, Edit2, Trash2, ToggleLeft, ToggleRight, Phone,
-  MessageCircle, Eye, EyeOff, Zap, Sun, Star, Flame,
-  Sparkles, Box, Gift, Layers, Shield, TrendingUp, Users, DollarSign,
-  CheckCircle, Clock, XCircle, AlertCircle, ArrowUpRight, Filter,
-  RefreshCw, Save, Lock, Mail, ChevronDown, Check, Megaphone, Bell, Image, Upload
+  Package, Tag, LogOut, Menu, X,
+  Search, Plus, Edit2, Trash2, ToggleLeft, ToggleRight,
+  Eye, EyeOff, Zap, Sun, Star, Flame,
+  Sparkles, Box, Gift, Layers, Shield, TrendingUp, Users,
+  CheckCircle, Clock, XCircle, ArrowUpRight, RefreshCw, Save, Lock, Mail, ChevronDown, Check, Megaphone, Bell, Image, Upload, Settings
 } from 'lucide-react';
 import './Admin.css';
 
@@ -194,67 +193,6 @@ export const getCategoryIcon = (name = '') => {
 export const AdminCtx = createContext(null);
 export const useAdmin = () => useContext(AdminCtx);
 
-/* ── Skeletons ────────────────────────────────────── */
-export function DashboardSkeleton() {
-  return (
-    <>
-      <div style={{marginBottom:24}}>
-        <div className="adm-skeleton" style={{width:120,height:24,marginBottom:8}} />
-        <div className="adm-skeleton" style={{width:240,height:14}} />
-      </div>
-      <div className="stats-grid">
-        {[1,2,3,4].map(i => (
-          <div key={i} className="adm-sk-stat-card">
-            <div className="adm-skeleton" style={{width:40,height:40,borderRadius:10}} />
-            <div className="adm-skeleton" style={{width:100,height:32}} />
-            <div className="adm-skeleton" style={{width:120,height:14}} />
-            <div className="adm-skeleton" style={{width:80,height:12}} />
-          </div>
-        ))}
-      </div>
-      <div className="db-grid">
-        <div className="adm-card">
-          <div className="adm-card-hdr">
-            <div>
-              <div className="adm-skeleton" style={{width:140,height:18,marginBottom:6}} />
-              <div className="adm-skeleton" style={{width:180,height:12}} />
-            </div>
-          </div>
-          <div style={{padding:20}}>
-            {[1,2,3,4,5].map(i => (
-              <div key={i} className="adm-sk-space-between" style={{padding:'14px 0',borderBottom:i===5?'none':'1px solid #f1f5f9'}}>
-                <div className="adm-sk-flex">
-                  <div className="adm-skeleton" style={{width:32,height:32,borderRadius:'50%'}} />
-                  <div>
-                    <div className="adm-skeleton" style={{width:120,height:14,marginBottom:6}} />
-                    <div className="adm-skeleton" style={{width:80,height:10}} />
-                  </div>
-                </div>
-                <div className="adm-skeleton" style={{width:70,height:20,borderRadius:20}} />
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="adm-card">
-          <div className="adm-card-hdr">
-            <div>
-              <div className="adm-skeleton" style={{width:150,height:18,marginBottom:6}} />
-              <div className="adm-skeleton" style={{width:200,height:12}} />
-            </div>
-          </div>
-          <div className="adm-card-body" style={{paddingTop:12}}>
-            {[1,2,3,4,5].map(i => (
-              <div key={i} className="adm-sk-space-between" style={{padding:'12px 0',borderBottom:i===5?'none':'1px solid #f1f5f9'}}>
-                <div className="adm-skeleton" style={{width:100,height:14}} />
-                <div className="adm-skeleton" style={{width:30,height:14}} />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
 
 export function CategoriesSkeleton() {
   return (
@@ -365,59 +303,6 @@ export function ProductsSkeleton() {
   );
 }
 
-export function OrdersSkeleton() {
-  return (
-    <div className="adm-page-container">
-      <div className="adm-page-header">
-        <div style={{marginBottom:16}}>
-          <div className="adm-skeleton" style={{width:100,height:22,marginBottom:6,borderRadius:4}} />
-          <div className="adm-skeleton" style={{width:140,height:13,borderRadius:4}} />
-        </div>
-
-        <div className="adm-search-bar">
-          <div className="adm-skeleton" style={{flex:1,height:44,borderRadius:10}} />
-          <div className="adm-skeleton" style={{width:160,height:44,borderRadius:10}} />
-        </div>
-
-        <div style={{marginBottom:12}}>
-          <div className="adm-skeleton" style={{width:150,height:13,borderRadius:4}} />
-        </div>
-      </div>
-
-      <div className="adm-scroll-list">
-        {[1, 2, 3, 4].map(i => (
-          <div key={i} className="order-card" style={{pointerEvents:'none'}}>
-            <div className="order-hdr">
-              <div>
-                <div className="adm-skeleton" style={{width:60,height:12,marginBottom:6,borderRadius:3}} />
-                <div className="adm-skeleton" style={{width:160,height:16,marginBottom:6,borderRadius:4}} />
-                <div className="adm-skeleton" style={{width:220,height:12,marginBottom:10,borderRadius:3}} />
-                <div style={{display:'flex',gap:8}}>
-                  <div className="adm-skeleton" style={{width:110,height:24,borderRadius:12}} />
-                  <div className="adm-skeleton" style={{width:110,height:24,borderRadius:12}} />
-                </div>
-              </div>
-              <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:8}}>
-                <div className="adm-skeleton" style={{width:90,height:24,borderRadius:20}} />
-                <div className="adm-skeleton" style={{width:110,height:32,borderRadius:8}} />
-              </div>
-            </div>
-            <div className="order-items" style={{borderTop:'1px solid #f1f5f9',paddingTop:12,marginTop:12}}>
-              <div className="adm-sk-space-between" style={{marginBottom:8}}>
-                <div className="adm-skeleton" style={{width:180,height:13,borderRadius:3}} />
-                <div className="adm-skeleton" style={{width:60,height:13,borderRadius:3}} />
-              </div>
-              <div className="adm-sk-space-between">
-                <div className="adm-skeleton" style={{width:140,height:13,borderRadius:3}} />
-                <div className="adm-skeleton" style={{width:50,height:13,borderRadius:3}} />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 /* ══════════════════════════════════════════════════
    LOGIN PAGE  →  /admin/login
@@ -431,7 +316,7 @@ export function AdminLogin() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (sessionStorage.getItem('admin_logged_in') === 'true') navigate('/admin', { replace: true });
+    if (sessionStorage.getItem('admin_logged_in') === 'true') navigate('/admin/categories', { replace: true });
   }, [navigate]);
 
   const handleLogin = async (e) => {
@@ -439,7 +324,7 @@ export function AdminLogin() {
     await new Promise(r => setTimeout(r, 500));
     if (email === 'arjunansri21@gmail.com' && password === '12345678') {
       sessionStorage.setItem('admin_logged_in', 'true');
-      navigate('/admin', { replace: true });
+      navigate('/admin/categories', { replace: true });
     } else {
       setError('Invalid email or password. Please try again.');
     }
@@ -506,7 +391,7 @@ export function AdminLayout() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [products, setProducts] = useState([]);
-  const [orders, setOrders]     = useState([]);
+
   const [categoryData, setCategoryData] = useState(() => {
     try {
       const saved = localStorage.getItem('sethupyropark_admin_categories_v3');
@@ -530,9 +415,8 @@ export function AdminLayout() {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [prods, ords] = await Promise.all([
+      const [prods] = await Promise.all([
         api('/products?order=product_code.asc'),
-        api('/orders?order=created_at.desc'),
       ]);
       const ps = (prods || []).filter(p => !p.category || !p.category.startsWith('__'));
       setProducts(ps);
@@ -554,8 +438,6 @@ export function AdminLayout() {
         }
         return prev;
       });
-
-      setOrders(ords || []);
     } catch (e) { console.error(e); }
     setLoading(false);
   }, []);
@@ -614,16 +496,15 @@ export function AdminLayout() {
   };
 
   const navItems = [
-    { to: '/admin',              label: 'Dashboard',         icon: LayoutDashboard, end: true },
     { to: '/admin/categories',   label: 'Categories',        icon: Tag,             badge: categoryData.length || null },
     { to: '/admin/products',     label: 'Products',          icon: Package,         badge: products.length || null },
-    { to: '/admin/orders',       label: 'Orders',            icon: ShoppingCart,    badge: orders.filter(o=>o.status==='Pending').length || null },
     { to: '/admin/banners',      label: 'Hero Banners',      icon: Image },
     { to: '/admin/announcement', label: 'Important Message', icon: Megaphone },
+    { to: '/admin/settings',     label: 'Settings',          icon: Settings },
   ];
 
   return (
-    <AdminCtx.Provider value={{ products, orders, categories, categoryData, saveCategory, deleteCategory, loading, fetchAll }}>
+    <AdminCtx.Provider value={{ products, categories, categoryData, saveCategory, deleteCategory, loading, fetchAll }}>
       <div className="adm">
         <div className="adm-layout">
           {sidebarOpen && <div className="sb-ov" onClick={()=>setSidebarOpen(false)} />}
@@ -691,92 +572,6 @@ export function AdminLayout() {
         </div>
       </div>
     </AdminCtx.Provider>
-  );
-}
-
-/* ══════════════════════════════════════════════════
-   DASHBOARD  →  /admin
-══════════════════════════════════════════════════ */
-export function AdminDashboard() {
-  const { products, categories, orders, loading } = useAdmin();
-  const navigate = useNavigate();
-
-  const totalSales = orders.reduce((s, o) => {
-    try { const items = typeof o.items==='string'?JSON.parse(o.items):(o.items||[]); return s+items.reduce((a,i)=>a+((i.price||0)*(i.quantity||1)),0); }
-    catch { return s; }
-  }, 0);
-  const recentOrders = orders.slice(0, 5);
-  const breakdown = categories.map(cat=>({ name:cat, count:products.filter(p=>p.category===cat&&p.is_active!==false).length })).filter(b=>b.count>0).sort((a,b)=>b.count-a.count);
-  const stats = [
-    { label:'Total Products', value:products.length, icon:Package,     color:'orange', trend:`${products.filter(p=>p.is_active!==false).length} active` },
-    { label:'Categories',     value:categories.length, icon:Tag,       color:'blue',   trend:`${breakdown.length} non-empty` },
-    { label:'Total Sales',    value:fmt(totalSales),   icon:DollarSign, color:'green', trend:`From ${orders.length} orders` },
-    { label:'Total Orders',   value:orders.length,     icon:ShoppingCart,color:'purple',trend:`${orders.filter(o=>o.status==='Pending').length} pending` },
-  ];
-
-  if (loading) return <DashboardSkeleton />;
-
-  return (
-    <>
-      <div style={{marginBottom:24}}>
-        <div className="pg-title">Dashboard</div>
-        <div className="pg-sub">Welcome back! Here's what's happening.</div>
-      </div>
-      <div className="stats-grid">
-        {stats.map(s => (
-          <div key={s.label} className={`stat-card c-${s.color}`}>
-            <div className={`stat-icon c-${s.color}`}><s.icon /></div>
-            <div className="stat-val">{s.value}</div>
-            <div className="stat-lbl">{s.label}</div>
-            <div className="stat-trend">↑ {s.trend}</div>
-          </div>
-        ))}
-      </div>
-      <div className="db-grid">
-        <div className="adm-card">
-          <div className="adm-card-hdr">
-            <div><div className="adm-card-title">Recent Orders</div><div className="adm-card-sub">Latest 5 customer orders</div></div>
-            <button className="adm-btn adm-btn-secondary adm-btn-sm" onClick={()=>navigate('/admin/orders')}>
-              View All <ArrowUpRight style={{width:12,height:12}} />
-            </button>
-          </div>
-          <div className="adm-table-wrap">
-            <table className="adm-table">
-              <thead><tr><th>Customer</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead>
-              <tbody>
-                {recentOrders.length===0 ? (
-                  <tr><td colSpan={4} style={{textAlign:'center',color:'#94a3b8',padding:32}}>No orders yet</td></tr>
-                ) : recentOrders.map(o => {
-                  const items = (()=>{ try { return typeof o.items==='string'?JSON.parse(o.items):(o.items||[]); } catch{return[];} })();
-                  const total = items.reduce((a,i)=>a+((i.price||0)*(i.quantity||1)),0);
-                  const cfg = STATUS_CONFIG[o.status]||STATUS_CONFIG.Pending;
-                  return (
-                    <tr key={o.id}>
-                      <td><div style={{fontWeight:600,color:'#1e293b'}}>{o.name||'—'}</div><div style={{fontSize:11,color:'#94a3b8'}}>{o.phone||''}</div></td>
-                      <td style={{fontSize:12}}>{fmtDate(o.created_at)}</td>
-                      <td style={{fontWeight:600,color:'#ff6b35'}}>{fmt(total)}</td>
-                      <td><span className="adm-badge" style={{background:cfg.bg,color:cfg.color,border:`1px solid ${cfg.color}33`}}><span className="adm-dot" style={{background:cfg.color}} />{o.status||'Pending'}</span></td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div className="adm-card">
-          <div className="adm-card-hdr"><div><div className="adm-card-title">Product Breakdown</div><div className="adm-card-sub">Active products per category</div></div></div>
-          <div className="adm-card-body bd-list">
-            {breakdown.length===0 ? <div style={{textAlign:'center',color:'#94a3b8',fontSize:13,padding:'24px 0'}}>No active products</div>
-            : breakdown.map(b=>(
-              <div key={b.name} className="bd-item">
-                <div className="bd-name">{b.name}</div>
-                <div className="bd-cnt">{b.count}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </>
   );
 }
 
@@ -1695,116 +1490,7 @@ export function AdminProducts() {
   );
 }
 
-/* ══════════════════════════════════════════════════
-   ORDERS  →  /admin/orders
-══════════════════════════════════════════════════ */
-export function AdminOrders() {
-  const { orders, loading, fetchAll } = useAdmin();
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [updatingStatus, setUpdatingStatus] = useState(null);
 
-  const filtered = orders.filter(o => {
-    const q = search.toLowerCase();
-    return (!q || ((o.name||'').toLowerCase().includes(q) || (o.phone||'').includes(q)))
-        && (!statusFilter || o.status === statusFilter);
-  });
-
-  const renderItems = (raw) => { try { return typeof raw==='string'?JSON.parse(raw):(raw||[]); } catch{return[];} };
-
-  const updateStatus = async (id, status) => {
-    setUpdatingStatus(id);
-    try { await api(`/orders?id=eq.${id}`,{method:'PATCH',body:JSON.stringify({status})}); fetchAll(); }
-    catch(e){alert(e.message);}
-    setUpdatingStatus(null);
-  };
-
-  if (loading) return <OrdersSkeleton />;
-
-  return (
-    <div className="adm-page-container">
-      <div className="adm-page-header">
-        <div style={{marginBottom:16}}>
-          <div className="pg-title">Orders</div>
-          <div className="pg-sub">{orders.length} total orders</div>
-        </div>
-
-        <div className="adm-search-bar">
-          <div className="adm-search-wrap">
-            <Search className="si" />
-            <input className="adm-form-input" placeholder="Search by name or phone..." value={search} onChange={e=>setSearch(e.target.value)} />
-          </div>
-          <div style={{minWidth:170}}>
-            <CustomSelect
-              value={statusFilter}
-              options={[
-                { label: 'All Statuses', value: '' },
-                ...Object.keys(STATUS_CONFIG).map(s => ({ label: s, value: s }))
-              ]}
-              onChange={val => setStatusFilter(val)}
-              placeholder="All Statuses"
-            />
-          </div>
-        </div>
-
-        <div style={{marginBottom:12,fontSize:13,color:'#64748b'}}>{filtered.length} orders{statusFilter&&` with status "${statusFilter}"`}</div>
-      </div>
-
-      <div className="adm-scroll-list">
-        {filtered.length===0 ? (
-          <div className="adm-empty-state"><ShoppingCart /><p>No orders found</p></div>
-        ) : filtered.map(o => {
-          const items = renderItems(o.items);
-          const total = items.reduce((a,i)=>a+((i.price||0)*(i.quantity||1)),0);
-          const cfg = STATUS_CONFIG[o.status]||STATUS_CONFIG.Pending;
-          const ph = (o.phone||'').replace(/\D/g,'');
-          return (
-            <div key={o.id} className="order-card">
-              <div className="order-hdr">
-                <div>
-                  <div className="order-id">#{o.id}</div>
-                  <div className="order-cust">{o.name||'Unknown Customer'}</div>
-                  <div className="order-meta">
-                    {o.address&&<span>📍 {o.address}</span>}
-                    {o.created_at&&<span style={{marginLeft:12}}>🕐 {fmtDate(o.created_at)}</span>}
-                  </div>
-                  {o.phone&&(
-                    <div className="order-contact">
-                      <a href={`tel:${o.phone}`} className="adm-chip adm-chip-phone"><Phone style={{width:12,height:12}} />{o.phone}</a>
-                      <a href={`https://wa.me/${ph}`} target="_blank" rel="noreferrer" className="adm-chip adm-chip-wa"><MessageCircle style={{width:12,height:12}} />WhatsApp</a>
-                    </div>
-                  )}
-                </div>
-                <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:8}}>
-                  <span className="adm-badge" style={{background:cfg.bg,color:cfg.color,border:`1px solid ${cfg.color}33`}}>
-                    <span className="adm-dot" style={{background:cfg.color}} />{o.status||'Pending'}
-                  </span>
-                  <CustomSelect
-                    value={o.status || 'Pending'}
-                    options={Object.keys(STATUS_CONFIG).map(s => ({ label: s, value: s }))}
-                    onChange={val => updateStatus(o.id, val)}
-                    style={{ minWidth: 140 }}
-                  />
-                </div>
-              </div>
-              {items.length>0&&(
-                <div className="order-items">
-                  {items.map((item,i)=>(
-                    <div key={i} className="order-item-row">
-                      <span>{item.quantity||1}x {item.name||item.product_name||'Product'}</span>
-                      <span style={{color:'#ff6b35'}}>₹{(item.price||0)*(item.quantity||1)}</span>
-                    </div>
-                  ))}
-                  <div className="order-total"><span>Total</span><span>{fmt(total)}</span></div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 /* ══════════════════════════════════════════════════
    IMPORTANT MESSAGE (MARQUEE ANNOUNCEMENT)
@@ -2385,7 +2071,6 @@ export function AdminHeroBanners() {
                     />
                   </label>
                 </div>
-
                 <div className="d-flex align-items-center justify-content-end pt-3" style={{ gap: '12px', borderTop: '1px solid #f1f5f9' }}>
                   <button
                     type="button"
@@ -2419,5 +2104,180 @@ export function AdminHeroBanners() {
   );
 }
 
-/* ── Default export kept for backward compat ─────── */
+/* ══════════════════════════════════════════════════
+   SETTINGS  →  /admin/settings
+══════════════════════════════════════════════════ */
+const SETTINGS_KEY = '__SITE_SETTINGS__';
+
+export async function fetchSiteSettings() {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/products?category=eq.${encodeURIComponent(SETTINGS_KEY)}&limit=1`,
+      { headers }
+    );
+    if (!res.ok) return {};
+    const data = await res.json();
+    if (data && data.length > 0) {
+      try { return JSON.parse(data[0].description || '{}'); } catch { return {}; }
+    }
+  } catch { }
+  return {};
+}
+
+export function AdminSettings() {
+  const [minTN,    setMinTN]    = useState('');
+  const [minOther, setMinOther] = useState('');
+  const [saving,   setSaving]   = useState(false);
+  const [loading,  setLoading]  = useState(true);
+  const [success,  setSuccess]  = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const s = await fetchSiteSettings();
+      setMinTN   (s.min_order_tn    != null ? String(s.min_order_tn)    : '');
+      setMinOther(s.min_order_other != null ? String(s.min_order_other) : '');
+      setLoading(false);
+    })();
+  }, []);
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setSuccess(false);
+    const settingsObj = {
+      min_order_tn:    parseFloat(minTN)    || 0,
+      min_order_other: parseFloat(minOther) || 0,
+    };
+    const settingsJson = JSON.stringify(settingsObj);
+    try { localStorage.setItem('sethupyropark_site_settings', settingsJson); } catch {}
+    window.dispatchEvent(new CustomEvent('site_settings_updated', { detail: settingsObj }));
+    try {
+      const existing = await api(`/products?category=eq.${encodeURIComponent(SETTINGS_KEY)}`);
+      if (existing && existing.length > 0) {
+        await api(`/products?id=eq.${existing[0].id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ description: settingsJson, is_active: true }),
+        });
+      } else {
+        await api('/products', {
+          method: 'POST',
+          body: JSON.stringify({ name: 'Site Settings', category: SETTINGS_KEY, description: settingsJson, price: 0, stock: 0, is_active: true }),
+        });
+      }
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 4000);
+    } catch (err) { console.error('Failed to save settings:', err); }
+    setSaving(false);
+  };
+
+  return (
+    <div className="adm-page-container">
+      <div className="adm-page-header">
+        <div>
+          <h1 className="adm-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Settings color="#ff6b35" /> Store Settings
+          </h1>
+          <p className="adm-sub">Set minimum order amounts per region. Customers below the limit cannot place an enquiry.</p>
+        </div>
+      </div>
+
+      {success && (
+        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12, padding: '12px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8, color: '#166534', fontWeight: 700 }}>
+          <CheckCircle size={18} /> Settings saved and published successfully!
+        </div>
+      )}
+
+      <div className="adm-card">
+        <div className="adm-card-hdr">
+          <div>
+            <div className="adm-card-title">Minimum Order Amount</div>
+            <div className="adm-card-sub">Set different minimums for Tamil Nadu customers and customers from other states.</div>
+          </div>
+        </div>
+        <div className="adm-card-body">
+          {loading ? (
+            <div style={{ display: 'flex', gap: 16 }}>
+              <div className="adm-skeleton" style={{ flex: 1, height: 80, borderRadius: 10 }} />
+              <div className="adm-skeleton" style={{ flex: 1, height: 80, borderRadius: 10 }} />
+            </div>
+          ) : (
+            <form onSubmit={handleSave}>
+              <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', marginBottom: 20 }}>
+                {/* Tamil Nadu */}
+                <div style={{ flex: '1 1 260px', background: '#fff7ed', border: '1.5px solid #fed7aa', borderRadius: 12, padding: '18px 20px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                    <span style={{ fontSize: 22 }}>🏛️</span>
+                    <div>
+                      <div style={{ fontWeight: 700, color: '#92400e', fontSize: 14 }}>Tamil Nadu</div>
+                      <div style={{ fontSize: 11, color: '#b45309' }}>Local state minimum</div>
+                    </div>
+                  </div>
+                  <div className="adm-inp-wrap">
+                    <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontWeight: 800, color: '#ff6b35', fontSize: 16, pointerEvents: 'none', zIndex: 5 }}>₹</span>
+                    <input
+                      className="adm-form-input"
+                      type="number"
+                      min="0"
+                      step="1"
+                      placeholder="e.g. 1000"
+                      value={minTN}
+                      onChange={e => setMinTN(e.target.value)}
+                      style={{ background: '#fff', border: '1.5px solid #fcd34d' }}
+                    />
+                  </div>
+                  <div style={{ marginTop: 7, fontSize: 12, color: minTN && parseFloat(minTN) > 0 ? '#92400e' : '#b45309', fontWeight: 500 }}>
+                    {minTN && parseFloat(minTN) > 0
+                      ? `Customers must order at least ₹${parseFloat(minTN).toLocaleString('en-IN')}`
+                      : 'Set to 0 or leave blank — no minimum'}
+                  </div>
+                </div>
+
+                {/* Other States */}
+                <div style={{ flex: '1 1 260px', background: '#eff6ff', border: '1.5px solid #bfdbfe', borderRadius: 12, padding: '18px 20px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                    <span style={{ fontSize: 22 }}>🇮🇳</span>
+                    <div>
+                      <div style={{ fontWeight: 700, color: '#1e3a8a', fontSize: 14 }}>Other States</div>
+                      <div style={{ fontSize: 11, color: '#3b82f6' }}>Rest of India minimum</div>
+                    </div>
+                  </div>
+                  <div className="adm-inp-wrap">
+                    <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontWeight: 800, color: '#3b82f6', fontSize: 16, pointerEvents: 'none', zIndex: 5 }}>₹</span>
+                    <input
+                      className="adm-form-input"
+                      type="number"
+                      min="0"
+                      step="1"
+                      placeholder="e.g. 2500"
+                      value={minOther}
+                      onChange={e => setMinOther(e.target.value)}
+                      style={{ background: '#fff', border: '1.5px solid #93c5fd' }}
+                    />
+                  </div>
+                  <div style={{ marginTop: 7, fontSize: 12, color: minOther && parseFloat(minOther) > 0 ? '#1e3a8a' : '#3b82f6', fontWeight: 500 }}>
+                    {minOther && parseFloat(minOther) > 0
+                      ? `Customers must order at least ₹${parseFloat(minOther).toLocaleString('en-IN')}`
+                      : 'Set to 0 or leave blank — no minimum'}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="adm-btn adm-btn-primary"
+                disabled={saving}
+                style={{ backgroundColor: '#ff6b35', borderColor: '#ff6b35', minWidth: 140 }}
+              >
+                <Save size={15} /> {saving ? 'Saving...' : 'Save Settings'}
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Default export kept for backward compat ───────── */
 export default AdminLayout;

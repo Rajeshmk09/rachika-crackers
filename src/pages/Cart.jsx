@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Trash2, ArrowLeft, CheckCircle2, ShieldCheck, Truck, User, Phone, MapPin, Tag, ShoppingBag } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import { ShoppingCart, Trash2, ArrowLeft, CheckCircle2, ShieldCheck, Truck, User, Phone, MapPin, Tag, ShoppingBag, AlertTriangle } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 import HeaderNav from '../components/HeaderNav';
 
@@ -19,68 +20,266 @@ export default function Cart() {
     clearCart,
   } = useShop();
 
-  const [orderForm, setOrderForm] = useState({
-    name: '',
-    phone: '',
-    address: '',
-    city: '',
-    notes: '',
-  });
-
-  const [submitting, setSubmitting] = useState(false);
+  const [orderForm, setOrderForm] = useState({ name: '', phone: '', address: '', isTamilNadu: true });
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [settings, setSettings] = useState({ min_order_tn: 0, min_order_other: 0 });
 
-  const handlePlaceOrder = async (e) => {
+  // Load minimum order amount from Supabase (with localStorage fallback)
+  useEffect(() => {
+    const loadSettings = async () => {
+      // Try localStorage cache first for instant load
+      try {
+        const cached = localStorage.getItem('sethupyropark_site_settings');
+        if (cached) {
+          const s = JSON.parse(cached);
+          setSettings({
+            min_order_tn: parseFloat(s.min_order_tn) || 0,
+            min_order_other: parseFloat(s.min_order_other) || 0
+          });
+        }
+      } catch {}
+
+      // Fetch fresh from Supabase
+      try {
+        const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://iplfsscpeixfxzbouhlp.supabase.co';
+        const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/products?category=eq.__SITE_SETTINGS__&limit=1`,
+          { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.length > 0) {
+            const s = JSON.parse(data[0].description || '{}');
+            const newSettings = {
+              min_order_tn: parseFloat(s.min_order_tn) || 0,
+              min_order_other: parseFloat(s.min_order_other) || 0
+            };
+            setSettings(newSettings);
+            try { localStorage.setItem('sethupyropark_site_settings', JSON.stringify(s)); } catch {}
+          }
+        }
+      } catch {}
+    };
+    loadSettings();
+
+    // Listen for live updates from admin panel
+    const onUpdate = (e) => {
+      setSettings({
+        min_order_tn: parseFloat(e.detail?.min_order_tn) || 0,
+        min_order_other: parseFloat(e.detail?.min_order_other) || 0
+      });
+    };
+    window.addEventListener('site_settings_updated', onUpdate);
+    return () => window.removeEventListener('site_settings_updated', onUpdate);
+  }, []);
+
+  const minOrderAmount = orderForm.isTamilNadu ? settings.min_order_tn : settings.min_order_other;
+  const belowMinimum = minOrderAmount > 0 && cartTotalPrice < minOrderAmount;
+
+  const handleEnquiry = (e) => {
     e.preventDefault();
     if (!orderForm.name || !orderForm.phone) {
-      setError('Please provide your Name and Mobile Phone Number.');
+      setError('Please provide your Name and Mobile Number.');
       return;
     }
-
-    setSubmitting(true);
+    if (belowMinimum) {
+      setError(`Minimum order amount for ${orderForm.isTamilNadu ? 'Tamil Nadu' : 'other states'} is ₹${minOrderAmount.toLocaleString('en-IN')}. Please add more items to your cart.`);
+      return;
+    }
     setError('');
 
-    try {
-      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://iplfsscpeixfxzbouhlp.supabase.co';
-      const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    // ── Generate PDF ──────────────────────────────────────
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const W = 210;
+    const margin = 14;
+    const col2 = W - margin;
+    let y = 0;
 
-      const orderPayload = {
+    const INR = (n) => `Rs. ${parseFloat(n).toLocaleString('en-IN')}`;
+    const lineH = 7;
+
+    // Header banner
+    doc.setFillColor(255, 112, 17);
+    doc.rect(0, 0, W, 28, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SETHU PYRO PARK', margin, 12);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Rachika Crackers', margin, 19);
+    doc.text('+91 8867390680', col2, 12, { align: 'right' });
+    doc.text('Order Enquiry', col2, 19, { align: 'right' });
+
+    y = 36;
+
+    // Title
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ORDER ENQUIRY DETAILS', margin, y);
+    doc.setDrawColor(255, 112, 17);
+    doc.setLineWidth(0.8);
+    doc.line(margin, y + 2, col2, y + 2);
+
+    y += 12;
+
+    // Customer info box
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(margin, y, W - margin * 2, 33, 3, 3, 'F');
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(100, 116, 139);
+    doc.text('CUSTOMER DETAILS', margin + 4, y + 6);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(10);
+    doc.text(`Name:    ${orderForm.name}`, margin + 4, y + 13);
+    doc.text(`Phone:   ${orderForm.phone}`, margin + 4, y + 20);
+    doc.text(`Region:  ${orderForm.isTamilNadu ? 'Tamil Nadu' : 'Other State'}`, margin + 4, y + 27);
+    if (orderForm.address) {
+      const addrLines = doc.splitTextToSize(`Address: ${orderForm.address}`, W - margin * 2 - 8);
+      doc.text(addrLines, margin + 4, y + 34);
+      y += addrLines.length * 5;
+    }
+
+    y += 40;
+
+    // Items table header
+    doc.setFillColor(15, 23, 42);
+    doc.rect(margin, y, W - margin * 2, 8, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('#', margin + 3, y + 5.5);
+    doc.text('Product', margin + 10, y + 5.5);
+    doc.text('Unit', margin + 95, y + 5.5);
+    doc.text('Qty', margin + 118, y + 5.5);
+    doc.text('Price', margin + 130, y + 5.5);
+    doc.text('Subtotal', col2 - 2, y + 5.5, { align: 'right' });
+
+    y += 8;
+
+    // Items rows
+    cartItems.forEach(({ product, qty }, idx) => {
+      const price = parseFloat(product.price || 0);
+      const sub = price * qty;
+      const unit = product.order_unit || product.quantity || product.unit || '—';
+      const rowBg = idx % 2 === 0 ? [255, 255, 255] : [248, 250, 252];
+      doc.setFillColor(...rowBg);
+      doc.rect(margin, y, W - margin * 2, lineH, 'F');
+
+      doc.setTextColor(15, 23, 42);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text(String(idx + 1), margin + 3, y + 5);
+
+      const nameLines = doc.splitTextToSize(product.name, 82);
+      doc.text(nameLines[0], margin + 10, y + 5);
+
+      doc.text(String(unit).substring(0, 14), margin + 95, y + 5);
+      doc.text(String(qty), margin + 120, y + 5);
+      doc.text(INR(price), margin + 130, y + 5);
+      doc.setFont('helvetica', 'bold');
+      doc.text(INR(sub), col2 - 2, y + 5, { align: 'right' });
+
+      // thin separator
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.2);
+      doc.line(margin, y + lineH, col2, y + lineH);
+
+      y += lineH;
+    });
+
+    y += 6;
+
+    // Totals box
+    const totW = 80;
+    const totX = col2 - totW;
+    // Total amount highlight
+    doc.setFillColor(255, 112, 17);
+    doc.roundedRect(totX, y, totW, 10, 2, 2, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10.5);
+    doc.text('Total Payable:', totX + 4, y + 6.5);
+    doc.text(INR(cartTotalPrice), col2 - 4, y + 6.5, { align: 'right' });
+
+    y += 20;
+
+    // Footer
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.4);
+    doc.line(margin, y, col2, y);
+    y += 6;
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(8.5);
+    doc.setTextColor(100, 116, 139);
+    doc.text('Thank you for choosing Sethu Pyro Park! We will confirm your order shortly.', margin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generated: ${new Date().toLocaleString('en-IN')}`, col2, y, { align: 'right' });
+
+    // Download
+    const fileName = `OrderEnquiry_${orderForm.name.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
+    doc.save(fileName);
+
+    // ── WhatsApp text ─────────────────────────────────────
+    const itemLines = cartItems.map((item, idx) => {
+      const price = parseFloat(item.product.price || 0);
+      const unit = item.product.order_unit || item.product.quantity || item.product.unit || '';
+      return `${idx + 1}. ${item.product.name}${unit ? ` (${unit})` : ''} — Qty: ${item.qty} x Rs.${price.toLocaleString('en-IN')} = Rs.${(price * item.qty).toLocaleString('en-IN')}`;
+    }).join('\n');
+
+    const message =
+`*ORDER ENQUIRY — Sethu Pyro Park*
+
+Name: ${orderForm.name}
+Phone: ${orderForm.phone}
+Region: ${orderForm.isTamilNadu ? 'Tamil Nadu' : 'Other State'}${orderForm.address ? `\nAddress: ${orderForm.address}` : ''}
+
+*Items:*
+${itemLines}
+
+*Amount Payable: Rs.${cartTotalPrice.toLocaleString('en-IN')}*
+
+_(PDF order sheet has been downloaded separately)_
+Kindly confirm my order. Thank you!`;
+
+    setTimeout(() => {
+      window.open(`https://wa.me/918867390680?text=${encodeURIComponent(message)}`, '_blank');
+    }, 800);
+
+    // Save order to Supabase in background after WhatsApp opens
+    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://iplfsscpeixfxzbouhlp.supabase.co';
+    const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    fetch(`${SUPABASE_URL}/rest/v1/orders`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=representation',
+      },
+      body: JSON.stringify({
         name: orderForm.name,
         phone: orderForm.phone,
-        address: `${orderForm.address}, ${orderForm.city}`,
+        address: `[${orderForm.isTamilNadu ? 'Tamil Nadu' : 'Other State'}] ${orderForm.address}`,
         items: JSON.stringify(cartItems.map(i => ({
           product_code: i.product.product_code,
           name: i.product.name,
           quantity: i.qty,
           price: parseFloat(i.product.price || 0),
-          unit: i.product.order_unit || i.product.quantity || i.product.unit || ''
+          unit: i.product.order_unit || i.product.quantity || i.product.unit || '',
         }))),
         status: 'Pending',
-      };
+      }),
+    }).catch(() => {});  // fail silently — WhatsApp already opened
 
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
-        method: 'POST',
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`,
-          'Content-Type': 'application/json',
-          Prefer: 'return=representation',
-        },
-        body: JSON.stringify(orderPayload),
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to submit order. Please try again.');
-      }
-
-      setOrderSuccess(true);
-      clearCart();
-    } catch (err) {
-      setError(err.message || 'Something went wrong while placing your order.');
-    } finally {
-      setSubmitting(false);
-    }
+    setOrderSuccess(true);
+    clearCart();
   };
 
   return (
@@ -126,20 +325,18 @@ export default function Cart() {
 
         {orderSuccess ? (
           <div className="bg-white rounded-lg shadow-sm border p-5 text-center my-4">
-            <div className="rounded-circle bg-success text-white d-inline-flex p-3 mb-3">
+            <div className="rounded-circle bg-success text-white d-inline-flex p-3 mb-4">
               <CheckCircle2 size={48} />
             </div>
-            <h3 className="acme font-weight-bold text-success mb-2">Order Placed Successfully!</h3>
-            <p className="text-muted josefin mb-4 max-w-md mx-auto" style={{ maxWidth: '500px' }}>
-              Thank you for choosing Sethu Pyro Park Rachika Crackers. Our team will verify your order and contact you shortly at <strong>+91 {orderForm.phone}</strong> for order confirmation and dispatch details.
-            </p>
-            <Link
-              to="/products"
-              className="btn btn-lg font-weight-bold acme rounded-pill text-white px-5 py-3 shadow-sm"
-              style={{ backgroundColor: '#ff7011', border: 'none' }}
-            >
-              Back to Catalog
-            </Link>
+            <div className="mt-2">
+              <Link
+                to="/products"
+                className="btn btn-lg font-weight-bold acme rounded-pill text-white px-5 py-3 shadow-sm"
+                style={{ backgroundColor: '#ff7011', border: 'none' }}
+              >
+                Back to Catalog
+              </Link>
+            </div>
           </div>
         ) : cartCount === 0 ? (
           <div className="text-center py-5 my-4 bg-white rounded-lg shadow-sm border p-5">
@@ -161,7 +358,7 @@ export default function Cart() {
         ) : (
           <div className="row">
             {/* Cart Items List */}
-            <div className="col-lg-8 mb-4">
+            <div className="col-12 mb-4">
               <div className="bg-white rounded-lg shadow-sm border p-3 p-md-4 mb-3">
                 <div className="d-flex align-items-center justify-content-between pb-3 border-bottom mb-3">
                   <span className="font-weight-bold acme text-dark h5 mb-0">Added Items ({cartItems.length})</span>
@@ -275,12 +472,9 @@ export default function Cart() {
             </div>
 
             {/* Order Summary & Checkout Form */}
-            <div className="col-lg-4">
+            <div className="col-12">
               <div
                 style={{
-                  position: 'sticky',
-                  top: '80px',
-                  zIndex: 100,
                   borderRadius: '20px',
                   overflow: 'hidden',
                   boxShadow: '0 8px 32px rgba(0,0,0,0.10)',
@@ -296,41 +490,50 @@ export default function Cart() {
                   </div>
                 </div>
 
-                {/* Price Breakdown */}
-                <div style={{ padding: '20px 24px 0' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <span style={{ color: '#64748b', fontSize: '0.88rem', fontWeight: 600 }}>Total Items</span>
-                    <span style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.95rem' }}>{cartCount} Pcs</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <span style={{ color: '#64748b', fontSize: '0.88rem', fontWeight: 600 }}>Total MRP</span>
-                    <span style={{ color: '#94a3b8', fontSize: '0.9rem', textDecoration: 'line-through' }}>₹{cartTotalMrp.toLocaleString('en-IN')}</span>
-                  </div>
-                  {cartTotalSavings > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', background: '#f0fdf4', borderRadius: '8px', padding: '7px 10px' }}>
-                      <span style={{ color: '#16a34a', fontSize: '0.88rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <Tag size={14} color="#16a34a" /> You Save
-                      </span>
-                      <span style={{ color: '#16a34a', fontWeight: 800, fontSize: '0.95rem' }}>- ₹{cartTotalSavings.toLocaleString('en-IN')}</span>
+                {/* Price + Form — full width horizontal layout */}
+                <div style={{ padding: '24px 28px' }}>
+                  {/* Price row */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid #f1f5f9' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                      <span style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: 600 }}>Items</span>
+                      <span style={{ fontWeight: 800, color: '#1e293b', fontSize: '0.95rem' }}>{cartCount} Pcs</span>
                     </div>
-                  )}
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff5ee', borderRadius: '12px', padding: '14px 16px', margin: '12px 0 20px' }}>
-                    <span style={{ fontWeight: 800, color: '#1e293b', fontSize: '1rem' }}>Total Amount</span>
-                    <span style={{ fontWeight: 900, color: '#ff7011', fontSize: '1.45rem', letterSpacing: '-0.5px' }}>
-                      ₹{cartTotalPrice.toLocaleString('en-IN')}
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                      <span style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: 600 }}>MRP</span>
+                      <span style={{ color: '#94a3b8', fontSize: '0.9rem', textDecoration: 'line-through' }}>₹{cartTotalMrp.toLocaleString('en-IN')}</span>
+                    </div>
+                    {cartTotalSavings > 0 && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', background: '#f0fdf4', borderRadius: '12px', border: '1px solid #bbf7d0' }}>
+                        <Tag size={14} color="#16a34a" />
+                        <span style={{ color: '#16a34a', fontSize: '0.85rem', fontWeight: 700 }}>You Save</span>
+                        <span style={{ color: '#16a34a', fontWeight: 800, fontSize: '0.95rem' }}>₹{cartTotalSavings.toLocaleString('en-IN')}</span>
+                      </div>
+                    )}
+                    <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px', background: '#fff5ee', borderRadius: '14px', padding: '12px 22px', border: '1.5px solid #fed7aa' }}>
+                      <span style={{ fontWeight: 700, color: '#1e293b', fontSize: '1rem' }}>Total</span>
+                      <span style={{ fontWeight: 900, color: '#ff7011', fontSize: '1.6rem', letterSpacing: '-1px' }}>
+                        ₹{cartTotalPrice.toLocaleString('en-IN')}
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-                {/* Divider */}
-                <div style={{ height: '1px', background: '#f1f5f9', margin: '0 24px' }} />
-
-                {/* Checkout Form */}
-                <form onSubmit={handlePlaceOrder} style={{ padding: '20px 24px' }}>
-                  <p style={{ fontSize: '0.78rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '14px' }}>
+                  {/* Delivery form — horizontal fields */}
+                  <p style={{ fontSize: '0.78rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '16px' }}>
                     Delivery Details
                   </p>
+
+                  {/* Minimum order warning */}
+                  {belowMinimum && (
+                    <div style={{ background: '#fff7ed', border: '1.5px solid #fed7aa', borderRadius: 12, padding: '12px 16px', marginBottom: 14, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                      <AlertTriangle size={18} color="#f59e0b" style={{ flexShrink: 0, marginTop: 1 }} />
+                      <div>
+                        <div style={{ fontWeight: 700, color: '#92400e', fontSize: '0.88rem' }}>Minimum Order Amount: ₹{minOrderAmount.toLocaleString('en-IN')}</div>
+                        <div style={{ color: '#b45309', fontSize: '0.82rem', marginTop: 2 }}>
+                          Your cart total is ₹{cartTotalPrice.toLocaleString('en-IN')}. Add ₹{(minOrderAmount - cartTotalPrice).toLocaleString('en-IN')} more to place an enquiry.
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {error && (
                     <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '10px', padding: '10px 14px', marginBottom: '14px', color: '#dc2626', fontSize: '0.84rem', fontWeight: 600 }}>
@@ -338,136 +541,147 @@ export default function Cart() {
                     </div>
                   )}
 
-                  {/* Name */}
-                  <div style={{ marginBottom: '12px' }}>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '5px' }}>
-                      Full Name <span style={{ color: '#ff7011' }}>*</span>
-                    </label>
-                    <div style={{ position: 'relative' }}>
-                      <span style={{ position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)', display: 'flex' }}><User size={16} color="#94a3b8" /></span>
-                      <input
-                        style={{
-                          width: '100%',
-                          padding: '10px 12px 10px 36px',
-                          borderRadius: '10px',
-                          border: '1.5px solid #e2e8f0',
-                          fontSize: '0.9rem',
-                          outline: 'none',
-                          background: '#f8fafc',
-                          color: '#1e293b',
-                          fontWeight: 500,
-                          transition: 'border 0.2s',
-                          boxSizing: 'border-box'
-                        }}
-                        onFocus={e => e.target.style.borderColor = '#ff7011'}
-                        onBlur={e => e.target.style.borderColor = '#e2e8f0'}
-                        placeholder="e.g. Ramesh Kumar"
-                        value={orderForm.name}
-                        onChange={e => setOrderForm({ ...orderForm, name: e.target.value })}
-                        required
-                      />
+                  <form onSubmit={handleEnquiry}>
+                    {/* Delivery Region Selection */}
+                    <div style={{ marginBottom: '16px' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '8px' }}>
+                        Delivery Region / State <span style={{ color: '#ff7011' }}>*</span>
+                      </label>
+                      <div style={{ display: 'flex', gap: '12px' }}>
+                        <button
+                          type="button"
+                          onClick={() => setOrderForm({ ...orderForm, isTamilNadu: true })}
+                          style={{
+                            flex: 1,
+                            padding: '12px 16px',
+                            borderRadius: '12px',
+                            border: orderForm.isTamilNadu ? '2px solid #ff7011' : '1.5px solid #cbd5e1',
+                            background: orderForm.isTamilNadu ? '#fff5ee' : '#ffffff',
+                            color: orderForm.isTamilNadu ? '#ff7011' : '#475569',
+                            fontWeight: 700,
+                            fontSize: '0.9rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          <span style={{ fontSize: '1.2rem' }}>🏛️</span> Tamil Nadu
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setOrderForm({ ...orderForm, isTamilNadu: false })}
+                          style={{
+                            flex: 1,
+                            padding: '12px 16px',
+                            borderRadius: '12px',
+                            border: !orderForm.isTamilNadu ? '2px solid #3b82f6' : '1.5px solid #cbd5e1',
+                            background: !orderForm.isTamilNadu ? '#eff6ff' : '#ffffff',
+                            color: !orderForm.isTamilNadu ? '#3b82f6' : '#475569',
+                            fontWeight: 700,
+                            fontSize: '0.9rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          <span style={{ fontSize: '1.2rem' }}>🇮🇳</span> Other States
+                        </button>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Phone */}
-                  <div style={{ marginBottom: '12px' }}>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '5px' }}>
-                      Mobile Number <span style={{ color: '#ff7011' }}>*</span>
-                    </label>
-                    <div style={{ position: 'relative' }}>
-                      <span style={{ position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)', display: 'flex' }}><Phone size={16} color="#94a3b8" /></span>
-                      <input
-                        style={{
-                          width: '100%',
-                          padding: '10px 12px 10px 36px',
-                          borderRadius: '10px',
-                          border: '1.5px solid #e2e8f0',
-                          fontSize: '0.9rem',
-                          outline: 'none',
-                          background: '#f8fafc',
-                          color: '#1e293b',
-                          fontWeight: 500,
-                          transition: 'border 0.2s',
-                          boxSizing: 'border-box'
-                        }}
-                        onFocus={e => e.target.style.borderColor = '#ff7011'}
-                        onBlur={e => e.target.style.borderColor = '#e2e8f0'}
-                        type="tel"
-                        placeholder="e.g. 9876543210"
-                        value={orderForm.phone}
-                        onChange={e => setOrderForm({ ...orderForm, phone: e.target.value })}
-                        required
-                      />
+                    {/* Row 1: Name + Phone */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', marginBottom: '14px' }}>
+                      <div style={{ flex: '1 1 200px' }}>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '6px' }}>
+                          Full Name <span style={{ color: '#ff7011' }}>*</span>
+                        </label>
+                        <div style={{ position: 'relative' }}>
+                          <span style={{ position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)', display: 'flex' }}><User size={16} color="#94a3b8" /></span>
+                          <input
+                            style={{ width: '100%', padding: '11px 12px 11px 36px', borderRadius: '10px', border: '1.5px solid #e2e8f0', fontSize: '0.9rem', outline: 'none', background: '#f8fafc', color: '#1e293b', fontWeight: 500, boxSizing: 'border-box' }}
+                            onFocus={e => e.target.style.borderColor = '#ff7011'}
+                            onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                            placeholder="e.g. Ramesh Kumar"
+                            value={orderForm.name}
+                            onChange={e => setOrderForm({ ...orderForm, name: e.target.value })}
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div style={{ flex: '1 1 180px' }}>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '6px' }}>
+                          Mobile Number <span style={{ color: '#ff7011' }}>*</span>
+                        </label>
+                        <div style={{ position: 'relative' }}>
+                          <span style={{ position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)', display: 'flex' }}><Phone size={16} color="#94a3b8" /></span>
+                          <input
+                            style={{ width: '100%', padding: '11px 12px 11px 36px', borderRadius: '10px', border: '1.5px solid #e2e8f0', fontSize: '0.9rem', outline: 'none', background: '#f8fafc', color: '#1e293b', fontWeight: 500, boxSizing: 'border-box' }}
+                            onFocus={e => e.target.style.borderColor = '#ff7011'}
+                            onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                            type="tel"
+                            placeholder="e.g. 9876543210"
+                            value={orderForm.phone}
+                            onChange={e => setOrderForm({ ...orderForm, phone: e.target.value })}
+                            required
+                          />
+                        </div>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Address */}
-                  <div style={{ marginBottom: '18px' }}>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '5px' }}>
-                      City / Address
-                    </label>
-                    <div style={{ position: 'relative' }}>
-                      <span style={{ position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)', display: 'flex' }}><MapPin size={16} color="#94a3b8" /></span>
-                      <input
-                        style={{
-                          width: '100%',
-                          padding: '10px 12px 10px 36px',
-                          borderRadius: '10px',
-                          border: '1.5px solid #e2e8f0',
-                          fontSize: '0.9rem',
-                          outline: 'none',
-                          background: '#f8fafc',
-                          color: '#1e293b',
-                          fontWeight: 500,
-                          transition: 'border 0.2s',
-                          boxSizing: 'border-box'
-                        }}
-                        onFocus={e => e.target.style.borderColor = '#ff7011'}
-                        onBlur={e => e.target.style.borderColor = '#e2e8f0'}
-                        placeholder="e.g. Chennai / Madurai"
-                        value={orderForm.city}
-                        onChange={e => setOrderForm({ ...orderForm, city: e.target.value })}
-                      />
+                    {/* Row 2: Full Address */}
+                    <div style={{ marginBottom: '16px' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '6px' }}>
+                        Full Address
+                      </label>
+                      <div style={{ position: 'relative' }}>
+                        <span style={{ position: 'absolute', left: '11px', top: '13px', display: 'flex' }}><MapPin size={16} color="#94a3b8" /></span>
+                        <textarea
+                          rows={2}
+                          style={{ width: '100%', padding: '11px 12px 11px 36px', borderRadius: '10px', border: '1.5px solid #e2e8f0', fontSize: '0.9rem', outline: 'none', background: '#f8fafc', color: '#1e293b', fontWeight: 500, boxSizing: 'border-box', resize: 'none', fontFamily: 'inherit' }}
+                          onFocus={e => e.target.style.borderColor = '#ff7011'}
+                          onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                          placeholder="e.g. 12, Gandhi Street, Madurai, Tamil Nadu - 625001"
+                          value={orderForm.address}
+                          onChange={e => setOrderForm({ ...orderForm, address: e.target.value })}
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Submit Button */}
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    style={{
-                      width: '100%',
-                      padding: '14px',
-                      borderRadius: '14px',
-                      border: 'none',
-                      background: submitting ? '#94a3b8' : 'linear-gradient(135deg, #ff7011 0%, #ff9944 100%)',
-                      color: 'white',
-                      fontWeight: 800,
-                      fontSize: '1rem',
-                      cursor: submitting ? 'not-allowed' : 'pointer',
-                      boxShadow: '0 4px 15px rgba(255,112,17,0.35)',
-                      transition: 'all 0.2s ease',
-                      letterSpacing: '0.2px'
-                    }}
-                  >
-                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                    {/* Row 3: Enquiry button — full width */}
+                    <button
+                      type="submit"
+                      disabled={belowMinimum}
+                      style={{
+                        width: '100%',
+                        padding: '13px 32px',
+                        borderRadius: '12px',
+                        border: 'none',
+                        background: belowMinimum ? '#94a3b8' : '#ff7011',
+                        color: 'white',
+                        fontWeight: 800,
+                        fontSize: '1rem',
+                        cursor: belowMinimum ? 'not-allowed' : 'pointer',
+                        boxShadow: belowMinimum ? 'none' : '0 4px 15px rgba(255,112,17,0.35)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                        opacity: belowMinimum ? 0.7 : 1,
+                      }}
+                    >
                       <ShoppingBag size={18} color="white" />
-                      {submitting ? 'Placing Order...' : `Place Order · ₹${cartTotalPrice.toLocaleString('en-IN')}`}
-                    </span>
-                  </button>
-                </form>
+                      {belowMinimum
+                        ? `Min. Order ₹${minOrderAmount.toLocaleString('en-IN')}`
+                        : `Enquiry · ₹${cartTotalPrice.toLocaleString('en-IN')}`
+                      }
+                    </button>
 
-                {/* Trust badges */}
-                <div style={{ background: '#f8fafc', padding: '14px 24px', borderTop: '1px solid #f1f5f9' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: '#16a34a', fontSize: '0.8rem', fontWeight: 700, marginBottom: '6px' }}>
-                    <ShieldCheck size={15} color="#16a34a" />
-                    100% Genuine Sivakasi Factory Prices
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: '#64748b', fontSize: '0.78rem', fontWeight: 600 }}>
-                    <Truck size={14} color="#64748b" />
-                    Fast Delivery Across Tamil Nadu
-                  </div>
+                  </form>
                 </div>
+
               </div>
             </div>
           </div>

@@ -102,6 +102,38 @@ const Home = () => {
 	});
 
 	const [activeSlideIndex, setActiveSlideIndex] = useState(0);
+	const [minTN, setMinTN] = useState(3000);
+	const [minOther, setMinOther] = useState(6000);
+
+	useEffect(() => {
+		// 1. Try local storage cache
+		try {
+			const cached = localStorage.getItem('sethupyropark_site_settings');
+			if (cached) {
+				const s = JSON.parse(cached);
+				if (s.min_order_tn != null) setMinTN(parseFloat(s.min_order_tn) || 0);
+				if (s.min_order_other != null) setMinOther(parseFloat(s.min_order_other) || 0);
+			}
+		} catch (e) { }
+
+		// 2. Fetch fresh from DB
+		const loadSettings = async () => {
+			try {
+				const headers = { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` };
+				const res = await fetch(`${SUPABASE_URL}/rest/v1/products?category=eq.__SITE_SETTINGS__&limit=1`, { headers });
+				if (res.ok) {
+					const data = await res.json();
+					if (data && data.length > 0) {
+						const s = JSON.parse(data[0].description || '{}');
+						if (s.min_order_tn != null) setMinTN(parseFloat(s.min_order_tn) || 0);
+						if (s.min_order_other != null) setMinOther(parseFloat(s.min_order_other) || 0);
+						try { localStorage.setItem('sethupyropark_site_settings', JSON.stringify(s)); } catch (e) { }
+					}
+				}
+			} catch (err) { }
+		};
+		loadSettings();
+	}, []);
 
 	// Auto-scroll hero banner slides every 3 seconds (3000ms)
 	useEffect(() => {
@@ -284,7 +316,7 @@ const Home = () => {
 								</div>
 								<div className="icon-info align-self-center">
 									<div className="top-bx-txt acme clr-red"> MINIMUM ORDER VALUE </div>
-									<div className="josefin smallfnt"><i className="bi bi-currency-rupee"></i> 3000 (TN, BLRE &amp; PY) </div>
+									<div className="josefin smallfnt"><i className="bi bi-currency-rupee"></i> {minTN.toLocaleString('en-IN')} Rs </div>
 								</div>
 							</div>
 
@@ -312,7 +344,7 @@ const Home = () => {
 								</div>
 								<div className="icon-info align-self-center">
 									<div className="top-bx-txt acme clr-red">OTHER STATES</div>
-									<div className="josefin smallfnt">Minimum Order <i className="bi bi-currency-rupee"></i> 6,000 </div>
+									<div className="josefin smallfnt">Minimum Order <i className="bi bi-currency-rupee"></i> {minOther.toLocaleString('en-IN')} </div>
 								</div>
 							</div>
 
