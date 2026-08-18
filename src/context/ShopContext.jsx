@@ -12,6 +12,7 @@ export const useShop = () => {
 
 export const ShopProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
+  const [pricelistUrl, setPricelistUrl] = useState('');
   const [loading, setLoading] = useState(false);
 
   // Store ONLY product IDs in localStorage
@@ -52,7 +53,7 @@ export const ShopProvider = ({ children }) => {
     setLoading(true);
     try {
       const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://iplfsscpeixfxzbouhlp.supabase.co';
-      const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwbGZzc2NwZWl4Znh6Ym91aGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NDQwNzksImV4cCI6MjEwMjUyMDA3OX0.nr2an5w0nX_L37C3g03HgzpFitueRNeOJ346TYvakZ8';
       const res = await fetch(`${SUPABASE_URL}/rest/v1/products?order=product_code.asc`, {
         headers: {
           apikey: SUPABASE_KEY,
@@ -61,6 +62,16 @@ export const ShopProvider = ({ children }) => {
       });
       if (res.ok) {
         const data = await res.json();
+        
+        // Extract site settings if present
+        const settingsProd = (data || []).find(p => p.category === '__SITE_SETTINGS__');
+        if (settingsProd) {
+          try {
+            const s = JSON.parse(settingsProd.description || '{}');
+            setPricelistUrl(s.pricelist_url || '');
+          } catch (e) {}
+        }
+
         // Exclude system internal entries (__HERO_BANNER__, __SITE_ANNOUNCEMENT__) from public catalog
         const cleanProducts = (data || []).filter(p => !p.category || !p.category.startsWith('__'));
         setProducts(cleanProducts);
@@ -219,6 +230,7 @@ export const ShopProvider = ({ children }) => {
         products,
         loading,
         fetchProducts,
+        pricelistUrl,
       }}
     >
       {children}

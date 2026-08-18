@@ -45,7 +45,7 @@ export default function ProductDetails() {
         setLoading(true);
         try {
           const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://iplfsscpeixfxzbouhlp.supabase.co';
-          const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+          const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwbGZzc2NwZWl4Znh6Ym91aGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NDQwNzksImV4cCI6MjEwMjUyMDA3OX0.nr2an5w0nX_L37C3g03HgzpFitueRNeOJ346TYvakZ8';
           const res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${id}`, {
             headers: {
               apikey: SUPABASE_KEY,

@@ -4,8 +4,36 @@ import { Heart, ShoppingCart } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 
 export default function HeaderNav() {
-  const { wishlistCount, cartCount, cartTotalPrice } = useShop();
+  const { wishlistCount, cartCount, cartTotalPrice, pricelistUrl } = useShop();
   const location = useLocation();
+
+  const handleDownloadPricelist = (e) => {
+    if (pricelistUrl && pricelistUrl.startsWith('data:')) {
+      e.preventDefault();
+      try {
+        const parts = pricelistUrl.split(';base64,');
+        const contentType = parts[0].split(':')[1];
+        const raw = window.atob(parts[1]);
+        const rawLength = raw.length;
+        const uInt8Array = new Uint8Array(rawLength);
+        for (let i = 0; i < rawLength; ++i) {
+          uInt8Array[i] = raw.charCodeAt(i);
+        }
+        const blob = new Blob([uInt8Array], { type: contentType });
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = 'Sethu_Pyro_Park_Pricelist.pdf';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+      } catch (err) {
+        console.error('Error generating PDF download:', err);
+        window.open(pricelistUrl, '_blank');
+      }
+    }
+  };
 
   const isActive = (path) => location.pathname === path;
 
@@ -68,7 +96,7 @@ export default function HeaderNav() {
               <Link className="nav-link" to="/contact">Contact</Link>
             </li>
             <li className="nav-item px-2 text-center">
-              <a className="pricelist_pdf blink" href="/order/pdf/rpt_price_list_php.html" target="_blank" rel="noopener noreferrer">
+              <a className="pricelist_pdf blink" href={pricelistUrl || "/products"} onClick={handleDownloadPricelist} target="_blank" rel="noopener noreferrer">
                 Download Pricelist
               </a>
             </li>

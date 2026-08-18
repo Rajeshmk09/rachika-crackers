@@ -10,10 +10,38 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://iplfsscpeixfx
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwbGZzc2NwZWl4Znh6Ym91aGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NDQwNzksImV4cCI6MjEwMjUyMDA3OX0.nr2an5w0nX_L37C3g03HgzpFitueRNeOJ346TYvakZ8';
 
 export default function MainHeader() {
-  const { wishlistCount, cartCount, cartTotalPrice } = useShop();
+  const { wishlistCount, cartCount, cartTotalPrice, pricelistUrl } = useShop();
   const location = useLocation();
 
   const [marqueeMessage, setMarqueeMessage] = useState('');
+
+  const handleDownloadPricelist = (e) => {
+    if (pricelistUrl && pricelistUrl.startsWith('data:')) {
+      e.preventDefault();
+      try {
+        const parts = pricelistUrl.split(';base64,');
+        const contentType = parts[0].split(':')[1];
+        const raw = window.atob(parts[1]);
+        const rawLength = raw.length;
+        const uInt8Array = new Uint8Array(rawLength);
+        for (let i = 0; i < rawLength; ++i) {
+          uInt8Array[i] = raw.charCodeAt(i);
+        }
+        const blob = new Blob([uInt8Array], { type: contentType });
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = 'Sethu_Pyro_Park_Pricelist.pdf';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+      } catch (err) {
+        console.error('Error generating PDF download:', err);
+        window.open(pricelistUrl, '_blank');
+      }
+    }
+  };
 
   useEffect(() => {
     // 1. Listen for custom event updates from Admin Panel
@@ -204,7 +232,7 @@ export default function MainHeader() {
                 <Link className="nav-link" to="/contact">Contact</Link>
               </li>
               <li className="nav-item px-2 text-center">
-                <a className="pricelist_pdf blink" href="/order/pdf/rpt_price_list_php.html" target="_blank" rel="noopener noreferrer">
+                <a className="pricelist_pdf blink" href={pricelistUrl || "/products"} onClick={handleDownloadPricelist} target="_blank" rel="noopener noreferrer">
                   Download Pricelist
                 </a>
               </li>

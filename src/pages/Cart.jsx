@@ -43,7 +43,7 @@ export default function Cart() {
       // Fetch fresh from Supabase
       try {
         const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://iplfsscpeixfxzbouhlp.supabase.co';
-        const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwbGZzc2NwZWl4Znh6Ym91aGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NDQwNzksImV4cCI6MjEwMjUyMDA3OX0.nr2an5w0nX_L37C3g03HgzpFitueRNeOJ346TYvakZ8';
         const res = await fetch(
           `${SUPABASE_URL}/rest/v1/products?category=eq.__SITE_SETTINGS__&limit=1`,
           { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
@@ -215,15 +215,15 @@ export default function Cart() {
     doc.setLineWidth(0.4);
     doc.line(margin, y, col2, y);
     y += 6;
-    doc.setFont('helvetica', 'italic');
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.5);
     doc.setTextColor(100, 116, 139);
-    doc.text('Thank you for choosing Sethu Pyro Park! We will confirm your order shortly.', margin, y);
-    doc.setFont('helvetica', 'normal');
     doc.text(`Generated: ${new Date().toLocaleString('en-IN')}`, col2, y, { align: 'right' });
 
     // Download
-    const fileName = `OrderEnquiry_${orderForm.name.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
+    const cleanName = (orderForm.name || 'Customer').replace(/\s+/g, '_');
+    const cleanPhone = (orderForm.phone || 'NoPhone').replace(/\s+/g, '_');
+    const fileName = `${cleanName}_${cleanPhone}.pdf`;
     doc.save(fileName);
 
     // ── WhatsApp text ─────────────────────────────────────
@@ -254,7 +254,7 @@ Kindly confirm my order. Thank you!`;
 
     // Save order to Supabase in background after WhatsApp opens
     const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://iplfsscpeixfxzbouhlp.supabase.co';
-    const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwbGZzc2NwZWl4Znh6Ym91aGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NDQwNzksImV4cCI6MjEwMjUyMDA3OX0.nr2an5w0nX_L37C3g03HgzpFitueRNeOJ346TYvakZ8';
     fetch(`${SUPABASE_URL}/rest/v1/orders`, {
       method: 'POST',
       headers: {
@@ -264,7 +264,7 @@ Kindly confirm my order. Thank you!`;
         Prefer: 'return=representation',
       },
       body: JSON.stringify({
-        name: orderForm.name,
+        customer_name: orderForm.name,
         phone: orderForm.phone,
         address: `[${orderForm.isTamilNadu ? 'Tamil Nadu' : 'Other State'}] ${orderForm.address}`,
         items: JSON.stringify(cartItems.map(i => ({
@@ -274,7 +274,8 @@ Kindly confirm my order. Thank you!`;
           price: parseFloat(i.product.price || 0),
           unit: i.product.order_unit || i.product.quantity || i.product.unit || '',
         }))),
-        status: 'Pending',
+        total: cartTotalPrice,
+        status: 'Payment Pending',
       }),
     }).catch(() => {});  // fail silently — WhatsApp already opened
 

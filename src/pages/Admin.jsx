@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback, createContext, useContext, useRef } from 'react';
 import { Outlet, NavLink, useNavigate, Navigate } from 'react-router-dom';
+import { jsPDF } from 'jspdf';
 import {
   Package, Tag, LogOut, Menu, X,
   Search, Plus, Edit2, Trash2, ToggleLeft, ToggleRight,
   Eye, EyeOff, Zap, Sun, Star, Flame,
   Sparkles, Box, Gift, Layers, Shield, TrendingUp, Users,
-  CheckCircle, Clock, XCircle, ArrowUpRight, RefreshCw, Save, Lock, Mail, ChevronDown, Check, Megaphone, Bell, Image, Upload, Settings
+  CheckCircle, Clock, XCircle, ArrowUpRight, RefreshCw, Save, Lock, Mail, ChevronDown, Check, Megaphone, Bell, Image, Upload, Settings, ShoppingCart, Download
 } from 'lucide-react';
 import './Admin.css';
 
@@ -113,10 +114,10 @@ export async function uploadToCloudinarySigned(file) {
 }
 
 export const STATUS_CONFIG = {
-  Pending:    { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  icon: Clock },
-  Processing: { color: '#3b82f6', bg: 'rgba(59,130,246,0.12)',  icon: RefreshCw },
-  Completed:  { color: '#10b981', bg: 'rgba(16,185,129,0.12)',  icon: CheckCircle },
-  Cancelled:  { color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   icon: XCircle },
+  'Payment Pending':   { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  icon: Clock },
+  'Payment Confirmed': { color: '#10b981', bg: 'rgba(16,185,129,0.12)',  icon: CheckCircle },
+  'Shipped':           { color: '#3b82f6', bg: 'rgba(59,130,246,0.12)',  icon: RefreshCw },
+  'Delivered':         { color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)',  icon: CheckCircle },
 };
 
 /* ── Custom Select Component ─────────────────────── */
@@ -501,6 +502,7 @@ export function AdminLayout() {
     { to: '/admin/banners',      label: 'Hero Banners',      icon: Image },
     { to: '/admin/announcement', label: 'Important Message', icon: Megaphone },
     { to: '/admin/settings',     label: 'Settings',          icon: Settings },
+    { to: '/admin/orders',       label: 'Orders',            icon: ShoppingCart },
   ];
 
   return (
@@ -2127,6 +2129,8 @@ export async function fetchSiteSettings() {
 export function AdminSettings() {
   const [minTN,    setMinTN]    = useState('');
   const [minOther, setMinOther] = useState('');
+  const [pricelistUrlState, setPricelistUrlState] = useState('');
+  const [uploadingPdf, setUploadingPdf] = useState(false);
   const [saving,   setSaving]   = useState(false);
   const [loading,  setLoading]  = useState(true);
   const [success,  setSuccess]  = useState(false);
@@ -2137,9 +2141,34 @@ export function AdminSettings() {
       const s = await fetchSiteSettings();
       setMinTN   (s.min_order_tn    != null ? String(s.min_order_tn)    : '');
       setMinOther(s.min_order_other != null ? String(s.min_order_other) : '');
+      setPricelistUrlState(s.pricelist_url || '');
       setLoading(false);
     })();
   }, []);
+
+  const handlePdfUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.type !== 'application/pdf') {
+      alert('Please select a valid PDF file.');
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      alert('File size too large. Please upload a PDF under 8MB.');
+      return;
+    }
+    setUploadingPdf(true);
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      setPricelistUrlState(evt.target.result);
+      setUploadingPdf(false);
+    };
+    reader.onerror = () => {
+      alert('Failed to read PDF file.');
+      setUploadingPdf(false);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -2148,6 +2177,7 @@ export function AdminSettings() {
     const settingsObj = {
       min_order_tn:    parseFloat(minTN)    || 0,
       min_order_other: parseFloat(minOther) || 0,
+      pricelist_url:   pricelistUrlState || '',
     };
     const settingsJson = JSON.stringify(settingsObj);
     try { localStorage.setItem('sethupyropark_site_settings', settingsJson); } catch {}
@@ -2263,6 +2293,73 @@ export function AdminSettings() {
                 </div>
               </div>
 
+              {/* Price List PDF Upload */}
+              <div style={{ marginTop: 24, marginBottom: 24, borderTop: '1px solid #e2e8f0', paddingTop: 24 }}>
+                <div style={{ fontWeight: 700, color: '#0f172a', fontSize: 15, marginBottom: 4 }}>Price List PDF Document</div>
+                <div style={{ fontSize: 12, color: '#64748b', marginBottom: 14 }}>Upload a PDF price list sheet. This file will be downloaded by customers when they click "Download Pricelist" on the website.</div>
+                
+                <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: '280px' }}>
+                    <div className="adm-inp-wrap" style={{ position: 'relative' }}>
+                      <input
+                        type="file"
+                        accept="application/pdf"
+                        onChange={handlePdfUpload}
+                        style={{ display: 'none' }}
+                        id="pricelist-pdf-upload"
+                      />
+                      <label
+                        htmlFor="pricelist-pdf-upload"
+                        className="adm-btn"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          cursor: 'pointer',
+                          backgroundColor: uploadingPdf ? '#f1f5f9' : '#fff',
+                          border: '1.5px dashed #ff6b35',
+                          color: '#ff6b35',
+                          padding: '12px 20px',
+                          borderRadius: 10,
+                          fontWeight: 700
+                        }}
+                      >
+                        <Upload size={16} />
+                        {uploadingPdf ? 'Uploading PDF...' : 'Choose PDF Price List'}
+                      </label>
+                    </div>
+                  </div>
+
+                  {pricelistUrlState && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#f8fafc', padding: '10px 16px', borderRadius: 10, border: '1px solid #e2e8f0' }}>
+                      <span style={{ fontSize: 13, color: '#0f172a', fontWeight: 600 }}>📄 pricelist.pdf</span>
+                      <a
+                        href={pricelistUrlState}
+                        download="pricelist.pdf"
+                        className="adm-btn adm-btn-secondary"
+                        style={{ padding: '6px 12px', fontSize: '0.8rem', fontWeight: 600 }}
+                      >
+                        Download PDF
+                      </a>
+                      <button
+                        type="button"
+                        className="adm-btn"
+                        onClick={() => setPricelistUrlState('')}
+                        style={{
+                          backgroundColor: '#fef2f2',
+                          borderColor: '#fca5a5',
+                          color: '#dc2626',
+                          padding: '6px 8px',
+                          fontSize: '0.8rem'
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <button
                 type="submit"
                 className="adm-btn adm-btn-primary"
@@ -2281,3 +2378,396 @@ export function AdminSettings() {
 
 /* ── Default export kept for backward compat ───────── */
 export default AdminLayout;
+
+
+/* ══════════════════════════════════════════════════
+   ORDERS / ENQUIRIES  →  /admin/orders
+══════════════════════════════════════════════════ */
+export function downloadOrderPDF(order) {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const W = 210;
+  const margin = 14;
+  const col2 = W - margin;
+  let y = 0;
+
+  const INR = (n) => `Rs. ${parseFloat(n).toLocaleString('en-IN')}`;
+  const lineH = 7;
+
+  // Header banner
+  doc.setFillColor(255, 112, 17);
+  doc.rect(0, 0, W, 28, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text('SETHU PYRO PARK', margin, 12);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Rachika Crackers', margin, 19);
+  doc.text('+91 8867390680', col2, 12, { align: 'right' });
+  doc.text('Order Enquiry', col2, 19, { align: 'right' });
+
+  y = 36;
+
+  // Title
+  doc.setTextColor(15, 23, 42);
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'bold');
+  doc.text('ORDER ENQUIRY DETAILS', margin, y);
+  doc.setDrawColor(255, 112, 17);
+  doc.setLineWidth(0.8);
+  doc.line(margin, y + 2, col2, y + 2);
+
+  y += 12;
+
+  // Parse items
+  let items = [];
+  try {
+    items = typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []);
+  } catch (e) {
+    items = [];
+  }
+
+  // Calculate total
+  const totalPayable = items.reduce((acc, item) => acc + (parseFloat(item.price || 0) * (item.quantity || 0)), 0);
+
+  // Region detection from address format
+  let region = 'Tamil Nadu';
+  let cleanAddress = order.address || '';
+  if (cleanAddress.startsWith('[Other State]')) {
+    region = 'Other State';
+    cleanAddress = cleanAddress.replace('[Other State]', '').trim();
+  } else if (cleanAddress.startsWith('[Tamil Nadu]')) {
+    region = 'Tamil Nadu';
+    cleanAddress = cleanAddress.replace('[Tamil Nadu]', '').trim();
+  }
+
+  // Customer info box
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(margin, y, W - margin * 2, 33, 3, 3, 'F');
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(100, 116, 139);
+  doc.text('CUSTOMER DETAILS', margin + 4, y + 6);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(15, 23, 42);
+  doc.setFontSize(10);
+  doc.text(`Name:    ${order.customer_name || '—'}`, margin + 4, y + 13);
+  doc.text(`Phone:   ${order.phone || '—'}`, margin + 4, y + 20);
+  doc.text(`Region:  ${region}`, margin + 4, y + 27);
+  if (cleanAddress) {
+    const addrLines = doc.splitTextToSize(`Address: ${cleanAddress}`, W - margin * 2 - 8);
+    doc.text(addrLines, margin + 4, y + 34);
+    y += addrLines.length * 5;
+  }
+
+  y += 40;
+
+  // Items table header
+  doc.setFillColor(15, 23, 42);
+  doc.rect(margin, y, W - margin * 2, 8, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text('#', margin + 3, y + 5.5);
+  doc.text('Product', margin + 10, y + 5.5);
+  doc.text('Unit', margin + 95, y + 5.5);
+  doc.text('Qty', margin + 118, y + 5.5);
+  doc.text('Price', margin + 130, y + 5.5);
+  doc.text('Subtotal', col2 - 2, y + 5.5, { align: 'right' });
+
+  y += 8;
+
+  // Items rows
+  items.forEach((item, idx) => {
+    const price = parseFloat(item.price || 0);
+    const qty = parseInt(item.quantity || 0);
+    const sub = price * qty;
+    const unit = item.unit || '—';
+    const rowBg = idx % 2 === 0 ? [255, 255, 255] : [248, 250, 252];
+    doc.setFillColor(...rowBg);
+    doc.rect(margin, y, W - margin * 2, lineH, 'F');
+
+    doc.setTextColor(15, 23, 42);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text(String(idx + 1), margin + 3, y + 5);
+
+    const nameLines = doc.splitTextToSize(item.name || '—', 82);
+    doc.text(nameLines[0], margin + 10, y + 5);
+
+    doc.text(String(unit).substring(0, 14), margin + 95, y + 5);
+    doc.text(String(qty), margin + 120, y + 5);
+    doc.text(INR(price), margin + 130, y + 5);
+    doc.setFont('helvetica', 'bold');
+    doc.text(INR(sub), col2 - 2, y + 5, { align: 'right' });
+
+    // thin separator
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.2);
+    doc.line(margin, y + lineH, col2, y + lineH);
+
+    y += lineH;
+  });
+
+  y += 6;
+
+  // Totals box
+  const totW = 80;
+  const totX = col2 - totW;
+  // Total amount highlight
+  doc.setFillColor(255, 112, 17);
+  doc.roundedRect(totX, y, totW, 10, 2, 2, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10.5);
+  doc.text('Total Payable:', totX + 4, y + 6.5);
+  doc.text(INR(totalPayable), col2 - 4, y + 6.5, { align: 'right' });
+
+  y += 20;
+
+  // Footer
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.4);
+  doc.line(margin, y, col2, y);
+  y += 6;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(100, 116, 139);
+  doc.text(`Generated: ${new Date().toLocaleString('en-IN')}`, col2, y, { align: 'right' });
+
+  // Download
+  const cleanName = (order.customer_name || 'Customer').replace(/\s+/g, '_');
+  const cleanPhone = (order.phone || 'NoPhone').replace(/\s+/g, '_');
+  const fileName = `${cleanName}_${cleanPhone}.pdf`;
+  doc.save(fileName);
+}
+
+export function AdminOrders() {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const fetchOrders = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api('/orders?order=created_at.desc');
+      setOrders(res || []);
+    } catch (e) {
+      console.error('Failed to fetch orders:', e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  const handleUpdateStatus = async (orderId, newStatus) => {
+    try {
+      await api(`/orders?id=eq.${orderId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: newStatus })
+      });
+      setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+    } catch (err) {
+      console.error('Failed to update status:', err);
+    }
+  };
+
+  const handleDeleteOrder = async (orderId) => {
+    if (!window.confirm('Are you sure you want to delete this order?')) return;
+    try {
+      await api(`/orders?id=eq.${orderId}`, { method: 'DELETE' });
+      setOrders(orders.filter(o => o.id !== orderId));
+    } catch (err) {
+      console.error('Failed to delete order:', err);
+    }
+  };
+
+  const getStatusColorStyle = (status) => {
+    const cfg = STATUS_CONFIG[status] || { color: '#64748b', bg: 'rgba(100,116,139,0.1)' };
+    return {
+      color: cfg.color,
+      backgroundColor: cfg.bg,
+      padding: '4px 10px',
+      borderRadius: '20px',
+      fontSize: '0.78rem',
+      fontWeight: 700,
+      display: 'inline-block'
+    };
+  };
+
+  const filteredOrders = orders.filter(o => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
+    return (
+      (o.customer_name || '').toLowerCase().includes(q) ||
+      (o.phone || '').toLowerCase().includes(q)
+    );
+  });
+
+  return (
+    <div className="adm-page-container">
+      <div className="adm-page-header d-flex align-items-center justify-content-between gap-3 mb-4">
+        <div>
+          <h1 className="adm-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <ShoppingCart color="#ff6b35" /> Order Enquiries
+          </h1>
+          <p className="adm-sub">Manage customer enquiries, update order statuses, and download print-ready PDF invoice sheets.</p>
+        </div>
+        <button className="adm-btn adm-btn-secondary" onClick={fetchOrders} disabled={loading}>
+          <RefreshCw style={{ width: 14, height: 14 }} className={loading ? 'spinning' : ''} />
+          {loading ? 'Loading...' : 'Refresh'}
+        </button>
+      </div>
+
+      {/* Search Bar */}
+      <div className="adm-search-bar" style={{ marginBottom: 20 }}>
+        <div className="adm-search-wrap" style={{ maxWidth: '360px', flex: 1 }}>
+          <Search className="si" />
+          <input
+            type="text"
+            className="adm-form-input"
+            placeholder="Search by customer name or phone..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="adm-card adm-scroll-card">
+        <div className="adm-table-wrap">
+          <table className="adm-table">
+            <thead>
+              <tr>
+                <th style={{ width: '130px' }}>Order Date</th>
+                <th>Customer</th>
+                <th>Region &amp; Address</th>
+                <th>Total Value</th>
+                <th style={{ width: '130px' }}>Status</th>
+                <th style={{ textAlign: 'right', width: '220px' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '40px 0', color: '#64748b' }}>
+                    <RefreshCw size={24} className="spinning mb-2" style={{ display: 'block', margin: '0 auto' }} />
+                    Loading enquiries...
+                  </td>
+                </tr>
+              ) : filteredOrders.length === 0 ? (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '40px 0', color: '#64748b' }}>
+                    {searchQuery ? 'No matching enquiries found.' : 'No order enquiries found.'}
+                  </td>
+                </tr>
+              ) : (
+                filteredOrders.map((order) => {
+                  let items = [];
+                  try {
+                    items = typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []);
+                  } catch (e) {}
+
+                  const totalVal = items.reduce((acc, i) => acc + (parseFloat(i.price || 0) * (i.quantity || 0)), 0);
+                  const itemCount = items.reduce((acc, i) => acc + (i.quantity || 0), 0);
+
+                  // Extract state region prefix
+                  let region = 'Tamil Nadu';
+                  let cleanAddress = order.address || '';
+                  if (cleanAddress.startsWith('[Other State]')) {
+                    region = 'Other State';
+                    cleanAddress = cleanAddress.replace('[Other State]', '').trim();
+                  } else if (cleanAddress.startsWith('[Tamil Nadu]')) {
+                    region = 'Tamil Nadu';
+                    cleanAddress = cleanAddress.replace('[Tamil Nadu]', '').trim();
+                  }
+
+                  return (
+                    <tr key={order.id}>
+                      <td>
+                        <div style={{ fontWeight: 600, color: '#1e293b' }}>{fmtDate(order.created_at)}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>ID: #{String(order.id).substring(0, 8)}</div>
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{order.customer_name || '—'}</div>
+                        <div style={{ fontSize: '0.85rem', color: '#475569' }}>📞 {order.phone || '—'}</div>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
+                          <span style={{
+                            backgroundColor: region === 'Tamil Nadu' ? '#fff7ed' : '#eff6ff',
+                            color: region === 'Tamil Nadu' ? '#c2410c' : '#1d4ed8',
+                            border: `1px solid ${region === 'Tamil Nadu' ? '#fed7aa' : '#bfdbfe'}`,
+                            padding: '1px 6px',
+                            borderRadius: '4px',
+                            fontSize: '0.72rem',
+                            fontWeight: 700
+                          }}>
+                            {region === 'Tamil Nadu' ? '🏛️ TN' : '🇮🇳 Other States'}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.85rem', color: '#64748b', whiteSpace: 'normal', wordBreak: 'break-all', maxWidth: '300px', lineHeight: 1.4 }}>
+                          {cleanAddress || <span style={{ fontStyle: 'italic', color: '#94a3b8' }}>No address provided</span>}
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: 800, color: '#ff6b35', fontSize: '0.98rem' }}>₹{totalVal.toLocaleString('en-IN')}</div>
+                        <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{itemCount} item{itemCount !== 1 ? 's' : ''}</div>
+                      </td>
+                      <td>
+                        <span style={getStatusColorStyle(order.status || 'Payment Pending')}>
+                          {order.status || 'Payment Pending'}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                          <button
+                            onClick={() => downloadOrderPDF(order)}
+                            className="adm-btn adm-btn-sm adm-btn-secondary"
+                            style={{ padding: '6px 12px', fontSize: '0.8rem', fontWeight: 600 }}
+                            title="Download PDF Invoice"
+                          >
+                            <Download size={13} style={{ marginRight: '4px' }} /> PDF
+                          </button>
+                          
+                          <CustomSelect
+                            value={order.status || 'Payment Pending'}
+                            options={[
+                              { label: 'Payment Pending', value: 'Payment Pending' },
+                              { label: 'Payment Confirmed', value: 'Payment Confirmed' },
+                              { label: 'Shipped', value: 'Shipped' },
+                              { label: 'Delivered', value: 'Delivered' }
+                            ]}
+                            onChange={(val) => handleUpdateStatus(order.id, val)}
+                            style={{ width: '170px' }}
+                          />
+
+                          <button
+                            onClick={() => handleDeleteOrder(order.id)}
+                            className="adm-btn adm-btn-sm"
+                            style={{
+                              backgroundColor: '#fef2f2',
+                              borderColor: '#fca5a5',
+                              color: '#dc2626',
+                              padding: '6px 8px'
+                            }}
+                            title="Delete Enquiry"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}

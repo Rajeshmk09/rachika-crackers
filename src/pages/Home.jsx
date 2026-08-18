@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import { useShop } from '../context/ShopContext';
 import HeaderNav from '../components/HeaderNav';
 import TopMarquee from '../components/TopMarquee';
 import HomeImg1 from '../assets/websitelogo.png';
@@ -84,6 +85,35 @@ const fetchFeaturedProductsQuery = async () => {
 };
 
 const Home = () => {
+	const { pricelistUrl } = useShop();
+
+	const handleDownloadPricelist = (e) => {
+		if (pricelistUrl && pricelistUrl.startsWith('data:')) {
+			e.preventDefault();
+			try {
+				const parts = pricelistUrl.split(';base64,');
+				const contentType = parts[0].split(':')[1];
+				const raw = window.atob(parts[1]);
+				const rawLength = raw.length;
+				const uInt8Array = new Uint8Array(rawLength);
+				for (let i = 0; i < rawLength; ++i) {
+					uInt8Array[i] = raw.charCodeAt(i);
+				}
+				const blob = new Blob([uInt8Array], { type: contentType });
+				const blobUrl = URL.createObjectURL(blob);
+				const link = document.createElement('a');
+				link.href = blobUrl;
+				link.download = 'Sethu_Pyro_Park_Pricelist.pdf';
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+				setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+			} catch (err) {
+				console.error('Error generating PDF download:', err);
+				window.open(pricelistUrl, '_blank');
+			}
+		}
+	};
 	// useQuery: isLoading=true ONLY on the very first fetch. On back navigation, cachedData shows instantly.
 	const {
 		data: dynamicHeroBanners = [],
@@ -695,7 +725,7 @@ const Home = () => {
 				</a>
 			</div>
 			<div className="fixed point2">
-				<a href="/products">
+				<a href={pricelistUrl || "/products"} onClick={handleDownloadPricelist} target="_blank" rel="noopener noreferrer">
 					<img src={HomeImg39} className="priceicn2 float-right blink" alt="SETHU PYRO PARK RACHIKA CRACKERS" title="SETHU PYRO PARK RACHIKA CRACKERS" />
 				</a>
 			</div>
