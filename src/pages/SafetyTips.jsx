@@ -6,96 +6,14 @@ import SafetyTipsImg5 from '../assets/safetytips_img_5.png';
 import SafetyTipsImg6 from '../assets/safetytips_img_6.png';
 import SafetyTipsImg7 from '../assets/safetytips_img_7.png';
 import React from 'react';
+import HeaderNav from '../components/HeaderNav';
 
 const SafetyTips = () => {
   return (
     <>
       
 	
-<div className="sectionbg">
-    <div className="container-fluid">
-		<div className="row">
-			<div className="col-md-12 px-0">
-			
-<div className="py-2 px-2 marquee L" style={{backgroundColor: '#0a539f', color: '#ffffff'}}>
-    🚨 Important Update! 🚨
-The SETHU PYRO PARK RACHIKA CRACKERS website will be closing this coming Sunday!
 
-🧨 Kindly place your orders as soon as possible to avoid missing out.
-
-Due to increased transport charges and unfavorable weather conditions, we are closing earlier than usual.
-
-🙏 Thank you for your continued support!
-
-For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sale is open now. Please buy early to get best discounts Happy Diwali....!!!! NOTE:-25.09.2025 ONWARDS ALL COMBO'S PACKS CLOSED &amp; "Home delivery is not available — please come and pick it up from the local hub."
-.....Due to high transportation charges, we have stopped services to Andhra Pradesh, Telangana, and Karnataka. We apologize for the inconvenience caused.</div>
-      
-    
-			</div>
-		</div>
-    </div>
-</div>
-<div className="container py-2">
-	<div className="row">
-		<div className="col-lg-4 col-md-12 col-12 text-center text-lg-left align-self-center">
-			<a href="/"> 
-				<img src={SafetyTipsImg1} className="img-fluid logo" alt="SETHU PYRO PARK RACHIKA CRACKERS" title="SETHU PYRO PARK RACHIKA CRACKERS" />
-			</a>
-		</div>
-		<div className="col-lg-4 d-none d-md-none d-lg-block align-self-center">
-			<div className="d-flex align-items-center">
-				<div className="icon pr-2">
-				    <img src={SafetyTipsImg2} className="img-fluid" alt="SETHU PYRO PARK RACHIKA CRACKERS" title="SETHU PYRO PARK RACHIKA CRACKERS" />
-				</div>
-				<div className="icon-info">
-				    <div className="acme heading6 clr">Location</div>
-				    <div className="josefin smallfnt">9/296/1, Sri Anjaneya Nagar, Anupankulam,<br />Sivakasi - 626 189 </div>
-				</div>
-			</div>
-		</div>
-		<div className="col-lg-4 d-none d-md-none d-lg-block">
-			<div className="phone"> 
-				<p className="smallfnt black">FOR QUERIES &amp; <br /> Bulk order</p>
-				<span className="josefin smallfnt clr1"> +91 96267 77758 </span> 
-			</div>
-		</div>
-	</div>
-</div>
-
-<nav className="navbar navbar-expand-lg navbar-light navbg navfont">
-	<div className="container">
-		<button type="button" className="navbar-toggler mx-auto" data-toggle="collapse" data-target="#myNavbar">
-			<span className="bi bi-list text-white"> Menu </span>
-		</button>
-		<div id="myNavbar" className="collapse navbar-collapse navfont">
-			<ul className="navbar-nav mr-auto text-center">
-				<li className="nav-item px-3 ">
-					<a className="nav-link" href="/"> Home </a>
-				</li>
-				<li className="nav-item px-3 ">
-					<a className="nav-link" href="/about"> About </a>
-				</li>
-				<li className="nav-item px-3 ">
-					<a className="nav-link" href="/products"> Products </a>
-				</li>
-				<li className="nav-item px-3 active">
-					<a className="nav-link" href=".">Safety Tips</a>
-				</li>
-				<li className="nav-item px-3 ">
-					<a className="nav-link" href="/contact">Contact</a>
-				</li>
-				<li className="nav-item px-3">
-					<a className="nav-link" href="https://www.metturtransports.com/">Track Your Order</a>
-				</li>
-				<li className="nav-item px-3 text-center">
-					<a className="pricelist_pdf blink" href="order/pdf/rpt_price_list_php.html" target="_blank">
-    Download Pricelist
-</a>
-				</li>
-			</ul>
-		</div> 	
-	</div>	
-</nav>
 <div className="safetytipsbg">
 	<div className="container pad">
 		<div className="row">
@@ -222,7 +140,8 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
 				<div className="acme py-2 heading5 clr">For Order</div>
 									<li className="josefin pb-2"><p><i className="bi bi-phone clr"></i>   </p>
 						<div className="text1 smallfnt">
-							(+91) 96267 77758 						</div>
+							<a href="tel:+918867390680" style={{ color: 'inherit', textDecoration: 'none', whiteSpace: 'nowrap' }}>(+91) 8867390680</a>
+						</div>
 					</li>
 																							<li className="josefin pb-3"><p><i className="bi bi-envelope clr"></i>   </p>
 							<div className="text1 smallfnt">
@@ -234,7 +153,7 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
 						<div className="col-lg-12 text-center pt-4">
 				<p className="smallfnt josefin pb-3">As per 2018 supreme court order, online sale of firecrackers are not permitted! We value our customers and at the same time, respect jurisdiction. We request you to add your products to the cart and submit the required crackers through the enquiry button. We will contact you within 24 hrs and confirm the order through WhatsApp or phone call. Please add and submit your enquiries and enjoy your Diwali with SETHU PYRO PARK RACHIKA CRACKERS. Our License No.----. SETHU PYRO PARK RACHIKA CRACKERS as a company following 100% legal &amp; statutory compliances and all our shops, go-downs are maintained as per the explosive acts. We send the parcels through registered and legal transport service providers as like every other major companies in Sivakasi is doing so.</p>	
 			</div>
-					</div>
+					{/* ... (end of existing code) ... */}</div>
     </div>
 </div>
 
@@ -247,11 +166,11 @@ For instant 90% discounts, offers call us now :- +91 96267 77758.   Diwali sal
 				<span className="time-of-year">
 					<img src={SafetyTipsImg5} className="priceicn1 float-left" alt="SETHU PYRO PARK RACHIKA CRACKERS" title="SETHU PYRO PARK RACHIKA CRACKERS" />
 					<div className="tooltip text-white text-center"> For More Details Call <br /> 
-						<i className="bi bi-phone"></i> +91 96267 77758 					</div>
+						<i className="bi bi-phone"></i> +91 8867390680 					</div>
 				</span>
 			</div>
 							<div className="fixed point1 w0 d-lg-none">
-				<a href="tel:+919626777758">
+				<a href="tel:+918867390680">
 					<img src={SafetyTipsImg6} className="priceicn1 float-left" alt="SETHU PYRO PARK RACHIKA CRACKERS" title="SETHU PYRO PARK RACHIKA CRACKERS" />
 				</a>
 			</div>

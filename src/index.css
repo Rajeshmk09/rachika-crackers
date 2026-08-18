@@ -34,9 +34,9 @@ li{list-style-type:none!important;}
 .navbar button {background-color:#e85222;}
 .phone {
   float: right;
-  width: 282px;
+  width: 325px;
   height: 70px;
-  margin: 25px 10px 25px 10px;
+  margin: 25px 0px 25px 10px;
   display: table;
   background: url("./assets/css_img_1.png") no-repeat;
   border-left: transparent;}
@@ -46,7 +46,7 @@ li{list-style-type:none!important;}
   vertical-align: middle;
   display: table-cell;
   position: relative;
-  font-size: 14px;}
+  font-size: 13px;}
 .phone p::after {
   content: url("./assets/css_img_2.png");
   position: absolute;
@@ -55,7 +55,9 @@ li{list-style-type:none!important;}
 .phone span {
   vertical-align: middle;
   display: table-cell;
-  font-size: 16px;}
+  font-size: 15px;
+  white-space: nowrap;
+  word-break: keep-all;}
   .homeparallax {
 	background-image: url("./assets/css_img_3.webp");
 	background-position: center;

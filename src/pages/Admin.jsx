@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, createContext, useContext } from 'react';
+import React, { useState, useEffect, useCallback, createContext, useContext, useRef } from 'react';
 import { Outlet, NavLink, useNavigate, Navigate } from 'react-router-dom';
 import {
   LayoutDashboard, Package, Tag, ShoppingCart, LogOut, Menu, X,
@@ -6,7 +6,7 @@ import {
   MessageCircle, Eye, EyeOff, Zap, Sun, Star, Flame,
   Sparkles, Box, Gift, Layers, Shield, TrendingUp, Users, DollarSign,
   CheckCircle, Clock, XCircle, AlertCircle, ArrowUpRight, Filter,
-  RefreshCw, Save, Lock, Mail
+  RefreshCw, Save, Lock, Mail, ChevronDown, Check, Megaphone, Bell, Image, Upload
 } from 'lucide-react';
 import './Admin.css';
 
@@ -25,12 +25,157 @@ export const api = async (path, options = {}) => {
 export const fmt = (n) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
 export const fmtDate = (d) => new Date(d).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
+/* ── Cloudinary Image Deletion ────────────────────── */
+export function extractCloudinaryPublicId(url) {
+  if (!url || typeof url !== 'string' || !url.includes('res.cloudinary.com')) return null;
+  try {
+    const parts = url.split('/upload/');
+    if (parts.length < 2) return null;
+    const afterUpload = parts[1];
+    const pathSegments = afterUpload.split('/');
+    if (pathSegments[0].startsWith('v') && !isNaN(pathSegments[0].slice(1))) {
+      pathSegments.shift();
+    }
+    const fullPathWithExt = pathSegments.join('/');
+    const lastDotIdx = fullPathWithExt.lastIndexOf('.');
+    return lastDotIdx !== -1 ? fullPathWithExt.slice(0, lastDotIdx) : fullPathWithExt;
+  } catch (e) {
+    return null;
+  }
+}
+
+export async function generateCloudinarySignature(paramsToSign, apiSecret) {
+  const sortedKeys = Object.keys(paramsToSign).sort();
+  const serialized = sortedKeys.map(k => `${k}=${paramsToSign[k]}`).join('&') + apiSecret;
+  const msgBuffer = new TextEncoder().encode(serialized);
+  const hashBuffer = await crypto.subtle.digest('SHA-1', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+export async function deleteFromCloudinary(url) {
+  const publicId = extractCloudinaryPublicId(url);
+  if (!publicId) return false;
+
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'ler130g0';
+  const apiKey = import.meta.env.VITE_CLOUDINARY_API_KEY || '485551373743138';
+  const apiSecret = import.meta.env.VITE_CLOUDINARY_API_SECRET || '3UzLYDM1K3ukrXqKTD6MetspM7g';
+
+  if (!cloudName || !apiKey || !apiSecret) return false;
+
+  try {
+    const timestamp = Math.floor(Date.now() / 1000);
+    const signature = await generateCloudinarySignature({ public_id: publicId, timestamp }, apiSecret);
+
+    const formData = new FormData();
+    formData.append('public_id', publicId);
+    formData.append('api_key', apiKey);
+    formData.append('timestamp', timestamp);
+    formData.append('signature', signature);
+
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    const data = await res.json();
+    console.log('Cloudinary Destroy Result:', data);
+    return data.result === 'ok';
+  } catch (err) {
+    console.warn('Cloudinary delete notice:', err);
+    return false;
+  }
+}
+
+export async function uploadToCloudinarySigned(file) {
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'ler130g0';
+  const apiKey = import.meta.env.VITE_CLOUDINARY_API_KEY || '485551373743138';
+  const apiSecret = import.meta.env.VITE_CLOUDINARY_API_SECRET || '3UzLYDM1K3ukrXqKTD6MetspM7g';
+
+  const timestamp = Math.floor(Date.now() / 1000);
+  const signature = await generateCloudinarySignature({ timestamp }, apiSecret);
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('api_key', apiKey);
+  formData.append('timestamp', timestamp);
+  formData.append('signature', signature);
+
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  const data = await res.json();
+  if (data.secure_url) {
+    return data.secure_url;
+  }
+  throw new Error(data.error?.message || 'Cloudinary upload failed');
+}
+
 export const STATUS_CONFIG = {
   Pending:    { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  icon: Clock },
   Processing: { color: '#3b82f6', bg: 'rgba(59,130,246,0.12)',  icon: RefreshCw },
   Completed:  { color: '#10b981', bg: 'rgba(16,185,129,0.12)',  icon: CheckCircle },
   Cancelled:  { color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   icon: XCircle },
 };
+
+/* ── Custom Select Component ─────────────────────── */
+export function CustomSelect({ value, options, onChange, placeholder = 'Select option', style = {}, minWidth }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(o => typeof o === 'object' ? String(o.value) === String(value) : String(o) === String(value));
+  const selectedLabel = selectedOption ? (typeof selectedOption === 'object' ? selectedOption.label : selectedOption) : value || placeholder;
+
+  return (
+    <div ref={ref} className="adm-custom-select-wrap" style={{ position: 'relative', width: '100%', minWidth, ...style }}>
+      <button
+        type="button"
+        className={`adm-custom-select-trigger ${open ? 'active' : ''}`}
+        onClick={() => setOpen(!open)}
+      >
+        <span className="adm-select-val">{selectedLabel}</span>
+        <ChevronDown className={`adm-select-chevron ${open ? 'open' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="adm-custom-select-dropdown">
+          <div className="adm-custom-select-list">
+            {options.map((opt, idx) => {
+              const val = typeof opt === 'object' ? opt.value : opt;
+              const lbl = typeof opt === 'object' ? opt.label : opt;
+              const isSelected = String(val) === String(value);
+              return (
+                <div
+                  key={idx}
+                  className={`adm-custom-select-item ${isSelected ? 'selected' : ''}`}
+                  onClick={() => {
+                    onChange(val);
+                    setOpen(false);
+                  }}
+                >
+                  <span>{lbl}</span>
+                  {isSelected && <Check style={{ width: 14, height: 14, color: '#ff6b35' }} />}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export const getCategoryIcon = (name = '') => {
   const n = name.toLowerCase();
@@ -134,74 +279,143 @@ export function CategoriesSkeleton() {
 
 export function ProductsSkeleton() {
   return (
-    <>
-      <div style={{marginBottom:24}}>
-        <div className="adm-skeleton" style={{width:100,height:24,marginBottom:8}} />
-        <div className="adm-skeleton" style={{width:180,height:14}} />
+    <div className="adm-page-container">
+      <div className="adm-page-header">
+        <div style={{marginBottom:16}}>
+          <div className="adm-skeleton" style={{width:120,height:22,marginBottom:6,borderRadius:4}} />
+          <div className="adm-skeleton" style={{width:160,height:13,borderRadius:4}} />
+        </div>
+
+        <div className="adm-search-bar">
+          <div className="adm-skeleton" style={{flex:1,height:44,borderRadius:10}} />
+          <div className="adm-skeleton" style={{width:220,height:44,borderRadius:10}} />
+          <div className="adm-skeleton" style={{width:135,height:44,borderRadius:9}} />
+        </div>
+
+        <div style={{marginBottom:12}}>
+          <div className="adm-skeleton" style={{width:180,height:13,borderRadius:4}} />
+        </div>
       </div>
-      <div className="adm-search-bar">
-        <div className="adm-skeleton" style={{flex:1,height:40,borderRadius:9}} />
-        <div className="adm-skeleton" style={{width:220,height:40,borderRadius:9}} />
-        <div className="adm-skeleton" style={{width:130,height:40,borderRadius:9}} />
+
+      <div className="adm-card adm-scroll-card">
+        <div className="adm-table-wrap">
+          <table className="adm-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Product</th>
+                <th>Category</th>
+                <th>MRP</th>
+                <th>Discount</th>
+                <th>Price</th>
+                <th>Unit</th>
+                <th>Status</th>
+                <th style={{textAlign:'right'}}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                <tr key={i}>
+                  <td style={{width:40}}>
+                    <div className="adm-skeleton" style={{width:16,height:12,borderRadius:3}} />
+                  </td>
+                  <td>
+                    <div style={{display:'flex',alignItems:'center',gap:12}}>
+                      <div className="adm-skeleton" style={{width:44,height:44,borderRadius:8,flexShrink:0}} />
+                      <div>
+                        <div className="adm-skeleton" style={{width:140 + (i % 3)*25,height:14,marginBottom:6,borderRadius:4}} />
+                        <div className="adm-skeleton" style={{width:85,height:11,borderRadius:3}} />
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="adm-skeleton" style={{width:110,height:13,borderRadius:4}} />
+                  </td>
+                  <td>
+                    <div className="adm-skeleton" style={{width:50,height:13,borderRadius:4}} />
+                  </td>
+                  <td>
+                    <div className="adm-skeleton" style={{width:40,height:13,borderRadius:4}} />
+                  </td>
+                  <td>
+                    <div className="adm-skeleton" style={{width:55,height:13,borderRadius:4}} />
+                  </td>
+                  <td>
+                    <div className="adm-skeleton" style={{width:45,height:12,borderRadius:3}} />
+                  </td>
+                  <td>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <div className="adm-skeleton" style={{width:38,height:22,borderRadius:12,flexShrink:0}} />
+                      <div className="adm-skeleton" style={{width:40,height:12,borderRadius:3}} />
+                    </div>
+                  </td>
+                  <td>
+                    <div style={{display:'flex',gap:6,justifyContent:'flex-end'}}>
+                      <div className="adm-skeleton" style={{width:30,height:30,borderRadius:8}} />
+                      <div className="adm-skeleton" style={{width:30,height:30,borderRadius:8}} />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-      <div className="adm-skeleton" style={{width:180,height:14,marginBottom:12}} />
-      <div className="adm-card">
-        {[1,2,3,4,5].map(i => (
-          <div key={i} className="adm-sk-table-row">
-            <div className="adm-sk-flex" style={{flex:1}}>
-              <div className="adm-skeleton" style={{width:44,height:44,borderRadius:8}} />
-              <div>
-                <div className="adm-skeleton" style={{width:180,height:14,marginBottom:6}} />
-                <div className="adm-skeleton" style={{width:100,height:10}} />
-              </div>
-            </div>
-            <div className="adm-skeleton" style={{width:120,height:14,marginRight:30}} />
-            <div className="adm-skeleton" style={{width:60,height:14,marginRight:30}} />
-            <div className="adm-skeleton" style={{width:40,height:14,marginRight:30}} />
-            <div className="adm-skeleton" style={{width:28,height:28,borderRadius:'50%'}} />
-          </div>
-        ))}
-      </div>
-    </>
+    </div>
   );
 }
 
 export function OrdersSkeleton() {
   return (
-    <>
-      <div style={{marginBottom:24}}>
-        <div className="adm-skeleton" style={{width:90,height:24,marginBottom:8}} />
-        <div className="adm-skeleton" style={{width:150,height:14}} />
-      </div>
-      <div className="adm-search-bar">
-        <div className="adm-skeleton" style={{flex:1,height:40,borderRadius:9}} />
-        <div className="adm-skeleton" style={{width:160,height:40,borderRadius:9}} />
-      </div>
-      <div className="adm-skeleton" style={{width:150,height:14,marginBottom:12}} />
-      {[1,2,3].map(i => (
-        <div key={i} className="adm-sk-order-card">
-          <div className="adm-sk-space-between" style={{marginBottom:12}}>
-            <div>
-              <div className="adm-skeleton" style={{width:80,height:12,marginBottom:8}} />
-              <div className="adm-skeleton" style={{width:180,height:18,marginBottom:8}} />
-              <div className="adm-skeleton" style={{width:240,height:12}} />
-            </div>
-            <div className="adm-sk-flex" style={{flexDirection:'column',alignItems:'flex-end'}}>
-              <div className="adm-skeleton" style={{width:80,height:22,borderRadius:20,marginBottom:8}} />
-              <div className="adm-skeleton" style={{width:100,height:32,borderRadius:8}} />
-            </div>
-          </div>
-          <div className="adm-sk-flex" style={{gap:8,marginBottom:12}}>
-            <div className="adm-skeleton" style={{width:110,height:28,borderRadius:20}} />
-            <div className="adm-skeleton" style={{width:110,height:28,borderRadius:20}} />
-          </div>
-          <div style={{background:'#f8fafc',borderRadius:8,padding:14}}>
-            <div className="adm-sk-space-between" style={{marginBottom:8}}><div className="adm-skeleton" style={{width:150,height:12}} /><div className="adm-skeleton" style={{width:40,height:12}} /></div>
-            <div className="adm-sk-space-between" style={{borderTop:'1px solid #e2e8f0',paddingTop:8}}><div className="adm-skeleton" style={{width:60,height:14}} /><div className="adm-skeleton" style={{width:50,height:14}} /></div>
-          </div>
+    <div className="adm-page-container">
+      <div className="adm-page-header">
+        <div style={{marginBottom:16}}>
+          <div className="adm-skeleton" style={{width:100,height:22,marginBottom:6,borderRadius:4}} />
+          <div className="adm-skeleton" style={{width:140,height:13,borderRadius:4}} />
         </div>
-      ))}
-    </>
+
+        <div className="adm-search-bar">
+          <div className="adm-skeleton" style={{flex:1,height:44,borderRadius:10}} />
+          <div className="adm-skeleton" style={{width:160,height:44,borderRadius:10}} />
+        </div>
+
+        <div style={{marginBottom:12}}>
+          <div className="adm-skeleton" style={{width:150,height:13,borderRadius:4}} />
+        </div>
+      </div>
+
+      <div className="adm-scroll-list">
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="order-card" style={{pointerEvents:'none'}}>
+            <div className="order-hdr">
+              <div>
+                <div className="adm-skeleton" style={{width:60,height:12,marginBottom:6,borderRadius:3}} />
+                <div className="adm-skeleton" style={{width:160,height:16,marginBottom:6,borderRadius:4}} />
+                <div className="adm-skeleton" style={{width:220,height:12,marginBottom:10,borderRadius:3}} />
+                <div style={{display:'flex',gap:8}}>
+                  <div className="adm-skeleton" style={{width:110,height:24,borderRadius:12}} />
+                  <div className="adm-skeleton" style={{width:110,height:24,borderRadius:12}} />
+                </div>
+              </div>
+              <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:8}}>
+                <div className="adm-skeleton" style={{width:90,height:24,borderRadius:20}} />
+                <div className="adm-skeleton" style={{width:110,height:32,borderRadius:8}} />
+              </div>
+            </div>
+            <div className="order-items" style={{borderTop:'1px solid #f1f5f9',paddingTop:12,marginTop:12}}>
+              <div className="adm-sk-space-between" style={{marginBottom:8}}>
+                <div className="adm-skeleton" style={{width:180,height:13,borderRadius:3}} />
+                <div className="adm-skeleton" style={{width:60,height:13,borderRadius:3}} />
+              </div>
+              <div className="adm-sk-space-between">
+                <div className="adm-skeleton" style={{width:140,height:13,borderRadius:3}} />
+                <div className="adm-skeleton" style={{width:50,height:13,borderRadius:3}} />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -277,12 +491,35 @@ export function AdminLogin() {
    SHARED LAYOUT  →  /admin/*
    Provides sidebar + header + data context
 ══════════════════════════════════════════════════ */
+const DEFAULT_CATEGORIES_DATA = [
+  { id: 'cat-1', name: 'Single Sound Crackers', image_url: '', description: 'Loud single sound crackers & Lakshmi crackers' },
+  { id: 'cat-2', name: 'Chakkars', image_url: '', description: 'Ground spinning chakkars and wheels' },
+  { id: 'cat-3', name: 'Flower Pots & Fountains', image_url: '', description: 'Sparkling colorful fountains & flower pots' },
+  { id: 'cat-4', name: 'Sparklers', image_url: '', description: 'Handheld electric and colorful sparklers' },
+  { id: 'cat-5', name: 'Rockets & Sky Shots', image_url: '', description: 'High aerial sky shots and rockets' },
+  { id: 'cat-6', name: 'Fancy Novelties', image_url: '', description: 'Special light, sound and color novelties' },
+  { id: 'cat-7', name: 'Kids Special', image_url: '', description: 'Safe & fun soundless crackers for children' },
+  { id: 'cat-8', name: 'Gift Boxes & Combos', image_url: '', description: 'Assorted Diwali crackers gift boxes' },
+];
+
 export function AdminLayout() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [products, setProducts] = useState([]);
   const [orders, setOrders]     = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [categoryData, setCategoryData] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sethupyropark_admin_categories_v3');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return parsed.filter(c => {
+          const name = typeof c === 'object' ? c?.name : String(c);
+          return name && !name.startsWith('__');
+        });
+      }
+    } catch (e) {}
+    return DEFAULT_CATEGORIES_DATA;
+  });
   const [loading, setLoading]   = useState(false);
 
   // Auth guard
@@ -297,9 +534,27 @@ export function AdminLayout() {
         api('/products?order=product_code.asc'),
         api('/orders?order=created_at.desc'),
       ]);
-      const ps = prods || [];
+      const ps = (prods || []).filter(p => !p.category || !p.category.startsWith('__'));
       setProducts(ps);
-      setCategories([...new Set(ps.map(p => p.category).filter(Boolean))].sort());
+
+      // Merge any category names found in DB products into categoryData
+      const dbCatNames = [...new Set(ps.map(p => p.category).filter(n => n && !n.startsWith('__')))];
+      setCategoryData(prev => {
+        const existingNames = new Set(prev.map(c => c.name));
+        const missing = dbCatNames.filter(n => !existingNames.has(n)).map((name, idx) => ({
+          id: 'cat-db-' + idx + '-' + Date.now(),
+          name,
+          image_url: '',
+          description: ''
+        }));
+        if (missing.length > 0) {
+          const updated = [...prev, ...missing];
+          try { localStorage.setItem('sethupyropark_admin_categories_v3', JSON.stringify(updated)); } catch (e) {}
+          return updated;
+        }
+        return prev;
+      });
+
       setOrders(ords || []);
     } catch (e) { console.error(e); }
     setLoading(false);
@@ -307,20 +562,68 @@ export function AdminLayout() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
+  const saveCategory = async (catObj) => {
+    let nextList = [...categoryData];
+    const isEdit = !!catObj.id;
+
+    if (isEdit) {
+      nextList = nextList.map(c => c.id === catObj.id ? { ...c, ...catObj } : c);
+      if (catObj.oldName && catObj.oldName !== catObj.name) {
+        try {
+          await api(`/products?category=eq.${encodeURIComponent(catObj.oldName)}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ category: catObj.name })
+          });
+          await fetchAll();
+        } catch (e) {
+          console.error('Failed to update product categories:', e);
+        }
+      }
+    } else {
+      const newCat = {
+        id: 'cat-' + Date.now(),
+        name: catObj.name,
+        image_url: catObj.image_url || '',
+        description: catObj.description || '',
+      };
+      nextList.push(newCat);
+    }
+
+    setCategoryData(nextList);
+    try {
+      localStorage.setItem('sethupyropark_admin_categories_v3', JSON.stringify(nextList));
+    } catch (e) {}
+  };
+
+  const deleteCategory = async (catObj) => {
+    if (catObj.image_url) {
+      deleteFromCloudinary(catObj.image_url);
+    }
+    const nextList = categoryData.filter(c => c.id !== catObj.id && c.name !== catObj.name);
+    setCategoryData(nextList);
+    try {
+      localStorage.setItem('sethupyropark_admin_categories_v3', JSON.stringify(nextList));
+    } catch (e) {}
+  };
+
+  const categories = categoryData.map(c => c.name);
+
   const handleLogout = () => {
     sessionStorage.removeItem('admin_logged_in');
     navigate('/admin/login', { replace: true });
   };
 
   const navItems = [
-    { to: '/admin',            label: 'Dashboard',  icon: LayoutDashboard, end: true },
-    { to: '/admin/categories', label: 'Categories', icon: Tag,             badge: categories.length || null },
-    { to: '/admin/products',   label: 'Products',   icon: Package,         badge: products.length || null },
-    { to: '/admin/orders',     label: 'Orders',     icon: ShoppingCart,    badge: orders.filter(o=>o.status==='Pending').length || null },
+    { to: '/admin',              label: 'Dashboard',         icon: LayoutDashboard, end: true },
+    { to: '/admin/categories',   label: 'Categories',        icon: Tag,             badge: categoryData.length || null },
+    { to: '/admin/products',     label: 'Products',          icon: Package,         badge: products.length || null },
+    { to: '/admin/orders',       label: 'Orders',            icon: ShoppingCart,    badge: orders.filter(o=>o.status==='Pending').length || null },
+    { to: '/admin/banners',      label: 'Hero Banners',      icon: Image },
+    { to: '/admin/announcement', label: 'Important Message', icon: Megaphone },
   ];
 
   return (
-    <AdminCtx.Provider value={{ products, orders, categories, loading, fetchAll }}>
+    <AdminCtx.Provider value={{ products, orders, categories, categoryData, saveCategory, deleteCategory, loading, fetchAll }}>
       <div className="adm">
         <div className="adm-layout">
           {sidebarOpen && <div className="sb-ov" onClick={()=>setSidebarOpen(false)} />}
@@ -462,7 +765,7 @@ export function AdminDashboard() {
         </div>
         <div className="adm-card">
           <div className="adm-card-hdr"><div><div className="adm-card-title">Product Breakdown</div><div className="adm-card-sub">Active products per category</div></div></div>
-          <div className="adm-card-body" style={{paddingTop:12}}>
+          <div className="adm-card-body bd-list">
             {breakdown.length===0 ? <div style={{textAlign:'center',color:'#94a3b8',fontSize:13,padding:'24px 0'}}>No active products</div>
             : breakdown.map(b=>(
               <div key={b.name} className="bd-item">
@@ -478,39 +781,313 @@ export function AdminDashboard() {
 }
 
 /* ══════════════════════════════════════════════════
+   CATEGORY MODAL (Add & Edit Category with Cloudinary Image Upload)
+══════════════════════════════════════════════════ */
+function CategoryModal({ category, onClose, onSave }) {
+  const isEdit = !!category;
+  const [name, setName] = useState(category?.name || '');
+  const [imageUrl, setImageUrl] = useState(category?.image_url || '');
+  const [uploading, setUploading] = useState(false);
+  const [err, setErr] = useState('');
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (imageUrl) {
+      deleteFromCloudinary(imageUrl);
+    }
+
+    setUploading(true);
+    setErr('');
+
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'ler130g0';
+    const preset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'ml_default';
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', preset);
+
+    try {
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error?.message || 'Failed to upload image to Cloudinary');
+      }
+
+      const data = await res.json();
+      if (data.secure_url) {
+        setImageUrl(data.secure_url);
+      }
+    } catch (err) {
+      console.warn('Cloudinary upload notice:', err.message);
+      const reader = new FileReader();
+      reader.onloadend = () => setImageUrl(reader.result);
+      reader.readAsDataURL(file);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!name.trim()) {
+      setErr('Category Name is required.');
+      return;
+    }
+    onSave({
+      id: category?.id,
+      name: name.trim(),
+      oldName: category?.name,
+      image_url: imageUrl,
+    });
+    onClose();
+  };
+
+  return (
+    <div className="adm-modal-ov">
+      <div className="adm-modal" style={{maxWidth:480}}>
+        <div className="adm-modal-hdr">
+          <div className="adm-modal-title">{isEdit ? '✏ Edit Category' : '＋ Add New Category'}</div>
+          <button className="adm-close-btn" onClick={onClose}><X style={{width:16,height:16}} /></button>
+        </div>
+        <form onSubmit={handleSubmit} className="adm-modal-body">
+          {err && <div className="adm-err-box" style={{marginBottom:16}}>{err}</div>}
+          <div className="adm-form-group">
+            <label className="adm-form-lbl">Category Name *</label>
+            <input
+              className="adm-form-input"
+              placeholder="e.g. Mega Sky Shots"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <div className="adm-form-group">
+            <label className="adm-form-lbl">Category Banner Image (Cloudinary Upload)</label>
+            {imageUrl ? (
+              <div className="adm-img-preview-box">
+                <img src={imageUrl} alt="Category" className="adm-img-preview" style={{width:90,height:65,objectFit:'cover',borderRadius:8}} />
+                <div className="adm-img-preview-info">
+                  <div style={{fontSize:13,fontWeight:600,color:'#0f172a'}}>Category Image Uploaded</div>
+                  <div style={{fontSize:11,color:'#10b981',marginTop:2}}>✓ Ready for saving</div>
+                  <div className="adm-img-preview-actions" style={{marginTop:6}}>
+                    <label className="adm-btn adm-btn-secondary adm-btn-sm" style={{cursor:'pointer',padding:'4px 8px',fontSize:11}}>
+                      <RefreshCw style={{width:11,height:11}} /> Change
+                      <input type="file" accept="image/*" onChange={handleImageUpload} style={{display:'none'}} disabled={uploading} />
+                    </label>
+                    <button type="button" className="adm-btn adm-btn-danger adm-btn-sm" onClick={() => { deleteFromCloudinary(imageUrl); setImageUrl(''); }} style={{padding:'4px 8px',fontSize:11}}>
+                      <Trash2 style={{width:11,height:11}} /> Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <label className="adm-gallery-dropzone" style={{cursor:'pointer',height:90}}>
+                {uploading ? (
+                  <RefreshCw className="spinning" style={{width:20,height:20,color:'#ff6b35'}} />
+                ) : (
+                  <>
+                    <Plus style={{width:20,height:20,color:'#ff6b35'}} />
+                    <span style={{fontSize:12,fontWeight:600,color:'#ff6b35'}}>Upload Category Banner Image</span>
+                  </>
+                )}
+                <input type="file" accept="image/*" onChange={handleImageUpload} style={{display:'none'}} disabled={uploading} />
+              </label>
+            )}
+          </div>
+          <div className="adm-modal-ftr" style={{padding:'12px 0 0 0',marginTop:16,borderTop:'1px solid #e2e8f0'}}>
+            <button type="button" className="adm-btn adm-btn-secondary" onClick={onClose}>Cancel</button>
+            <button type="submit" className="adm-btn adm-btn-primary">
+              <Save style={{width:14,height:14}} /> {isEdit ? 'Update Category' : 'Add Category'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
    CATEGORIES  →  /admin/categories
 ══════════════════════════════════════════════════ */
 export function AdminCategories() {
-  const { categories, products, loading } = useAdmin();
+  const { categoryData, products, saveCategory, deleteCategory, loading } = useAdmin();
   const navigate = useNavigate();
+  const [search, setSearch] = useState('');
+  const [modalCat, setModalCat] = useState(null); // null = closed, false = new, object = edit
+  const [confirmDelete, setConfirmDelete] = useState(null);
+
   const colors = ['#ff6b35','#3b82f6','#10b981','#8b5cf6','#f59e0b','#ec4899','#14b8a6','#f97316'];
+
+  const cleanCategories = (categoryData || []).filter(c => {
+    const name = typeof c === 'object' ? (c?.name || '') : String(c || '');
+    return name && !name.startsWith('__');
+  });
+
+  const filtered = cleanCategories.filter(c => {
+    const q = search.toLowerCase();
+    const name = typeof c === 'object' ? (c?.name || '') : String(c || '');
+    return !q || name.toLowerCase().includes(q);
+  });
 
   if (loading) return <CategoriesSkeleton />;
 
   return (
-    <>
-      <div style={{marginBottom:24}}>
-        <div className="pg-title">Categories</div>
-        <div className="pg-sub">{categories.length} product categories</div>
+    <div className="adm-page-container">
+      {modalCat !== null && (
+        <CategoryModal
+          category={modalCat || null}
+          onClose={() => setModalCat(null)}
+          onSave={(catObj) => {
+            saveCategory(catObj);
+            setModalCat(null);
+          }}
+        />
+      )}
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title="Delete Category?"
+          message={`Permanently delete category "${confirmDelete.name}"? Products in this category will remain, but the category card will be removed.`}
+          onConfirm={() => {
+            deleteCategory(confirmDelete);
+            setConfirmDelete(null);
+          }}
+          onCancel={() => setConfirmDelete(null)}
+        />
+      )}
+
+      <div className="adm-page-header">
+        <div style={{marginBottom:16,display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:12}}>
+          <div>
+            <div className="pg-title">Categories</div>
+            <div className="pg-sub">{cleanCategories.length} product categories</div>
+          </div>
+          <button className="adm-btn adm-btn-primary" onClick={() => setModalCat(false)}>
+            <Plus /> Add Category
+          </button>
+        </div>
+
+        <div className="adm-search-bar" style={{marginBottom:12}}>
+          <div className="adm-search-wrap" style={{flex:1}}>
+            <Search className="si" />
+            <input
+              className="adm-form-input"
+              placeholder="Search categories by name..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div style={{marginBottom:12,fontSize:13,color:'#64748b'}}>
+          Showing {filtered.length} of {cleanCategories.length} categories
+        </div>
       </div>
-      <div style={{marginBottom:16,fontSize:13,color:'#64748b'}}>{categories.length} categories found</div>
+
       <div className="cats-grid">
-        {categories.map((cat, i) => {
-          const Icon = getCategoryIcon(cat);
-          const count = products.filter(p=>p.category===cat).length;
-          const activeCount = products.filter(p=>p.category===cat&&p.is_active!==false).length;
+        {filtered.map((cat, i) => {
+          const catName = typeof cat === 'object' ? (cat?.name || 'Uncategorized') : String(cat || '');
+          const catImg = typeof cat === 'object' ? (cat?.image_url || '') : '';
+          const Icon = getCategoryIcon(catName);
+
+          const prods = products.filter(p => (p.category || '').toLowerCase() === catName.toLowerCase());
+          const count = prods.length;
+          const activeCount = prods.filter(p => p.is_active !== false).length;
           const color = colors[i % colors.length];
+
           return (
-            <div key={cat} className="cat-card" onClick={()=>navigate(`/admin/products?cat=${encodeURIComponent(cat)}`)}>
-              <ArrowUpRight className="cat-arrow" />
-              <div className="cat-icon" style={{background:`${color}18`}}><Icon style={{width:22,height:22,color}} /></div>
-              <div className="cat-name">{cat}</div>
-              <div className="cat-cnt">{activeCount} active · {count} total</div>
+            <div
+              key={typeof cat === 'object' ? (cat.id || catName) : catName}
+              className="cat-card"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                padding: '18px',
+                minHeight: '140px',
+                background: '#ffffff',
+                borderRadius: '16px',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+                transition: 'all 0.2s ease',
+                position: 'relative',
+              }}
+            >
+              {/* Header row: Icon/Image on left + Edit/Delete action buttons on right */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+                <div
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 12,
+                    background: `${color}15`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                    border: `1px solid ${color}33`,
+                  }}
+                >
+                  {catImg ? (
+                    <img src={catImg} alt={catName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <Icon style={{ width: 22, height: 22, color }} />
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <button
+                    type="button"
+                    className="adm-btn adm-btn-secondary adm-btn-sm"
+                    title="Edit Category"
+                    style={{ padding: '5px 9px', fontSize: 12, borderRadius: 8 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setModalCat(typeof cat === 'object' ? cat : { name: catName, image_url: '' });
+                    }}
+                  >
+                    <Edit2 style={{ width: 13, height: 13 }} />
+                  </button>
+                  <button
+                    type="button"
+                    className="adm-btn adm-btn-danger adm-btn-sm"
+                    title="Delete Category"
+                    style={{ padding: '5px 9px', fontSize: 12, borderRadius: 8 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setConfirmDelete(typeof cat === 'object' ? cat : { name: catName, image_url: '' });
+                    }}
+                  >
+                    <Trash2 style={{ width: 13, height: 13 }} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Body: Category Title + Product Counts */}
+              <div
+                style={{ cursor: 'pointer', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}
+                onClick={() => navigate(`/admin/products?cat=${encodeURIComponent(catName)}`)}
+              >
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', lineHeight: 1.3, marginBottom: 4 }}>
+                  {catName}
+                </div>
+                <div style={{ fontSize: 12, fontWeight: 500, color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>{activeCount} active · {count} total products</span>
+                  <ArrowUpRight style={{ width: 15, height: 15, color: '#ff6b35', flexShrink: 0, marginLeft: 4 }} />
+                </div>
+              </div>
             </div>
           );
         })}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -545,30 +1122,92 @@ function ProductModal({ product, categories, onClose, onSaved }) {
     name: product?.name || '',
     category: product?.category || categories[0] || '',
     mrp: product?.mrp || '',
-    discount: product?.discount || '',
     price: product?.price || '',
-    unit: product?.unit || '',
     image_url: product?.image_url || '',
     is_active: product?.is_active !== false,
   });
+
+  const initUnitParsed = (() => {
+    const raw = (product?.order_unit || product?.quantity || product?.unit || '').trim();
+    if (!raw) return { unitType: '1 Box', subQty: '10', customStr: '' };
+    if (raw === '1 Piece' || raw === '1 Pc' || raw.toLowerCase().includes('single item')) {
+      return { unitType: '1 Piece', subQty: '', customStr: '' };
+    }
+    const boxMatch = raw.match(/1\s*Box/i);
+    if (boxMatch) {
+      const q = raw.match(/\((\d+)/);
+      return { unitType: '1 Box', subQty: q ? q[1] : '10', customStr: '' };
+    }
+    const pktMatch = raw.match(/1\s*(Pkt|Packet)/i);
+    if (pktMatch) {
+      const q = raw.match(/\((\d+)/);
+      return { unitType: '1 Packet', subQty: q ? q[1] : '5', customStr: '' };
+    }
+    const bdlMatch = raw.match(/1\s*Bundle/i);
+    if (bdlMatch) {
+      const q = raw.match(/\((\d+)/);
+      return { unitType: '1 Bundle', subQty: q ? q[1] : '10', customStr: '' };
+    }
+    return { unitType: 'Custom', subQty: '', customStr: raw };
+  })();
+
+  const [unitType, setUnitType] = useState(initUnitParsed.unitType);
+  const [subQty, setSubQty] = useState(initUnitParsed.subQty);
+  const [customUnit, setCustomUnit] = useState(initUnitParsed.customStr);
+
+  const computedUnit = (() => {
+    if (unitType === '1 Box') return `1 Box (${subQty || '1'} Pcs)`;
+    if (unitType === '1 Packet') return `1 Packet (${subQty || '1'} Pcs)`;
+    if (unitType === '1 Bundle') return `1 Bundle (${subQty || '1'} Pkts)`;
+    if (unitType === '1 Piece') return '1 Piece';
+    return customUnit || '';
+  })();
+
+  const parseImages = (raw) => {
+    if (!raw) return ['', '', '', ''];
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return [
+          parsed[0] || '',
+          parsed[1] || '',
+          parsed[2] || '',
+          parsed[3] || '',
+        ];
+      }
+    } catch (e) {}
+    return [raw, '', '', ''];
+  };
+
+  const [images, setImages] = useState(() => parseImages(product?.image_url));
+  const [uploadingIdx, setUploadingIdx] = useState(null);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
-  const [uploading, setUploading] = useState(false);
 
-  const handleImageUpload = async (e) => {
+  const calcDiscount = (mrpVal, priceVal) => {
+    const m = parseFloat(mrpVal);
+    const p = parseFloat(priceVal);
+    if (!isNaN(m) && !isNaN(p) && m > 0 && m >= p) {
+      return Math.round(((m - p) / m) * 100);
+    }
+    return 0;
+  };
+
+  const handleSlotImageUpload = async (e, slotIdx) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-    const preset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
-
-    if (!cloudName || !preset) {
-      alert('Cloudinary config (VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET) is missing in .env file.');
-      return;
+    // Delete previous image from Cloudinary storage if replacing photo
+    const oldUrl = images[slotIdx];
+    if (oldUrl) {
+      deleteFromCloudinary(oldUrl);
     }
 
-    setUploading(true);
+    setUploadingIdx(slotIdx);
     setErr('');
+
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'ler130g0';
+    const preset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'ml_default';
 
     const formData = new FormData();
     formData.append('file', file);
@@ -582,37 +1221,71 @@ function ProductModal({ product, categories, onClose, onSaved }) {
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error?.message || 'Failed to upload image');
+        throw new Error(errorData.error?.message || 'Failed to upload image to Cloudinary');
       }
 
       const data = await res.json();
       if (data.secure_url) {
-        set('image_url', data.secure_url);
+        setImages(prev => {
+          const next = [...prev];
+          next[slotIdx] = data.secure_url;
+          return next;
+        });
       }
     } catch (err) {
-      console.error(err);
-      setErr(`Upload failed: ${err.message}`);
+      console.warn('Cloudinary upload notice:', err.message);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImages(prev => {
+          const next = [...prev];
+          next[slotIdx] = reader.result;
+          return next;
+        });
+      };
+      reader.readAsDataURL(file);
     } finally {
-      setUploading(false);
+      setUploadingIdx(null);
     }
   };
 
-  const set = (k, v) => setForm(f => {
-    const next = { ...f, [k]: v };
-    if (k === 'mrp' || k === 'discount') {
-      const m = parseFloat(k==='mrp'?v:next.mrp);
-      const d = parseFloat(k==='discount'?v:next.discount);
-      if (!isNaN(m)&&!isNaN(d)) next.price = Math.round(m*(1-d/100));
-      else if (k==='mrp'&&isNaN(m)) next.price = '';
+  const removeSlotImage = (slotIdx) => {
+    const oldUrl = images[slotIdx];
+    if (oldUrl) {
+      deleteFromCloudinary(oldUrl);
     }
-    return next;
-  });
+    setImages(prev => {
+      const next = [...prev];
+      next[slotIdx] = '';
+      return next;
+    });
+  };
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const save = async () => {
     if (!form.product_code||!form.name||!form.category) { setErr('Product Code, Name and Category are required.'); return; }
     setSaving(true); setErr('');
     try {
-      const body = { ...form, mrp:form.mrp||null, discount:form.discount||null, price:form.price||null };
+      const disc = calcDiscount(form.mrp, form.price);
+      const activeImgs = images.filter(url => url && url.trim() !== '');
+      let finalImageUrl = null;
+      if (activeImgs.length === 1) {
+        finalImageUrl = activeImgs[0];
+      } else if (activeImgs.length > 1) {
+        finalImageUrl = JSON.stringify(activeImgs);
+      }
+
+      const body = {
+        product_code: form.product_code,
+        name: form.name,
+        category: form.category,
+        mrp: form.mrp ? parseFloat(form.mrp) : null,
+        price: form.price ? parseFloat(form.price) : null,
+        discount_percentage: disc,
+        order_unit: computedUnit || null,
+        image_url: finalImageUrl,
+        is_active: form.is_active,
+      };
       if (isEdit) await api(`/products?id=eq.${product.id}`,{method:'PATCH',body:JSON.stringify(body)});
       else await api('/products',{method:'POST',body:JSON.stringify(body)});
       onSaved();
@@ -622,7 +1295,7 @@ function ProductModal({ product, categories, onClose, onSaved }) {
 
   return (
     <div className="adm-modal-ov">
-      <div className="adm-modal">
+      <div className="adm-modal" style={{maxWidth:680}}>
         <div className="adm-modal-hdr">
           <div className="adm-modal-title">{isEdit ? '✏ Edit Product' : '＋ Add New Product'}</div>
           <button className="adm-close-btn" onClick={onClose}><X style={{width:16,height:16}} /></button>
@@ -636,9 +1309,12 @@ function ProductModal({ product, categories, onClose, onSaved }) {
             </div>
             <div className="adm-form-group">
               <label className="adm-form-lbl">Category *</label>
-              <select className="adm-form-select" value={form.category} onChange={e=>set('category',e.target.value)}>
-                {categories.map(c=><option key={c} value={c}>{c}</option>)}
-              </select>
+              <CustomSelect
+                value={form.category}
+                options={categories}
+                onChange={val => set('category', val)}
+                placeholder="Select category"
+              />
             </div>
           </div>
           <div className="adm-form-group">
@@ -648,45 +1324,205 @@ function ProductModal({ product, categories, onClose, onSaved }) {
           <div className="adm-form-row-3">
             <div className="adm-form-group">
               <label className="adm-form-lbl">MRP Price (₹)</label>
-              <input className="adm-form-input" type="number" placeholder="0" value={form.mrp} onChange={e=>set('mrp',e.target.value)} />
-            </div>
-            <div className="adm-form-group">
-              <label className="adm-form-lbl">Discount (%)</label>
-              <input className="adm-form-input" type="number" placeholder="0" min="0" max="100" value={form.discount} onChange={e=>set('discount',e.target.value)} />
+              <input className="adm-form-input" type="number" placeholder="e.g. 1000" value={form.mrp} onChange={e=>set('mrp',e.target.value)} />
             </div>
             <div className="adm-form-group">
               <label className="adm-form-lbl">Selling Price (₹)</label>
-              <input className="adm-form-input" type="number" placeholder="Auto-calculated" value={form.price} onChange={e=>set('price',e.target.value)} style={{background:'#f8fafc'}} disabled />
+              <input className="adm-form-input" type="number" placeholder="e.g. 800" value={form.price} onChange={e=>set('price',e.target.value)} />
+            </div>
+            <div className="adm-form-group">
+              <label className="adm-form-lbl">Discount (%)</label>
+              <input className="adm-form-input" type="text" value={form.mrp && form.price ? `${calcDiscount(form.mrp, form.price)}% OFF` : '0%'} style={{background:'#f8fafc',fontWeight:700,color:'#f59e0b'}} disabled />
             </div>
           </div>
-          {form.mrp && form.discount && (
+          {form.mrp && form.price && parseFloat(form.mrp) >= parseFloat(form.price) && (
             <div className="adm-price-calc">
-              Auto-calc: ₹{form.mrp} × (1 − {form.discount}%) = <strong style={{color:'#ff6b35'}}>₹{form.price}</strong>
+              Auto-calculated Discount: MRP ₹{form.mrp} − Selling Price ₹{form.price} = Save ₹{parseFloat(form.mrp) - parseFloat(form.price)} (<strong style={{color:'#f59e0b'}}>{calcDiscount(form.mrp, form.price)}% OFF</strong>)
             </div>
           )}
-          <div className="adm-form-row">
+
+          <div className="adm-form-row" style={{alignItems:'flex-start'}}>
             <div className="adm-form-group">
-              <label className="adm-form-lbl">Unit / Pack Size</label>
-              <input className="adm-form-input" placeholder="e.g. 1 Box, 10 Pcs" value={form.unit} onChange={e=>set('unit',e.target.value)} />
+              <label className="adm-form-lbl">Packaging Unit Type</label>
+              <CustomSelect
+                value={unitType}
+                options={[
+                  { label: '📦 1 Box', value: '1 Box' },
+                  { label: '🏷 1 Packet', value: '1 Packet' },
+                  { label: '🎁 1 Bundle', value: '1 Bundle' },
+                  { label: '✨ 1 Piece', value: '1 Piece' },
+                  { label: '✍ Custom Unit...', value: 'Custom' },
+                ]}
+                onChange={(val) => setUnitType(val)}
+                placeholder="Select unit type"
+              />
             </div>
-            <div className="adm-form-group">
-              <label className="adm-form-lbl">Product Image</label>
-              <div style={{display:'flex',gap:8,alignItems:'center'}}>
-                <input className="adm-form-input" placeholder="https://... or upload file" value={form.image_url} onChange={e=>set('image_url',e.target.value)} style={{flex:1}} />
-                <label className="adm-btn adm-btn-secondary" style={{cursor:'pointer',display:'inline-flex',alignItems:'center',gap:6,margin:0,padding:'10px 14px',height:'40px',lineHeight:'normal'}}>
-                  <Plus style={{width:14,height:14}} />
-                  {uploading ? '...' : 'Upload'}
-                  <input type="file" accept="image/*" onChange={handleImageUpload} style={{display:'none'}} disabled={uploading} />
-                </label>
+
+            {unitType === '1 Box' && (
+              <div className="adm-form-group">
+                <label className="adm-form-lbl">Pieces Inside Box (Pcs)</label>
+                <input
+                  className="adm-form-input"
+                  type="number"
+                  placeholder="e.g. 10"
+                  min="1"
+                  value={subQty}
+                  onChange={e => setSubQty(e.target.value)}
+                />
               </div>
+            )}
+
+            {unitType === '1 Packet' && (
+              <div className="adm-form-group">
+                <label className="adm-form-lbl">Pieces Inside Packet (Pcs)</label>
+                <input
+                  className="adm-form-input"
+                  type="number"
+                  placeholder="e.g. 5"
+                  min="1"
+                  value={subQty}
+                  onChange={e => setSubQty(e.target.value)}
+                />
+              </div>
+            )}
+
+            {unitType === '1 Bundle' && (
+              <div className="adm-form-group">
+                <label className="adm-form-lbl">Packets Inside Bundle (Pkts)</label>
+                <input
+                  className="adm-form-input"
+                  type="number"
+                  placeholder="e.g. 10"
+                  min="1"
+                  value={subQty}
+                  onChange={e => setSubQty(e.target.value)}
+                />
+              </div>
+            )}
+
+            {unitType === 'Custom' && (
+              <div className="adm-form-group">
+                <label className="adm-form-lbl">Custom Unit Text</label>
+                <input
+                  className="adm-form-input"
+                  placeholder="e.g. 1 Roll / 25 Pcs"
+                  value={customUnit}
+                  onChange={e => setCustomUnit(e.target.value)}
+                />
+              </div>
+            )}
+
+            <div className="adm-form-group">
+              <label className="adm-form-lbl">Status</label>
+              <CustomSelect
+                value={form.is_active ? 'true' : 'false'}
+                options={[
+                  { label: 'Active', value: 'true' },
+                  { label: 'Inactive', value: 'false' }
+                ]}
+                onChange={val => set('is_active', val === 'true')}
+              />
             </div>
           </div>
-          <div className="adm-form-group">
-            <label className="adm-form-lbl">Status</label>
-            <select className="adm-form-select" value={form.is_active?'true':'false'} onChange={e=>set('is_active',e.target.value==='true')}>
-              <option value="true">Active</option>
-              <option value="false">Inactive</option>
-            </select>
+
+          <div style={{marginTop: -6, marginBottom: 16, padding: '8px 12px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 8}}>
+            <span style={{fontSize: 12, fontWeight: 600, color: '#64748b'}}>Live Unit Preview:</span>
+            <strong style={{color: '#ff6b35', fontSize: 13, background: '#fff3ee', padding: '2px 8px', borderRadius: 6, border: '1px solid #ff6b3533'}}>{computedUnit || '—'}</strong>
+          </div>
+
+          <div className="adm-form-group" style={{marginTop:12}}>
+            <label className="adm-form-lbl">Product Image Gallery</label>
+            <div className="adm-gallery-layout">
+              {/* Row 1: Main Display Image */}
+              <div className="adm-gallery-main-row">
+                <div className="adm-gallery-card main-card">
+                  <div className="adm-gallery-card-hdr">
+                    <span className="adm-gallery-tag main">★ Main Display Image (Primary)</span>
+                    {images[0] && <span style={{fontSize:11,color:'#10b981',fontWeight:600}}>✓ Uploaded</span>}
+                  </div>
+                  {images[0] ? (
+                    <div className="adm-gallery-main-body">
+                      <div className="adm-gallery-main-thumb-wrap">
+                        <img src={images[0]} alt="Main Display" className="adm-gallery-main-thumb" />
+                      </div>
+                      <div className="adm-gallery-main-info">
+                        <div style={{fontSize:13,fontWeight:600,color:'#0f172a'}}>Main Product Photo</div>
+                        <div style={{fontSize:11,color:'#64748b',marginTop:2}}>Appears on search results, cards & catalog view</div>
+                        <div className="adm-gallery-actions" style={{marginTop:10,justifyContent:'flex-start'}}>
+                          <label className="adm-btn adm-btn-secondary adm-btn-sm" style={{cursor:'pointer',padding:'6px 12px',fontSize:12}}>
+                            <RefreshCw style={{width:12,height:12}} /> Change Main Image
+                            <input type="file" accept="image/*" onChange={(e) => handleSlotImageUpload(e, 0)} style={{display:'none'}} disabled={uploadingIdx === 0} />
+                          </label>
+                          <button type="button" className="adm-btn adm-btn-danger adm-btn-sm" onClick={() => removeSlotImage(0)} style={{padding:'6px 12px',fontSize:12}}>
+                            <Trash2 style={{width:12,height:12}} /> Remove
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="adm-gallery-dropzone main-dropzone" style={{cursor:'pointer'}}>
+                      {uploadingIdx === 0 ? (
+                        <div className="adm-dropzone-content">
+                          <RefreshCw className="spinning" style={{width:22,height:22,color:'#ff6b35'}} />
+                          <span style={{fontSize:13,fontWeight:600,color:'#ff6b35'}}>Uploading Main Image to Cloudinary...</span>
+                        </div>
+                      ) : (
+                        <div className="adm-dropzone-content">
+                          <div className="adm-dropzone-icon">
+                            <Plus style={{width:20,height:20,color:'#ff6b35'}} />
+                          </div>
+                          <div>
+                            <div style={{fontSize:13,fontWeight:600,color:'#0f172a'}}>Click to Upload Main Display Image</div>
+                            <div style={{fontSize:11,color:'#94a3b8',marginTop:2}}>Primary thumbnail for product card</div>
+                          </div>
+                        </div>
+                      )}
+                      <input type="file" accept="image/*" onChange={(e) => handleSlotImageUpload(e, 0)} style={{display:'none'}} disabled={uploadingIdx === 0} />
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* Row 2: 3 Slide Gallery Images */}
+              <div>
+                <div style={{fontSize:12,fontWeight:600,color:'#64748b',marginBottom:8}}>Additional Gallery Slide Images (3 Slots)</div>
+                <div className="adm-gallery-slides-grid">
+                  {[1, 2, 3].map((slotIdx) => (
+                    <div key={slotIdx} className="adm-gallery-card slide-card">
+                      <span className="adm-gallery-tag slide">Slide Image {slotIdx}</span>
+                      {images[slotIdx] ? (
+                        <>
+                          <div className="adm-gallery-thumb-wrap">
+                            <img src={images[slotIdx]} alt={`Slide ${slotIdx}`} className="adm-gallery-thumb" />
+                          </div>
+                          <div className="adm-gallery-actions">
+                            <label className="adm-btn adm-btn-secondary adm-btn-sm" style={{cursor:'pointer',padding:'4px 8px',fontSize:11}}>
+                              <RefreshCw style={{width:11,height:11}} />
+                              <input type="file" accept="image/*" onChange={(e) => handleSlotImageUpload(e, slotIdx)} style={{display:'none'}} disabled={uploadingIdx === slotIdx} />
+                            </label>
+                            <button type="button" className="adm-btn adm-btn-danger adm-btn-sm" onClick={() => removeSlotImage(slotIdx)} style={{padding:'4px 8px',fontSize:11}}>
+                              <Trash2 style={{width:11,height:11}} />
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <label className="adm-gallery-dropzone" style={{cursor:'pointer'}}>
+                          {uploadingIdx === slotIdx ? (
+                            <RefreshCw className="spinning" style={{width:18,height:18,color:'#64748b'}} />
+                          ) : (
+                            <>
+                              <Plus style={{width:18,height:18,color:'#94a3b8'}} />
+                              <span style={{fontSize:11,color:'#64748b'}}>+ Slide {slotIdx}</span>
+                            </>
+                          )}
+                          <input type="file" accept="image/*" onChange={(e) => handleSlotImageUpload(e, slotIdx)} style={{display:'none'}} disabled={uploadingIdx === slotIdx} />
+                        </label>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <div className="adm-modal-ftr">
@@ -728,44 +1564,70 @@ export function AdminProducts() {
     setToggling(null);
   };
 
-  const deleteProduct = async (id) => {
-    try { await api(`/products?id=eq.${id}`,{method:'DELETE'}); fetchAll(); }
-    catch(e){alert(e.message);}
+  const deleteProduct = async (prod) => {
+    try {
+      const imgUrlStr = typeof prod === 'object' ? prod.image_url : null;
+      const targetId = typeof prod === 'object' ? prod.id : prod;
+
+      if (imgUrlStr) {
+        try {
+          const arr = JSON.parse(imgUrlStr);
+          if (Array.isArray(arr)) {
+            arr.forEach(url => deleteFromCloudinary(url));
+          } else {
+            deleteFromCloudinary(imgUrlStr);
+          }
+        } catch(e) {
+          deleteFromCloudinary(imgUrlStr);
+        }
+      }
+
+      await api(`/products?id=eq.${targetId}`, { method: 'DELETE' });
+      fetchAll();
+    } catch(e) {
+      alert(e.message);
+    }
     setConfirm(null);
   };
 
   if (loading) return <ProductsSkeleton />;
 
   return (
-    <>
+    <div className="adm-page-container">
       {modalProd !== null && <ProductModal product={modalProd||null} categories={categories} onClose={()=>setModalProd(null)} onSaved={()=>{setModalProd(null);fetchAll();}} />}
-      {confirm && <ConfirmDialog title="Delete Product?" message={`Permanently delete "${confirm.name}"? This cannot be undone.`} onConfirm={()=>deleteProduct(confirm.id)} onCancel={()=>setConfirm(null)} />}
+      {confirm && <ConfirmDialog title="Delete Product?" message={`Permanently delete "${confirm.name}"? This cannot be undone.`} onConfirm={()=>deleteProduct(confirm)} onCancel={()=>setConfirm(null)} />}
 
-      <div style={{marginBottom:24}}>
-        <div className="pg-title">Products</div>
-        <div className="pg-sub">{products.length} products in catalog</div>
-      </div>
-
-      <div className="adm-search-bar">
-        <div className="adm-search-wrap">
-          <Search className="si" />
-          <input className="adm-form-input" placeholder="Search by name or product code..." value={search} onChange={e=>setSearch(e.target.value)} />
+      <div className="adm-page-header">
+        <div style={{marginBottom:16}}>
+          <div className="pg-title">Products</div>
+          <div className="pg-sub">{products.length} products in catalog</div>
         </div>
-        <div style={{position:'relative',minWidth:220}}>
-          <Filter style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',width:15,height:15,color:'#94a3b8',pointerEvents:'none'}} />
-          <select className="adm-form-select" value={catFilter} onChange={e=>setCatFilter(e.target.value)} style={{paddingLeft:36}}>
-            <option value="">All Categories</option>
-            {categories.map(c=><option key={c} value={c}>{c}</option>)}
-          </select>
+
+        <div className="adm-search-bar">
+          <div className="adm-search-wrap">
+            <Search className="si" />
+            <input className="adm-form-input" placeholder="Search by name or product code..." value={search} onChange={e=>setSearch(e.target.value)} />
+          </div>
+          <div style={{minWidth:220}}>
+            <CustomSelect
+              value={catFilter}
+              options={[
+                { label: 'All Categories', value: '' },
+                ...categories.map(c => ({ label: c, value: c }))
+              ]}
+              onChange={val => setCatFilter(val)}
+              placeholder="All Categories"
+            />
+          </div>
+          <button className="adm-btn adm-btn-primary" onClick={()=>setModalProd(false)}><Plus />Add Product</button>
         </div>
-        <button className="adm-btn adm-btn-primary" onClick={()=>setModalProd(false)}><Plus />Add Product</button>
+
+        <div style={{marginBottom:12,fontSize:13,color:'#64748b'}}>
+          Showing {filtered.length} of {products.length} products{catFilter&&<span> in <strong style={{color:'#ff6b35'}}>{catFilter}</strong></span>}
+        </div>
       </div>
 
-      <div style={{marginBottom:12,fontSize:13,color:'#64748b'}}>
-        Showing {filtered.length} of {products.length} products{catFilter&&<span> in <strong style={{color:'#ff6b35'}}>{catFilter}</strong></span>}
-      </div>
-
-      <div className="adm-card">
+      <div className="adm-card adm-scroll-card">
         <div className="adm-table-wrap">
           <table className="adm-table">
             <thead><tr><th>#</th><th>Product</th><th>Category</th><th>MRP</th><th>Discount</th><th>Price</th><th>Unit</th><th>Status</th><th style={{textAlign:'right'}}>Actions</th></tr></thead>
@@ -777,18 +1639,44 @@ export function AdminProducts() {
                   <td style={{color:'#94a3b8',fontFamily:'monospace',fontSize:11}}>{idx+1}</td>
                   <td>
                     <div style={{display:'flex',alignItems:'center',gap:12}}>
-                      {p.image_url ? <img src={p.image_url} alt="" className="prod-thumb" onError={e=>{e.target.style.display='none'}} /> : <div className="prod-thumb-ph"><Box style={{width:18,height:18}} /></div>}
+                      {(() => {
+                        let thumb = p.image_url;
+                        if (thumb) {
+                          try {
+                            const arr = JSON.parse(thumb);
+                            if (Array.isArray(arr) && arr.length > 0) thumb = arr[0];
+                          } catch(e) {}
+                        }
+                        return thumb ? <img src={thumb} alt="" className="prod-thumb" onError={e=>{e.target.style.display='none'}} /> : <div className="prod-thumb-ph"><Box style={{width:18,height:18}} /></div>;
+                      })()}
                       <div><div className="prod-name">{p.name}</div><div className="prod-code">{p.product_code}</div></div>
                     </div>
                   </td>
                   <td style={{fontSize:12,color:'#94a3b8',maxWidth:180}}>{p.category}</td>
                   <td style={{fontSize:13,color:'#64748b'}}>{p.mrp?`₹${p.mrp}`:'—'}</td>
-                  <td style={{fontSize:13,color:'#f59e0b'}}>{p.discount?`${p.discount}%`:'—'}</td>
+                  <td style={{fontSize:13,color:'#f59e0b',fontWeight:600}}>
+                    {(() => {
+                      const m = parseFloat(p.mrp);
+                      const pr = parseFloat(p.price);
+                      if (!isNaN(m) && !isNaN(pr) && m > 0 && m >= pr) {
+                        return `${Math.round(((m - pr) / m) * 100)}%`;
+                      }
+                      return p.discount ? `${p.discount}%` : '—';
+                    })()}
+                  </td>
                   <td style={{fontSize:13,fontWeight:700,color:'#10b981'}}>{p.price?`₹${p.price}`:'—'}</td>
-                  <td style={{fontSize:12,color:'#64748b'}}>{p.unit||'—'}</td>
+                  <td style={{fontSize:12,color:'#64748b'}}>{p.order_unit || p.quantity || p.unit || '—'}</td>
                   <td>
-                    <button className="tog-btn" onClick={()=>toggleActive(p)} disabled={toggling===p.id}>
-                      {p.is_active!==false ? <ToggleRight style={{width:28,height:28,color:'#10b981'}} /> : <ToggleLeft style={{width:28,height:28,color:'#cbd5e1'}} />}
+                    <button
+                      className={`adm-toggle-sw ${p.is_active !== false ? 'on' : ''}`}
+                      onClick={() => toggleActive(p)}
+                      disabled={toggling === p.id}
+                      title={p.is_active !== false ? 'Active (Click to deactivate)' : 'Inactive (Click to activate)'}
+                    >
+                      <span className="adm-toggle-track">
+                        <span className="adm-toggle-thumb" />
+                      </span>
+                      <span className="adm-toggle-lbl">{p.is_active !== false ? 'Active' : 'Inactive'}</span>
                     </button>
                   </td>
                   <td>
@@ -803,7 +1691,7 @@ export function AdminProducts() {
           </table>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -834,73 +1722,700 @@ export function AdminOrders() {
   if (loading) return <OrdersSkeleton />;
 
   return (
-    <>
-      <div style={{marginBottom:24}}>
-        <div className="pg-title">Orders</div>
-        <div className="pg-sub">{orders.length} total orders</div>
-      </div>
-
-      <div className="adm-search-bar">
-        <div className="adm-search-wrap">
-          <Search className="si" />
-          <input className="adm-form-input" placeholder="Search by name or phone..." value={search} onChange={e=>setSearch(e.target.value)} />
+    <div className="adm-page-container">
+      <div className="adm-page-header">
+        <div style={{marginBottom:16}}>
+          <div className="pg-title">Orders</div>
+          <div className="pg-sub">{orders.length} total orders</div>
         </div>
-        <select className="adm-form-select" value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} style={{minWidth:160}}>
-          <option value="">All Statuses</option>
-          {Object.keys(STATUS_CONFIG).map(s=><option key={s} value={s}>{s}</option>)}
-        </select>
+
+        <div className="adm-search-bar">
+          <div className="adm-search-wrap">
+            <Search className="si" />
+            <input className="adm-form-input" placeholder="Search by name or phone..." value={search} onChange={e=>setSearch(e.target.value)} />
+          </div>
+          <div style={{minWidth:170}}>
+            <CustomSelect
+              value={statusFilter}
+              options={[
+                { label: 'All Statuses', value: '' },
+                ...Object.keys(STATUS_CONFIG).map(s => ({ label: s, value: s }))
+              ]}
+              onChange={val => setStatusFilter(val)}
+              placeholder="All Statuses"
+            />
+          </div>
+        </div>
+
+        <div style={{marginBottom:12,fontSize:13,color:'#64748b'}}>{filtered.length} orders{statusFilter&&` with status "${statusFilter}"`}</div>
       </div>
 
-      <div style={{marginBottom:12,fontSize:13,color:'#64748b'}}>{filtered.length} orders{statusFilter&&` with status "${statusFilter}"`}</div>
-
-      {filtered.length===0 ? (
-        <div className="adm-empty-state"><ShoppingCart /><p>No orders found</p></div>
-      ) : filtered.map(o => {
-        const items = renderItems(o.items);
-        const total = items.reduce((a,i)=>a+((i.price||0)*(i.quantity||1)),0);
-        const cfg = STATUS_CONFIG[o.status]||STATUS_CONFIG.Pending;
-        const ph = (o.phone||'').replace(/\D/g,'');
-        return (
-          <div key={o.id} className="order-card">
-            <div className="order-hdr">
-              <div>
-                <div className="order-id">#{o.id}</div>
-                <div className="order-cust">{o.name||'Unknown Customer'}</div>
-                <div className="order-meta">
-                  {o.address&&<span>📍 {o.address}</span>}
-                  {o.created_at&&<span style={{marginLeft:12}}>🕐 {fmtDate(o.created_at)}</span>}
-                </div>
-                {o.phone&&(
-                  <div className="order-contact">
-                    <a href={`tel:${o.phone}`} className="adm-chip adm-chip-phone"><Phone style={{width:12,height:12}} />{o.phone}</a>
-                    <a href={`https://wa.me/${ph}`} target="_blank" rel="noreferrer" className="adm-chip adm-chip-wa"><MessageCircle style={{width:12,height:12}} />WhatsApp</a>
+      <div className="adm-scroll-list">
+        {filtered.length===0 ? (
+          <div className="adm-empty-state"><ShoppingCart /><p>No orders found</p></div>
+        ) : filtered.map(o => {
+          const items = renderItems(o.items);
+          const total = items.reduce((a,i)=>a+((i.price||0)*(i.quantity||1)),0);
+          const cfg = STATUS_CONFIG[o.status]||STATUS_CONFIG.Pending;
+          const ph = (o.phone||'').replace(/\D/g,'');
+          return (
+            <div key={o.id} className="order-card">
+              <div className="order-hdr">
+                <div>
+                  <div className="order-id">#{o.id}</div>
+                  <div className="order-cust">{o.name||'Unknown Customer'}</div>
+                  <div className="order-meta">
+                    {o.address&&<span>📍 {o.address}</span>}
+                    {o.created_at&&<span style={{marginLeft:12}}>🕐 {fmtDate(o.created_at)}</span>}
                   </div>
-                )}
+                  {o.phone&&(
+                    <div className="order-contact">
+                      <a href={`tel:${o.phone}`} className="adm-chip adm-chip-phone"><Phone style={{width:12,height:12}} />{o.phone}</a>
+                      <a href={`https://wa.me/${ph}`} target="_blank" rel="noreferrer" className="adm-chip adm-chip-wa"><MessageCircle style={{width:12,height:12}} />WhatsApp</a>
+                    </div>
+                  )}
+                </div>
+                <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:8}}>
+                  <span className="adm-badge" style={{background:cfg.bg,color:cfg.color,border:`1px solid ${cfg.color}33`}}>
+                    <span className="adm-dot" style={{background:cfg.color}} />{o.status||'Pending'}
+                  </span>
+                  <CustomSelect
+                    value={o.status || 'Pending'}
+                    options={Object.keys(STATUS_CONFIG).map(s => ({ label: s, value: s }))}
+                    onChange={val => updateStatus(o.id, val)}
+                    style={{ minWidth: 140 }}
+                  />
+                </div>
               </div>
-              <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:8}}>
-                <span className="adm-badge" style={{background:cfg.bg,color:cfg.color,border:`1px solid ${cfg.color}33`}}>
-                  <span className="adm-dot" style={{background:cfg.color}} />{o.status||'Pending'}
-                </span>
-                <select className="adm-status-sel" value={o.status||'Pending'} onChange={e=>updateStatus(o.id,e.target.value)} disabled={updatingStatus===o.id}>
-                  {Object.keys(STATUS_CONFIG).map(s=><option key={s}>{s}</option>)}
-                </select>
+              {items.length>0&&(
+                <div className="order-items">
+                  {items.map((item,i)=>(
+                    <div key={i} className="order-item-row">
+                      <span>{item.quantity||1}x {item.name||item.product_name||'Product'}</span>
+                      <span style={{color:'#ff6b35'}}>₹{(item.price||0)*(item.quantity||1)}</span>
+                    </div>
+                  ))}
+                  <div className="order-total"><span>Total</span><span>{fmt(total)}</span></div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   IMPORTANT MESSAGE (MARQUEE ANNOUNCEMENT)
+══════════════════════════════════════════════════ */
+export function AdminAnnouncement() {
+  const [message, setMessage] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const fetchFromDB = useCallback(async () => {
+    try {
+      let res;
+      try {
+        res = await api('/announcements?order=updated_at.desc');
+      } catch (err) {
+        res = await api('/products?category=eq.__SITE_ANNOUNCEMENT__');
+      }
+      if (res && res.length > 0 && (res[0].message || res[0].description)) {
+        setMessage(res[0].message || res[0].description);
+      }
+    } catch(e) {}
+  }, []);
+
+  useEffect(() => {
+    fetchFromDB();
+  }, [fetchFromDB]);
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setSuccess(false);
+
+    try {
+      window.dispatchEvent(new CustomEvent('marquee_updated', { detail: message }));
+
+      try {
+        const existing = await api('/announcements');
+        if (existing && existing.length > 0) {
+          await api(`/announcements?id=eq.${existing[0].id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ message, is_active: true, updated_at: new Date().toISOString() })
+          });
+        } else {
+          await api('/announcements', {
+            method: 'POST',
+            body: JSON.stringify({ message, is_active: true })
+          });
+        }
+      } catch (err) {
+        const existingProd = await api('/products?category=eq.__SITE_ANNOUNCEMENT__');
+        if (existingProd && existingProd.length > 0) {
+          await api(`/products?id=eq.${existingProd[0].id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ description: message, name: 'Site Announcement Marquee', is_active: true })
+          });
+        } else {
+          await api('/products', {
+            method: 'POST',
+            body: JSON.stringify({
+              name: 'Site Announcement Marquee',
+              category: '__SITE_ANNOUNCEMENT__',
+              description: message,
+              price: 0,
+              stock: 0,
+              is_active: true
+            })
+          });
+        }
+      }
+
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 4000);
+    } catch (err) {
+      console.error('Failed to save announcement:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleReset = async () => {
+    setMessage('');
+    try {
+      try {
+        const existing = await api('/announcements');
+        if (existing && existing.length > 0) {
+          await api(`/announcements?id=eq.${existing[0].id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ message: '', is_active: false })
+          });
+        }
+      } catch (err) {
+        const existingProd = await api('/products?category=eq.__SITE_ANNOUNCEMENT__');
+        if (existingProd && existingProd.length > 0) {
+          await api(`/products?id=eq.${existingProd[0].id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ description: '', is_active: false })
+          });
+        }
+      }
+      window.dispatchEvent(new CustomEvent('marquee_updated', { detail: '' }));
+    } catch(e){}
+  };
+
+  return (
+    <div className="adm-page-container">
+      <div className="adm-page-header">
+        <div>
+          <h1 className="adm-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Megaphone color="#ff6b35" /> Important Message (Marquee Banner)
+          </h1>
+          <p className="adm-sub">Manage and update the scrolling notification message displayed at the top of all website pages.</p>
+        </div>
+      </div>
+
+      {success && (
+        <div className="adm-card p-3 mb-4" style={{ backgroundColor: '#f0fdf4', borderColor: '#bbf7d0' }}>
+          <div className="d-flex align-items-center text-success font-weight-bold" style={{ gap: '8px', color: '#166534' }}>
+            <CheckCircle size={20} />
+            <span>Important Message updated and published to live website marquee successfully!</span>
+          </div>
+        </div>
+      )}
+
+      {/* Live Marquee Preview */}
+      <div className="adm-card mb-4">
+        <div className="adm-card-hdr">
+          <div>
+            <h3 className="adm-card-title d-flex align-items-center" style={{ gap: '8px' }}>
+              <Bell size={18} color="#ff6b35" /> Live Marquee Banner Preview
+            </h3>
+            <p className="adm-card-sub">This is how your message appears to users scrolling the website:</p>
+          </div>
+        </div>
+        <div className="adm-card-body" style={{ padding: 0, overflow: 'hidden' }}>
+          <div className="py-2 px-2" style={{ backgroundColor: '#0a539f', color: '#ffffff', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+            <marquee behavior="scroll" direction="left" scrollamount="6" style={{ fontSize: '14px', fontWeight: 600, color: '#ffffff', display: 'block' }}>
+              {message || 'No announcement message set...'}
+            </marquee>
+          </div>
+        </div>
+      </div>
+
+      {/* Announcement Edit Form */}
+      <div className="adm-card">
+        <div className="adm-card-hdr">
+          <div>
+            <h3 className="adm-card-title">Edit Announcement Message</h3>
+            <p className="adm-card-sub">Type your custom notification. Emojis, phone numbers, and formatting are fully supported.</p>
+          </div>
+        </div>
+        <div className="adm-card-body">
+          <form onSubmit={handleSave}>
+            <div className="adm-form-group">
+              <label className="adm-form-lbl">Important Message Text</label>
+              <textarea
+                className="adm-form-input"
+                rows={5}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Type your important announcement message here..."
+                style={{ padding: '12px', fontSize: '0.95rem', lineHeight: '1.6', borderRadius: '10px' }}
+                required
+              />
+              <div className="d-flex justify-content-between text-muted small mt-1" style={{ fontSize: '0.85rem' }}>
+                <span>Characters: {message.length}</span>
+                <span>Words: {message.trim() ? message.trim().split(/\s+/).length : 0}</span>
               </div>
             </div>
-            {items.length>0&&(
-              <div className="order-items">
-                {items.map((item,i)=>(
-                  <div key={i} className="order-item-row">
-                    <span>{item.quantity||1}x {item.name||item.product_name||'Product'}</span>
-                    <span style={{color:'#ff6b35'}}>₹{(item.price||0)*(item.quantity||1)}</span>
+
+            <div className="d-flex align-items-center justify-content-between pt-3 border-top" style={{ gap: '12px' }}>
+              <button
+                type="button"
+                onClick={handleReset}
+                className="adm-btn adm-btn-secondary"
+              >
+                Reset to Default
+              </button>
+
+              <button
+                type="submit"
+                className="adm-btn adm-btn-primary"
+                disabled={saving}
+                style={{ backgroundColor: '#ff6b35', borderColor: '#ff6b35' }}
+              >
+                <Save size={16} className="mr-1" />
+                {saving ? 'Saving & Publishing...' : 'Save & Publish Message'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   HERO BANNERS MANAGEMENT
+══════════════════════════════════════════════════ */
+export function AdminHeroBanners() {
+  const [banners, setBanners] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  // Modal State
+  const [showModal, setShowModal] = useState(false);
+  const [editingBanner, setEditingBanner] = useState(null);
+  const [imageUrl, setImageUrl] = useState('');
+
+  const fetchBanners = useCallback(async () => {
+    setLoading(true);
+    try {
+      let res;
+      try {
+        res = await api('/hero_banners?order=created_at.asc');
+      } catch (err) {
+        res = await api('/products?category=eq.__HERO_BANNER__&order=created_at.asc');
+      }
+      setBanners(res || []);
+    } catch (e) {
+      console.error('Failed to fetch hero banners:', e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchBanners();
+  }, [fetchBanners]);
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const url = await uploadToCloudinarySigned(file);
+      if (url) {
+        setImageUrl(url);
+      }
+    } catch (err) {
+      console.error('Cloudinary upload error:', err);
+      alert('Upload failed: ' + (err.message || 'Could not upload image'));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const openAddModal = () => {
+    setEditingBanner(null);
+    setImageUrl('');
+    setShowModal(true);
+  };
+
+  const openEditModal = (banner) => {
+    setEditingBanner(banner);
+    setImageUrl(banner.image_url || '');
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEditingBanner(null);
+    setImageUrl('');
+  };
+
+  const handleSaveBanner = async (e) => {
+    e.preventDefault();
+    if (!imageUrl.trim()) return;
+    setSaving(true);
+
+    try {
+      if (editingBanner) {
+        try {
+          await api(`/hero_banners?id=eq.${editingBanner.id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ image_url: imageUrl.trim(), title: 'Hero Banner', target_url: '/products' })
+          });
+        } catch (err) {
+          await api(`/products?id=eq.${editingBanner.id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ name: 'Hero Banner', image_url: imageUrl.trim(), description: '/products' })
+          });
+        }
+      } else {
+        try {
+          await api('/hero_banners', {
+            method: 'POST',
+            body: JSON.stringify({ image_url: imageUrl.trim(), title: 'Hero Banner', target_url: '/products' })
+          });
+        } catch (err) {
+          await api('/products', {
+            method: 'POST',
+            body: JSON.stringify({
+              name: 'Hero Banner',
+              category: '__HERO_BANNER__',
+              image_url: imageUrl.trim(),
+              description: '/products',
+              price: 0,
+              stock: 0,
+              is_active: true
+            })
+          });
+        }
+      }
+
+      closeModal();
+      await fetchBanners();
+    } catch (err) {
+      console.error('Failed to save banner:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteBanner = async (banner) => {
+    if (!window.confirm('Are you sure you want to delete this hero banner image?')) return;
+
+    try {
+      if (banner.image_url) {
+        deleteFromCloudinary(banner.image_url);
+      }
+      try {
+        await api(`/hero_banners?id=eq.${banner.id}`, { method: 'DELETE' });
+      } catch (err) {
+        await api(`/products?id=eq.${banner.id}`, { method: 'DELETE' });
+      }
+      await fetchBanners();
+    } catch (err) {
+      console.error('Failed to delete banner:', err);
+    }
+  };
+
+  return (
+    <div className="adm-page-container">
+      <div className="adm-page-header d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-4" style={{ gap: '16px' }}>
+        <div>
+          <h1 className="adm-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Image color="#ff6b35" /> Hero Banner Images
+          </h1>
+          <p className="adm-sub">Upload carousel images to display on the home page hero slider.</p>
+        </div>
+
+        <button
+          onClick={openAddModal}
+          className="adm-btn adm-btn-primary"
+          style={{ backgroundColor: '#ff6b35', borderColor: '#ff6b35', padding: '10px 20px', borderRadius: '10px' }}
+        >
+          <Plus size={18} className="mr-1" /> Add New Hero Banner
+        </button>
+      </div>
+
+      {/* Hero Banner Images Grid */}
+      <div className="adm-card">
+        <div className="adm-card-hdr d-flex align-items-center justify-content-between">
+          <h3 className="adm-card-title">Active Carousel Images ({banners.length})</h3>
+        </div>
+        <div className="adm-card-body">
+          {loading ? (
+            <div className="text-center py-5 text-muted">Loading banner images...</div>
+          ) : banners.length === 0 ? (
+            <div className="text-center py-5">
+              <Image size={48} color="#cbd5e1" className="mb-2" />
+              <h4 className="adm-card-title mt-2">No Dynamic Banners Uploaded</h4>
+              <p className="text-muted small mb-4">Click <strong>Add New Hero Banner</strong> to upload carousel images for your home page!</p>
+              <button
+                onClick={openAddModal}
+                className="adm-btn adm-btn-primary"
+                style={{ backgroundColor: '#ff6b35', borderColor: '#ff6b35' }}
+              >
+                <Upload size={16} className="mr-1" /> Upload First Banner
+              </button>
+            </div>
+          ) : (
+            <div className="row">
+              {banners.map((banner, index) => (
+                <div key={banner.id} className="col-md-6 col-lg-4 mb-4">
+                  <div className="card h-100 border-0 shadow-sm" style={{ borderRadius: '14px', overflow: 'hidden', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
+                    <div style={{ height: '200px', backgroundColor: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
+                      <img
+                        src={banner.image_url}
+                        alt={`Hero Banner ${index + 1}`}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                      <span className="badge badge-dark position-absolute" style={{ top: '10px', left: '10px', backgroundColor: 'rgba(0,0,0,0.7)', fontSize: '0.8rem', padding: '5px 10px' }}>
+                        Slide #{index + 1}
+                      </span>
+                    </div>
+                    <div className="p-3 d-flex align-items-center justify-content-between" style={{ backgroundColor: '#ffffff', borderTop: '1px solid #f1f5f9' }}>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#334155' }}>
+                        Banner #{index + 1}
+                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(banner)}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            backgroundColor: '#f1f5f9',
+                            color: '#0f172a',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '8px',
+                            padding: '6px 14px',
+                            fontSize: '0.85rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            lineHeight: 1.2
+                          }}
+                        >
+                          <Edit2 size={14} color="#0f172a" /> Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteBanner(banner)}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            backgroundColor: '#fef2f2',
+                            color: '#dc2626',
+                            border: '1px solid #fca5a5',
+                            borderRadius: '8px',
+                            padding: '6px 14px',
+                            fontSize: '0.85rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            lineHeight: 1.2
+                          }}
+                        >
+                          <Trash2 size={14} color="#dc2626" /> Delete
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                ))}
-                <div className="order-total"><span>Total</span><span>{fmt(total)}</span></div>
-              </div>
-            )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Image Upload Modal Popup */}
+      {showModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+        >
+          <div
+            className="adm-card shadow-lg"
+            style={{
+              position: 'relative',
+              width: '100%',
+              maxWidth: '560px',
+              borderRadius: '20px',
+              overflow: 'hidden',
+              backgroundColor: '#ffffff',
+              border: 'none'
+            }}
+          >
+            {/* Close X Button at Top Right End */}
+            <button
+              type="button"
+              onClick={closeModal}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                backgroundColor: '#f1f5f9',
+                border: 'none',
+                borderRadius: '50%',
+                width: '36px',
+                height: '36px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#64748b',
+                cursor: 'pointer',
+                zIndex: 10
+              }}
+              title="Close Modal"
+            >
+              <X size={20} />
+            </button>
+
+            <div style={{ padding: '24px 60px 20px 24px', borderBottom: '1px solid #f1f5f9' }}>
+              <h3 className="mb-0 d-flex align-items-center" style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1e293b' }}>
+                <Upload size={22} color="#ff6b35" className="mr-2" />
+                {editingBanner ? 'Edit Hero Banner Image' : 'Upload New Hero Banner Image'}
+              </h3>
+            </div>
+
+            <div className="p-4">
+              <form onSubmit={handleSaveBanner}>
+                {/* Drag and Drop File Upload Area */}
+                <div className="mb-4">
+                  <label className="adm-form-lbl text-dark font-weight-bold mb-2">
+                    {imageUrl ? 'Uploaded Banner Image Preview:' : 'Select Image File'}
+                  </label>
+                  <label
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: imageUrl ? '16px' : '35px 20px',
+                      border: imageUrl ? '2px solid #22c55e' : '2px dashed #cbd5e1',
+                      borderRadius: '16px',
+                      backgroundColor: imageUrl ? '#f0fdf4' : '#f8fafc',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      textAlign: 'center',
+                      position: 'relative',
+                      minHeight: '180px'
+                    }}
+                  >
+                    {uploading ? (
+                      <div className="py-4 text-center">
+                        <RefreshCw size={36} color="#ff6b35" className="spinning mb-2 mx-auto d-block" />
+                        <span className="font-weight-bold text-dark d-block">Uploading image to server...</span>
+                      </div>
+                    ) : imageUrl ? (
+                      <div className="w-100 text-center py-2">
+                        <img
+                          src={imageUrl}
+                          alt="Banner Preview"
+                          style={{ maxHeight: '190px', maxWidth: '100%', objectFit: 'contain', borderRadius: '10px' }}
+                        />
+                        <div className="mt-3 d-flex align-items-center justify-content-center">
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              backgroundColor: '#ffffff',
+                              color: '#ff6b35',
+                              border: '1.5px solid #ff6b35',
+                              padding: '8px 18px',
+                              borderRadius: '10px',
+                              fontWeight: 700,
+                              fontSize: '0.9rem',
+                              cursor: 'pointer',
+                              boxShadow: '0 2px 5px rgba(255, 107, 53, 0.15)'
+                            }}
+                          >
+                            <Upload size={16} color="#ff6b35" />
+                            {editingBanner ? 'Change Banner Image' : 'Change Image'}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <Upload size={36} color="#ff6b35" className="mb-2" />
+                        <span className="font-weight-bold text-dark mb-1" style={{ fontSize: '1rem' }}>
+                          Click to Choose Banner Image
+                        </span>
+                        <span className="text-muted small">PNG, JPG, WEBP formats supported</span>
+                      </>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      style={{ display: 'none' }}
+                      disabled={uploading}
+                    />
+                  </label>
+                </div>
+
+                <div className="d-flex align-items-center justify-content-end pt-3" style={{ gap: '12px', borderTop: '1px solid #f1f5f9' }}>
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="adm-btn adm-btn-secondary"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="adm-btn adm-btn-primary px-4"
+                    disabled={saving || uploading || !imageUrl}
+                    style={{
+                      backgroundColor: imageUrl ? '#22c55e' : '#ff6b35',
+                      borderColor: imageUrl ? '#22c55e' : '#ff6b35',
+                      fontWeight: 700,
+                      padding: '10px 24px'
+                    }}
+                  >
+                    <Save size={16} className="mr-1" />
+                    {saving ? 'Publishing Banner...' : editingBanner ? 'Update Banner Image' : 'Save & Publish Banner'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        );
-      })}
-    </>
+        </div>
+      )}
+    </div>
   );
 }
 
