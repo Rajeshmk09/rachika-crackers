@@ -4,6 +4,7 @@ import { Heart, ShoppingBag, ArrowLeft, Truck, ShieldCheck, Share2, MessageCircl
 import { useShop } from '../context/ShopContext';
 import HeaderNav from '../components/HeaderNav';
 import ProductCard from '../components/ProductCard';
+import MobileProductCard from '../components/MobileProductCard';
 import TopMarquee from '../components/TopMarquee';
 
 import HomeImg1 from '../assets/websitelogo.png';
@@ -33,6 +34,12 @@ export default function ProductDetails() {
   const [activeImgIdx, setActiveImgIdx] = useState(0);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  useEffect(() => {
+    const fn = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', fn);
+    return () => window.removeEventListener('resize', fn);
+  }, []);
 
   useEffect(() => {
     const found = products.find(p => String(p.id) === String(id));
@@ -252,58 +259,58 @@ export default function ProductDetails() {
             {/* Right Column: Product Meta, Pricing, Packaging Unit & Actions */}
             <div className="col-lg-6 d-flex flex-column pl-lg-4">
               {/* Product Code & Category */}
-              <div className="d-flex align-items-center gap-2 mb-2" style={{ gap: '10px' }}>
-                <span className="badge badge-secondary px-3 py-2 josefin" style={{ fontSize: '0.8rem', backgroundColor: '#e2e8f0', color: '#475569' }}>
+              <div className="d-flex align-items-center gap-2 mb-2" style={{ gap: '8px', flexWrap: 'wrap' }}>
+                <span className="badge badge-secondary josefin" style={{ fontSize: isMobile ? '0.68rem' : '0.8rem', padding: isMobile ? '4px 8px' : '6px 12px', backgroundColor: '#e2e8f0', color: '#475569' }}>
                   Code: {product.product_code}
                 </span>
-                <span className="badge badge-primary px-3 py-2 josefin" style={{ fontSize: '0.8rem', backgroundColor: '#fff3ee', color: '#ff7011', border: '1px solid #ff701133' }}>
+                <span className="badge badge-primary josefin" style={{ fontSize: isMobile ? '0.68rem' : '0.8rem', padding: isMobile ? '4px 8px' : '6px 12px', backgroundColor: '#fff3ee', color: '#ff7011', border: '1px solid #ff701133' }}>
                   Category: {product.category}
                 </span>
               </div>
 
               {/* Product Name */}
-              <h1 className="acme font-weight-bold text-dark mb-2" style={{ fontSize: '2rem', lineHeight: '1.2' }}>
+              <h1 className="acme font-weight-bold text-dark mb-2" style={{ fontSize: isMobile ? '1.35rem' : '2rem', lineHeight: '1.25' }}>
                 {product.name}
               </h1>
 
               {/* In Stock Badge */}
               <div className="mb-3">
-                <span className="badge badge-success px-3 py-2 rounded-pill josefin" style={{ backgroundColor: '#ecfdf5', color: '#059669', border: '1px solid #05966933', fontSize: '0.85rem' }}>
+                <span className="badge rounded-pill josefin" style={{ backgroundColor: '#ecfdf5', color: '#059669', border: '1px solid #05966933', fontSize: isMobile ? '0.72rem' : '0.85rem', padding: isMobile ? '4px 10px' : '6px 14px' }}>
                   ✓ In Stock
                 </span>
               </div>
 
               {/* Pricing Display */}
-              <div className="p-3 bg-light rounded-lg border mb-4" style={{ backgroundColor: '#fafafa', borderRadius: '12px' }}>
-                <div className="d-flex align-items-baseline gap-3">
-                  <span className="acme font-weight-bold text-dark" style={{ fontSize: '2.5rem', color: '#0f172a' }}>
+              <div className="bg-light rounded-lg border mb-3" style={{ backgroundColor: '#fafafa', borderRadius: '12px', padding: isMobile ? '10px 12px' : '16px' }}>
+                <div className="d-flex align-items-baseline" style={{ gap: isMobile ? '6px' : '12px', flexWrap: 'wrap' }}>
+                  <span className="acme font-weight-bold text-dark" style={{ fontSize: isMobile ? '1.6rem' : '2.5rem', color: '#0f172a' }}>
                     ₹{priceVal}
                   </span>
                   {mrpVal > priceVal && (
                     <>
-                      <span className="text-muted josefin text-decoration-through" style={{ fontSize: '1.25rem', textDecoration: 'line-through' }}>
+                      <span className="text-muted josefin" style={{ fontSize: isMobile ? '0.9rem' : '1.25rem', textDecoration: 'line-through' }}>
                         ₹{mrpVal}
                       </span>
-                      <span className="badge badge-danger px-3 py-2 font-weight-bold josefin ml-2" style={{ fontSize: '0.9rem' }}>
+                      <span className="badge badge-danger font-weight-bold josefin" style={{ fontSize: isMobile ? '0.7rem' : '0.9rem', padding: isMobile ? '4px 8px' : '6px 12px' }}>
                         SAVE {discount}% OFF
                       </span>
                     </>
                   )}
                 </div>
                 {mrpVal > priceVal && (
-                  <div className="text-success small josefin font-weight-bold mt-1">
+                  <div className="text-success josefin font-weight-bold mt-1" style={{ fontSize: isMobile ? '0.75rem' : '0.875rem' }}>
                     🎉 You save ₹{(mrpVal - priceVal).toLocaleString('en-IN')} on this item!
                   </div>
                 )}
               </div>
 
               {/* Packaging Unit Details */}
-              <div className="mb-4">
-                <label className="text-muted small font-weight-bold josefin text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>
+              <div className="mb-3">
+                <label className="text-muted font-weight-bold josefin text-uppercase mb-1" style={{ letterSpacing: '0.5px', fontSize: isMobile ? '0.68rem' : '0.75rem' }}>
                   Packaging &amp; Order Unit:
                 </label>
-                <div className="p-3 rounded-lg border bg-white d-inline-flex align-items-center w-100" style={{ borderRadius: '10px' }}>
-                  <span className="font-weight-bold text-dark josefin" style={{ fontSize: '1.05rem' }}>
+                <div className="rounded-lg border bg-white d-inline-flex align-items-center w-100" style={{ borderRadius: '10px', padding: isMobile ? '8px 12px' : '12px 16px' }}>
+                  <span className="font-weight-bold text-dark josefin" style={{ fontSize: isMobile ? '0.9rem' : '1.05rem' }}>
                     {product.order_unit || product.quantity || product.unit || '1 Box'}
                   </span>
                 </div>
@@ -315,8 +322,8 @@ export default function ProductDetails() {
                   <button
                     type="button"
                     onClick={() => addToCart(product, 1)}
-                    className="btn btn-warning btn-block font-weight-bold acme rounded-pill py-3 text-white shadow-sm"
-                    style={{ backgroundColor: '#ff7011', border: 'none', fontSize: '1.15rem' }}
+                    className="btn btn-warning btn-block font-weight-bold acme rounded-pill text-white shadow-sm"
+                    style={{ backgroundColor: '#ff7011', border: 'none', fontSize: isMobile ? '1rem' : '1.15rem', padding: isMobile ? '10px' : '14px' }}
                   >
                     <ShoppingBag size={20} className="mr-2" /> Add to Cart
                   </button>
@@ -352,11 +359,11 @@ export default function ProductDetails() {
         {similarProducts.length > 0 && (
           <div className="mt-5 pt-4 border-top">
             <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-4">
-              <div>
-                <h3 className="acme font-weight-bold text-dark mb-1" style={{ color: '#0f172a', fontSize: '1.75rem' }}>
+              <div style={{ textAlign: isMobile ? 'center' : 'left', width: '100%' }}>
+                <h3 className="acme font-weight-bold text-dark mb-1" style={{ color: '#0f172a', fontSize: isMobile ? '1.3rem' : '1.75rem' }}>
                   Similar Crackers You Might Like
                 </h3>
-                <p className="text-muted josefin mb-0">
+                <p className="text-muted josefin mb-0" style={{ fontSize: isMobile ? '0.8rem' : '1rem' }}>
                   Discover top-selling {product.category} and popular Sivakasi wholesale crackers
                 </p>
               </div>
@@ -367,8 +374,8 @@ export default function ProductDetails() {
 
             <div className="row">
               {similarProducts.map((simProd) => (
-                <div key={simProd.id} className="col-12 col-sm-6 col-lg-3 mb-4">
-                  <ProductCard product={simProd} />
+                <div key={simProd.id} className="col-6 col-sm-6 col-lg-3 mb-4">
+                  {isMobile ? <MobileProductCard product={simProd} /> : <ProductCard product={simProd} />}
                 </div>
               ))}
             </div>

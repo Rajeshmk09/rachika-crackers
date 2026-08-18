@@ -1,9 +1,10 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ShopProvider } from './context/ShopContext';
 import MainHeader from './components/MainHeader';
 import ScrollToTop from './components/ScrollToTop';
+import SiteFooter from './components/SiteFooter';
 
 import Home from './pages/Home';
 import About from './pages/About';
@@ -33,7 +34,7 @@ function App() {
       <ShopProvider>
         <Router>
           <ScrollToTop />
-          <MainHeader />
+<MainHeader />
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
@@ -45,7 +46,7 @@ function App() {
             <Route path="/safetytips" element={<SafetyTips />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<AdminLayout />}>
-
+              <Route index element={<Navigate to="/admin/categories" replace />} />
               <Route path="categories" element={<AdminCategories />} />
               <Route path="products" element={<AdminProducts />} />
 
@@ -55,6 +56,7 @@ function App() {
               <Route path="orders" element={<AdminOrders />} />
             </Route>
           </Routes>
+          <SiteFooter />
         </Router>
       </ShopProvider>
     </QueryClientProvider>

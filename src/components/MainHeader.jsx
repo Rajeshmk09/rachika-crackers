@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Heart, ShoppingCart, PhoneCall } from 'lucide-react';
+import { Heart, ShoppingCart, PhoneCall, X } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 
 import HomeImg1 from '../assets/websitelogo.png';
@@ -14,6 +14,18 @@ export default function MainHeader() {
   const location = useLocation();
 
   const [marqueeMessage, setMarqueeMessage] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const closeSidebar = () => setSidebarOpen(false);
+
+  // Close sidebar on route change
+  useEffect(() => { closeSidebar(); }, [location.pathname]);
+
+  // Lock body scroll when sidebar is open
+  useEffect(() => {
+    document.body.style.overflow = sidebarOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [sidebarOpen]);
 
   const handleDownloadPricelist = (e) => {
     if (pricelistUrl && pricelistUrl.startsWith('data:')) {
@@ -41,18 +53,15 @@ export default function MainHeader() {
         window.open(pricelistUrl, '_blank');
       }
     }
+    closeSidebar();
   };
 
   useEffect(() => {
-    // 1. Listen for custom event updates from Admin Panel
     const handleUpdate = (e) => {
-      if (e.detail !== undefined) {
-        setMarqueeMessage(String(e.detail || ''));
-      }
+      if (e.detail !== undefined) setMarqueeMessage(String(e.detail || ''));
     };
     window.addEventListener('marquee_updated', handleUpdate);
 
-    // 2. Fetch announcement message directly from Supabase DB API
     const fetchDBAnnouncement = async () => {
       try {
         let res = await fetch(`${SUPABASE_URL}/rest/v1/announcements?order=updated_at.desc`, {
@@ -65,16 +74,12 @@ export default function MainHeader() {
             return;
           }
         }
-
-        // Fallback to products table
         res = await fetch(`${SUPABASE_URL}/rest/v1/products?category=eq.__SITE_ANNOUNCEMENT__`, {
           headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
         });
         if (res.ok) {
           const data = await res.json();
-          if (data && data.length > 0 && data[0].description) {
-            setMarqueeMessage(data[0].description);
-          }
+          if (data && data.length > 0 && data[0].description) setMarqueeMessage(data[0].description);
         }
       } catch (err) {
         console.warn('DB announcement fetch error:', err);
@@ -82,28 +87,31 @@ export default function MainHeader() {
     };
     fetchDBAnnouncement();
 
-    return () => {
-      window.removeEventListener('marquee_updated', handleUpdate);
-    };
+    return () => window.removeEventListener('marquee_updated', handleUpdate);
   }, []);
 
-  // Do not render public header on admin pages
-  if (location.pathname.startsWith('/admin')) {
-    return null;
-  }
+  if (location.pathname.startsWith('/admin')) return null;
 
   const isActive = (path) => location.pathname === path;
 
+  const navLinks = [
+    { to: '/', label: 'Home' },
+    { to: '/about', label: 'About' },
+    { to: '/products', label: 'Products' },
+    { to: '/safetytips', label: 'Safety Tips' },
+    { to: '/contact', label: 'Contact' },
+  ];
+
   return (
     <>
-      {/* 1. Top Scrolling Marquee Banner & Logo Bar */}
+      {/* ── Marquee + Desktop Header ───────────────────────────────────────── */}
       <header className="main-site-header">
         {marqueeMessage && marqueeMessage.trim() !== '' && (
           <div className="sectionbg">
             <div className="container-fluid">
               <div className="row">
                 <div className="col-md-12 px-0">
-                  <div className="py-2 px-2" style={{ backgroundColor: '#0a539f', color: '#ffffff', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                  <div className="py-2 px-2" style={{ backgroundColor: '#0a539f', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                     <marquee behavior="scroll" direction="left" scrollamount="6" style={{ fontSize: '14px', fontWeight: 600, color: '#ffffff', display: 'block' }}>
                       {marqueeMessage}
                     </marquee>
@@ -114,45 +122,29 @@ export default function MainHeader() {
           </div>
         )}
 
-        {/* Logo + Location + Contact Info Bar */}
-        <div className="container py-2">
+        {/* Desktop only: Logo + Location + Phone */}
+        <div className="container py-2 d-none d-lg-block">
           <div className="row align-items-center">
-            <div className="col-lg-4 col-md-12 col-12 text-center text-lg-left">
-              <Link to="/"> 
+            <div className="col-lg-4 text-lg-left">
+              <Link to="/">
                 <img src={HomeImg1} className="img-fluid logo" alt="SETHU PYRO PARK RACHIKA CRACKERS" title="SETHU PYRO PARK RACHIKA CRACKERS" />
               </Link>
             </div>
-            <div className="col-lg-4 d-none d-lg-block">
+            <div className="col-lg-4">
               <div className="d-flex align-items-center">
                 <div className="icon pr-2">
                   <img src={HomeImg2} className="img-fluid" alt="SETHU PYRO PARK" />
                 </div>
                 <div className="icon-info">
                   <div className="acme heading6 clr">Location</div>
-                  <div className="josefin smallfnt">9/296/1, Sri Anjaneya Nagar, Anupankulam,<br />Sivakasi - 626 189 </div>
+                  <div className="josefin smallfnt">1/235/1 SIVAGANAPURAM, Sivagnanapuram,<br />Virudhunagar - 626 002</div>
                 </div>
               </div>
             </div>
-            <div className="col-lg-4 d-none d-lg-block text-right">
-              <a
-                href="tel:+918867390680"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  padding: '10px 18px',
-                  border: '1.5px solid #cbd5e1',
-                  borderRadius: '12px',
-                  backgroundColor: '#ffffff',
-                  textDecoration: 'none',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                  transition: 'all 0.2s ease'
-                }}
-              >
+            <div className="col-lg-4 text-right">
+              <a href="tel:+918867390680" style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', padding: '10px 18px', border: '1.5px solid #cbd5e1', borderRadius: '12px', backgroundColor: '#ffffff', textDecoration: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
                 <div style={{ textAlign: 'left' }}>
-                  <span style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#475569', letterSpacing: '0.4px', textTransform: 'uppercase' }}>
-                    FOR QUERIES &amp; BULK ORDER
-                  </span>
+                  <span style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#475569', letterSpacing: '0.4px', textTransform: 'uppercase' }}>FOR QUERIES &amp; BULK ORDER</span>
                   <span style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ff6b35', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
                     <PhoneCall size={17} color="#ff6b35" />
                     +91 8867390680
@@ -164,82 +156,157 @@ export default function MainHeader() {
         </div>
       </header>
 
-      {/* 2. Blue Main Navigation Bar (Position Sticky at Body Level) */}
-      <nav
-        className="navbar navbar-expand-lg navbar-light navbg navfont"
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 99999,
-          boxShadow: '0 4px 14px rgba(0, 0, 0, 0.18)',
-          backgroundColor: '#0a539f'
-        }}
-      >
+      {/* ── Sticky Navbar ──────────────────────────────────────────────────── */}
+      <nav className="navbar navbar-expand-lg navbar-light navbg navfont" style={{ position: 'sticky', top: 0, zIndex: 99999, boxShadow: '0 4px 14px rgba(0,0,0,0.18)', backgroundColor: '#0a539f' }}>
         <div className="container">
-          <button type="button" className="navbar-toggler mx-auto" data-toggle="collapse" data-target="#myNavbar">
-            <span className="bi bi-list text-white"> Menu </span>
+
+          {/* Mobile: small logo left */}
+          <Link to="/" className="navbar-brand d-lg-none p-0" style={{ marginRight: 'auto' }}>
+            <img src={HomeImg1} alt="SETHU PYRO PARK" style={{ height: '48px', width: 'auto', objectFit: 'contain' }} />
+          </Link>
+
+          {/* Mobile: hamburger right — opens sidebar */}
+          <button
+            className="d-lg-none"
+            onClick={() => setSidebarOpen(true)}
+            style={{ background: 'none', border: '2px solid rgba(255,255,255,0.6)', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer' }}
+            aria-label="Open menu"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth="2.5">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
           </button>
-          <div id="myNavbar" className="collapse navbar-collapse navfont">
+
+          {/* Desktop nav links */}
+          <div className="d-none d-lg-block w-100">
             <ul className="navbar-nav mr-auto text-center align-items-center">
-              <li className={`nav-item px-2 ${isActive('/') ? 'active' : ''}`}>
-                <Link className="nav-link" to="/"> Home </Link>
-              </li>
-              <li className={`nav-item px-2 ${isActive('/about') ? 'active' : ''}`}>
-                <Link className="nav-link" to="/about"> About </Link>
-              </li>
-              <li className={`nav-item px-2 ${isActive('/products') ? 'active' : ''}`}>
-                <Link className="nav-link" to="/products"> Products </Link>
-              </li>
-
-              {/* Wishlist Link with Live Badge */}
+              {navLinks.map(({ to, label }) => (
+                <li key={to} className={`nav-item px-2 ${isActive(to) ? 'active' : ''}`}>
+                  <Link className="nav-link" to={to}>{label}</Link>
+                </li>
+              ))}
               <li className={`nav-item px-2 ${isActive('/wishlist') ? 'active' : ''}`}>
-                <Link
-                  className="nav-link d-inline-flex align-items-center"
-                  to="/wishlist"
-                  style={{ color: wishlistCount > 0 ? '#ff4d4f' : 'inherit' }}
-                >
-                  <Heart size={16} fill={wishlistCount > 0 ? "#ff4d4f" : "none"} color={wishlistCount > 0 ? "#ff4d4f" : "currentColor"} className="mr-1" />
+                <Link className="nav-link d-inline-flex align-items-center" to="/wishlist" style={{ color: wishlistCount > 0 ? '#ff4d4f' : 'inherit' }}>
+                  <Heart size={16} fill={wishlistCount > 0 ? '#ff4d4f' : 'none'} color={wishlistCount > 0 ? '#ff4d4f' : 'currentColor'} className="mr-1" />
                   Wishlist
-                  {wishlistCount > 0 && (
-                    <span className="badge badge-pill badge-danger ml-1" style={{ fontSize: '0.75rem', padding: '3px 7px' }}>
-                      {wishlistCount}
-                    </span>
-                  )}
+                  {wishlistCount > 0 && <span className="badge badge-pill badge-danger ml-1" style={{ fontSize: '0.75rem', padding: '3px 7px' }}>{wishlistCount}</span>}
                 </Link>
               </li>
-
-              {/* Cart Link with Live Badge & Total */}
               <li className={`nav-item px-2 ${isActive('/cart') ? 'active' : ''}`}>
-                <Link
-                  className="nav-link d-inline-flex align-items-center"
-                  to="/cart"
-                  style={{ color: cartCount > 0 ? '#ff7011' : 'inherit', fontWeight: cartCount > 0 ? '700' : 'normal' }}
-                >
-                  <ShoppingCart size={16} className="mr-1" color={cartCount > 0 ? "#ff7011" : "currentColor"} />
+                <Link className="nav-link d-inline-flex align-items-center" to="/cart" style={{ color: cartCount > 0 ? '#ff7011' : 'inherit', fontWeight: cartCount > 0 ? '700' : 'normal' }}>
+                  <ShoppingCart size={16} className="mr-1" color={cartCount > 0 ? '#ff7011' : 'currentColor'} />
                   Cart
-                  {cartCount > 0 && (
-                    <span className="badge badge-pill badge-warning ml-1 text-white" style={{ backgroundColor: '#ff7011', fontSize: '0.75rem', padding: '3px 7px' }}>
-                      {cartCount} {cartTotalPrice > 0 ? `(₹${cartTotalPrice.toLocaleString('en-IN')})` : ''}
-                    </span>
-                  )}
+                  {cartCount > 0 && <span className="badge badge-pill badge-warning ml-1 text-white" style={{ backgroundColor: '#ff7011', fontSize: '0.75rem', padding: '3px 7px' }}>{cartCount} {cartTotalPrice > 0 ? `(₹${cartTotalPrice.toLocaleString('en-IN')})` : ''}</span>}
                 </Link>
               </li>
-
-              <li className={`nav-item px-2 ${isActive('/safetytips') ? 'active' : ''}`}>
-                <Link className="nav-link" to="/safetytips">Safety Tips</Link>
-              </li>
-              <li className={`nav-item px-2 ${isActive('/contact') ? 'active' : ''}`}>
-                <Link className="nav-link" to="/contact">Contact</Link>
-              </li>
-              <li className="nav-item px-2 text-center">
-                <a className="pricelist_pdf blink" href={pricelistUrl || "/products"} onClick={handleDownloadPricelist} target="_blank" rel="noopener noreferrer">
-                  Download Pricelist
-                </a>
+              <li className="nav-item px-2">
+                <a className="pricelist_pdf blink" href={pricelistUrl || '/products'} onClick={handleDownloadPricelist} target="_blank" rel="noopener noreferrer">Download Pricelist</a>
               </li>
             </ul>
-          </div> 	
-        </div>	
+          </div>
+
+        </div>
       </nav>
+
+      {/* ── Mobile Sidebar Overlay ─────────────────────────────────────────── */}
+      {sidebarOpen && (
+        <div
+          onClick={closeSidebar}
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 199998 }}
+        />
+      )}
+
+      {/* ── Mobile Sidebar Drawer ──────────────────────────────────────────── */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        height: '100%',
+        width: '280px',
+        backgroundColor: '#0a539f',
+        zIndex: 199999,
+        transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+        transition: 'transform 0.3s ease',
+        display: 'flex',
+        flexDirection: 'column',
+        overflowY: 'auto',
+      }}>
+        {/* Sidebar header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.15)' }}>
+          <Link to="/" onClick={closeSidebar}>
+            <img src={HomeImg1} alt="SETHU PYRO PARK" style={{ height: '50px', objectFit: 'contain' }} />
+          </Link>
+          <button onClick={closeSidebar} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }} aria-label="Close menu">
+            <X size={26} color="white" />
+          </button>
+        </div>
+
+        {/* Sidebar nav links */}
+        <ul style={{ listStyle: 'none', padding: '12px 0', margin: 0, flex: 1 }}>
+          {navLinks.map(({ to, label }) => (
+            <li key={to} style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+              <Link
+                to={to}
+                onClick={closeSidebar}
+                style={{
+                  display: 'block',
+                  padding: '14px 24px',
+                  color: isActive(to) ? '#ffd700' : '#ffffff',
+                  fontWeight: isActive(to) ? '700' : '500',
+                  textDecoration: 'none',
+                  fontSize: '1rem',
+                  letterSpacing: '0.3px',
+                  backgroundColor: isActive(to) ? 'rgba(255,255,255,0.1)' : 'transparent',
+                }}
+              >
+                {label}
+              </Link>
+            </li>
+          ))}
+
+          {/* Wishlist */}
+          <li style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+            <Link to="/wishlist" onClick={closeSidebar} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 24px', color: wishlistCount > 0 ? '#ff4d4f' : '#ffffff', textDecoration: 'none', fontSize: '1rem', fontWeight: '500' }}>
+              <Heart size={17} fill={wishlistCount > 0 ? '#ff4d4f' : 'none'} color={wishlistCount > 0 ? '#ff4d4f' : 'white'} />
+              Wishlist
+              {wishlistCount > 0 && <span style={{ background: '#ff4d4f', color: '#fff', borderRadius: '20px', padding: '1px 8px', fontSize: '0.75rem' }}>{wishlistCount}</span>}
+            </Link>
+          </li>
+
+          {/* Cart */}
+          <li style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+            <Link to="/cart" onClick={closeSidebar} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 24px', color: cartCount > 0 ? '#ff7011' : '#ffffff', textDecoration: 'none', fontSize: '1rem', fontWeight: cartCount > 0 ? '700' : '500' }}>
+              <ShoppingCart size={17} color={cartCount > 0 ? '#ff7011' : 'white'} />
+              Cart
+              {cartCount > 0 && <span style={{ background: '#ff7011', color: '#fff', borderRadius: '20px', padding: '1px 8px', fontSize: '0.75rem' }}>{cartCount}</span>}
+            </Link>
+          </li>
+
+          {/* Download Pricelist */}
+          <li style={{ padding: '16px 24px' }}>
+            <a
+              className="pricelist_pdf blink"
+              href={pricelistUrl || '/products'}
+              onClick={handleDownloadPricelist}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: 'block', textAlign: 'center' }}
+            >
+              Download Pricelist
+            </a>
+          </li>
+        </ul>
+
+        {/* Sidebar footer: call */}
+        <div style={{ padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,0.15)' }}>
+          <a href="tel:+918867390680" style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#ffffff', textDecoration: 'none', fontSize: '0.95rem', fontWeight: '600' }}>
+            <PhoneCall size={18} color="#ffd700" />
+            +91 8867390680
+          </a>
+        </div>
+      </div>
     </>
   );
 }

@@ -1,43 +1,151 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Search, SlidersHorizontal, RotateCcw, ChevronUp, ChevronDown, CheckSquare, Square, Tag, ArrowUpDown, X } from 'lucide-react';
+import { Search, SlidersHorizontal, RotateCcw, ChevronUp, ChevronDown, X, ArrowUpDown } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 import HeaderNav from '../components/HeaderNav';
 import ProductCard from '../components/ProductCard';
+import MobileProductCard from '../components/MobileProductCard';
 import TopMarquee from '../components/TopMarquee';
 
 import ProductsImg1 from '../assets/websitelogo.png';
 import ProductsImg2 from '../assets/products_img_2.jpeg';
 
+const SORT_OPTIONS = [
+  { value: 'default',      label: 'Default' },
+  { value: 'priceLow',     label: 'Price ↑' },
+  { value: 'priceHigh',    label: 'Price ↓' },
+  { value: 'discountHigh', label: 'Discount ↓' },
+  { value: 'nameAsc',      label: 'A → Z' },
+];
+
+function SortDropdown({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const selected = SORT_OPTIONS.find(o => o.value === value) || SORT_OPTIONS[0];
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: '6px',
+          padding: '7px 12px', borderRadius: '10px',
+          background: '#fff', border: '1px solid #cbd5e1',
+          fontSize: '0.82rem', fontWeight: '600', color: '#1e293b',
+          cursor: 'pointer', whiteSpace: 'nowrap', minWidth: '110px',
+          justifyContent: 'space-between',
+        }}
+      >
+        {selected.label}
+        <ChevronDown size={14} color="#64748b" style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+      </button>
+      {open && (
+        <>
+          <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 999 }} />
+          <div style={{
+            position: 'absolute', right: 0, top: 'calc(100% + 6px)',
+            background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 1000,
+            overflow: 'hidden', minWidth: '130px',
+          }}>
+            {SORT_OPTIONS.map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => { onChange(opt.value); setOpen(false); }}
+                style={{
+                  display: 'block', width: '100%', textAlign: 'left',
+                  padding: '10px 16px', border: 'none', background: opt.value === value ? '#fff7f0' : '#fff',
+                  fontSize: '0.82rem', fontWeight: opt.value === value ? '700' : '500',
+                  color: opt.value === value ? '#ff7011' : '#1e293b',
+                  cursor: 'pointer',
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function Products() {
   const { products, loading: shopLoading } = useShop();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Multi-select Category filter state (Array of category names)
+  // ── Active filter states (applied to product grid) ─────────────────────────
   const [selectedCategories, setSelectedCategories] = useState(() => {
     const initialCat = searchParams.get('cat');
     return initialCat && initialCat !== 'All' ? [initialCat] : [];
   });
-
   const [searchQuery, setSearchQuery] = useState('');
-
-  // Interactive Price Filter (Min / Max range slider + checkboxes)
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(10000);
-  const [selectedPriceRanges, setSelectedPriceRanges] = useState([]); // ['under200', '200to500', etc.]
-
-  // Discount Filter
-  const [minDiscount, setMinDiscount] = useState(0); // 0, 10, 30, 50
-
-  // Sorting
+  const [selectedPriceRanges, setSelectedPriceRanges] = useState([]);
+  const [minDiscount, setMinDiscount] = useState(0);
   const [sortBy, setSortBy] = useState('default');
 
-  // Collapsible sections state
+  // ── Mobile state ────────────────────────────────────────────────────────────
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  useEffect(() => {
+    const fn = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', fn);
+    return () => window.removeEventListener('resize', fn);
+  }, []);
+
+  // ── Mobile bottom-sheet filter state ────────────────────────────────────────
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  // Draft states — only applied when "Apply" is tapped
+  const [draftCategories, setDraftCategories] = useState([]);
+  const [draftMinPrice, setDraftMinPrice] = useState(0);
+  const [draftMaxPrice, setDraftMaxPrice] = useState(10000);
+  const [draftMinDiscount, setDraftMinDiscount] = useState(0);
+
+  // Open sheet: copy current applied state into drafts
+  const openFilterSheet = () => {
+    setDraftCategories([...selectedCategories]);
+    setDraftMinPrice(minPrice);
+    setDraftMaxPrice(maxPrice);
+    setDraftMinDiscount(minDiscount);
+    setFilterSheetOpen(true);
+  };
+
+  // Apply: push drafts into real state and close
+  const applyFilters = () => {
+    setSelectedCategories(draftCategories);
+    setMinPrice(draftMinPrice);
+    setMaxPrice(draftMaxPrice);
+    setMinDiscount(draftMinDiscount);
+    if (draftCategories.length === 1) {
+      setSearchParams({ cat: draftCategories[0] });
+    } else {
+      searchParams.delete('cat');
+      setSearchParams(searchParams);
+    }
+    setFilterSheetOpen(false);
+  };
+
+  const resetDrafts = () => {
+    setDraftCategories([]);
+    setDraftMinPrice(0);
+    setDraftMaxPrice(highestCatalogPrice);
+    setDraftMinDiscount(0);
+  };
+
+  // Lock scroll when sheet open
+  useEffect(() => {
+    document.body.style.overflow = filterSheetOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [filterSheetOpen]);
+
+  // ── Sidebar UI state ────────────────────────────────────────────────────────
   const [catExpanded, setCatExpanded] = useState(true);
   const [priceExpanded, setPriceExpanded] = useState(true);
   const [discountExpanded, setDiscountExpanded] = useState(true);
 
-  // Highest price calculation for range slider max boundary
+  // ── Price range ─────────────────────────────────────────────────────────────
   const highestCatalogPrice = useMemo(() => {
     if (!products || products.length === 0) return 5000;
     const max = Math.max(...products.map(p => parseFloat(p.price || 0)));
@@ -47,10 +155,11 @@ export default function Products() {
   useEffect(() => {
     if (highestCatalogPrice > 0 && maxPrice === 10000) {
       setMaxPrice(highestCatalogPrice);
+      setDraftMaxPrice(highestCatalogPrice);
     }
   }, [highestCatalogPrice]);
 
-  // Keep selectedCategories synced if URL parameter changes
+  // ── Sync URL → state ────────────────────────────────────────────────────────
   useEffect(() => {
     const cat = searchParams.get('cat');
     if (cat && cat !== 'All') {
@@ -58,18 +167,18 @@ export default function Products() {
     }
   }, [searchParams]);
 
-  // Extract unique categories & item counts
+  // ── Categories list ─────────────────────────────────────────────────────────
   const categoriesList = useMemo(() => {
     if (!products || products.length === 0) return [];
-    const countsMap = new Map();
+    const map = new Map();
     products.forEach(p => {
       const cat = p.category || 'Uncategorized';
-      countsMap.set(cat, (countsMap.get(cat) || 0) + 1);
+      map.set(cat, (map.get(cat) || 0) + 1);
     });
-    return Array.from(countsMap.entries()).map(([name, count]) => ({ name, count }));
+    return Array.from(map.entries()).map(([name, count]) => ({ name, count }));
   }, [products]);
 
-  // Category toggle handler (Multi-select checkbox)
+  // ── Category toggle (desktop sidebar) ──────────────────────────────────────
   const toggleCategory = (catName) => {
     if (catName === 'All') {
       setSelectedCategories([]);
@@ -77,90 +186,67 @@ export default function Products() {
       setSearchParams(searchParams);
       return;
     }
-
     setSelectedCategories(prev => {
-      const next = prev.includes(catName)
-        ? prev.filter(c => c !== catName)
-        : [...prev, catName];
-
-      if (next.length === 1) {
-        setSearchParams({ cat: next[0] });
-      } else {
-        searchParams.delete('cat');
-        setSearchParams(searchParams);
-      }
+      const next = prev.includes(catName) ? prev.filter(c => c !== catName) : [...prev, catName];
+      if (next.length === 1) setSearchParams({ cat: next[0] });
+      else { searchParams.delete('cat'); setSearchParams(searchParams); }
       return next;
     });
   };
 
-  // Price range checkbox toggle handler
-  const togglePriceRange = (rangeKey) => {
-    setSelectedPriceRanges(prev =>
-      prev.includes(rangeKey) ? prev.filter(r => r !== rangeKey) : [...prev, rangeKey]
+  // ── Draft category toggle (mobile sheet) ───────────────────────────────────
+  const toggleDraftCategory = (catName) => {
+    if (catName === 'All') { setDraftCategories([]); return; }
+    setDraftCategories(prev =>
+      prev.includes(catName) ? prev.filter(c => c !== catName) : [...prev, catName]
     );
   };
 
-  // Filter & sort algorithm
+  // ── Filter & sort ───────────────────────────────────────────────────────────
   const filteredProducts = useMemo(() => {
     if (!products) return [];
-
     return products.filter(p => {
       const price = parseFloat(p.price || 0);
 
-      // Category checkbox filter (Multi-select OR logic)
       if (selectedCategories.length > 0) {
         const pCat = (p.category || '').toLowerCase();
-        const matchesCat = selectedCategories.some(c => c.toLowerCase() === pCat);
-        if (!matchesCat) return false;
+        if (!selectedCategories.some(c => c.toLowerCase() === pCat)) return false;
       }
 
-      // Search filter (name or product_code or category)
       if (searchQuery.trim() !== '') {
         const q = searchQuery.toLowerCase().trim();
-        const matchName = (p.name || '').toLowerCase().includes(q);
-        const matchCode = (p.product_code || '').toLowerCase().includes(q);
-        const matchCat = (p.category || '').toLowerCase().includes(q);
-        if (!matchName && !matchCode && !matchCat) return false;
+        if (
+          !(p.name || '').toLowerCase().includes(q) &&
+          !(p.product_code || '').toLowerCase().includes(q) &&
+          !(p.category || '').toLowerCase().includes(q)
+        ) return false;
       }
 
-      // Price slider min & max filter
-      if (price < minPrice || price > maxPrice) {
-        return false;
-      }
+      if (price < minPrice || price > maxPrice) return false;
 
-      // Price range checkboxes (if any checked)
       if (selectedPriceRanges.length > 0) {
-        const inUnder200 = selectedPriceRanges.includes('under200') && price < 200;
-        const in200to500 = selectedPriceRanges.includes('200to500') && price >= 200 && price <= 500;
-        const in500to1000 = selectedPriceRanges.includes('500to1000') && price >= 500 && price <= 1000;
-        const inAbove1000 = selectedPriceRanges.includes('above1000') && price > 1000;
-
-        if (!inUnder200 && !in200to500 && !in500to1000 && !inAbove1000) {
-          return false;
-        }
+        const ok =
+          (selectedPriceRanges.includes('under200') && price < 200) ||
+          (selectedPriceRanges.includes('200to500') && price >= 200 && price <= 500) ||
+          (selectedPriceRanges.includes('500to1000') && price >= 500 && price <= 1000) ||
+          (selectedPriceRanges.includes('above1000') && price > 1000);
+        if (!ok) return false;
       }
 
-      // Discount filter
       const mrp = parseFloat(p.mrp || p.original_price || p.price || 0);
       const discount = (mrp > 0 && mrp >= price) ? Math.round(((mrp - price) / mrp) * 100) : (p.discount_percentage || 0);
-      if (minDiscount > 0 && discount < minDiscount) {
-        return false;
-      }
+      if (minDiscount > 0 && discount < minDiscount) return false;
 
       return true;
     }).sort((a, b) => {
-      const pA = parseFloat(a.price || 0);
-      const pB = parseFloat(b.price || 0);
-
+      const pA = parseFloat(a.price || 0), pB = parseFloat(b.price || 0);
       const mrpA = parseFloat(a.mrp || a.original_price || a.price || 0);
       const mrpB = parseFloat(b.mrp || b.original_price || b.price || 0);
-
-      const discA = mrpA > 0 ? ((mrpA - pA) / mrpA) * 100 : 0;
-      const discB = mrpB > 0 ? ((mrpB - pB) / mrpB) * 100 : 0;
-
+      const dA = mrpA > 0 ? ((mrpA - pA) / mrpA) * 100 : 0;
+      const dB = mrpB > 0 ? ((mrpB - pB) / mrpB) * 100 : 0;
       if (sortBy === 'priceLow') return pA - pB;
       if (sortBy === 'priceHigh') return pB - pA;
-      if (sortBy === 'discountHigh') return discB - discA;
+      if (sortBy === 'discountHigh') return dB - dA;
       if (sortBy === 'nameAsc') return (a.name || '').localeCompare(b.name || '');
       return 0;
     });
@@ -177,17 +263,133 @@ export default function Products() {
     setSearchParams({});
   };
 
-  const activeFiltersCount = (selectedCategories.length > 0 ? 1 : 0) +
+  const activeFiltersCount =
+    (selectedCategories.length > 0 ? 1 : 0) +
     (searchQuery !== '' ? 1 : 0) +
     (minPrice > 0 || maxPrice < highestCatalogPrice ? 1 : 0) +
     (selectedPriceRanges.length > 0 ? 1 : 0) +
     (minDiscount > 0 ? 1 : 0);
 
+  // ── Reusable filter panel content ───────────────────────────────────────────
+  // Used in both desktop sidebar and mobile sheet (with draft/real state switch)
+  const FilterContent = ({ draft = false }) => {
+    const cats = draft ? draftCategories : selectedCategories;
+    const toggleCat = draft ? toggleDraftCategory : toggleCategory;
+    const curMax = draft ? draftMaxPrice : maxPrice;
+    const setMax = draft ? setDraftMaxPrice : setMaxPrice;
+    const curMin = draft ? draftMinPrice : minPrice;
+    const curDiscount = draft ? draftMinDiscount : minDiscount;
+    const setDiscount = draft ? setDraftMinDiscount : setMinDiscount;
+
+    return (
+      <>
+        {/* Categories */}
+        <div className="mb-4">
+          <div
+            className="d-flex align-items-center justify-content-between py-1"
+            onClick={() => setCatExpanded(!catExpanded)}
+            style={{ cursor: 'pointer' }}
+          >
+            <div className="d-flex align-items-center" style={{ gap: '8px' }}>
+              <span className="font-weight-bold text-dark" style={{ fontSize: '1.05rem' }}>Categories</span>
+              <span className="badge badge-pill badge-light text-muted px-2" style={{ fontSize: '0.75rem', backgroundColor: '#f1f5f9' }}>{categoriesList.length}</span>
+            </div>
+            {catExpanded ? <ChevronUp size={18} className="text-muted" /> : <ChevronDown size={18} className="text-muted" />}
+          </div>
+
+          {catExpanded && (
+            <div className="mt-2 pr-1" style={{ maxHeight: '220px', overflowY: 'auto' }}>
+              <label className="d-flex align-items-center justify-content-between py-2 px-2 rounded mb-1"
+                style={{ backgroundColor: cats.length === 0 ? '#fff3ee' : 'transparent', cursor: 'pointer' }}>
+                <div className="d-flex align-items-center" style={{ gap: '10px' }}>
+                  <input type="checkbox" checked={cats.length === 0} onChange={() => toggleCat('All')}
+                    style={{ width: '16px', height: '16px', accentColor: '#ff7011', cursor: 'pointer' }} />
+                  <span className="josefin" style={{ fontSize: '0.9rem', color: cats.length === 0 ? '#ff7011' : '#334155', fontWeight: cats.length === 0 ? '700' : '400' }}>All Categories</span>
+                </div>
+                <span className="badge badge-pill badge-light text-muted" style={{ fontSize: '0.75rem', backgroundColor: '#f1f5f9' }}>{products.length}</span>
+              </label>
+
+              {categoriesList.map(({ name, count }) => {
+                const checked = cats.includes(name);
+                return (
+                  <label key={name} className="d-flex align-items-center justify-content-between py-2 px-2 rounded mb-1"
+                    style={{ backgroundColor: checked ? '#fff3ee' : 'transparent', cursor: 'pointer' }}>
+                    <div className="d-flex align-items-center" style={{ gap: '10px' }}>
+                      <input type="checkbox" checked={checked} onChange={() => toggleCat(name)}
+                        style={{ width: '16px', height: '16px', accentColor: '#ff7011', cursor: 'pointer' }} />
+                      <span className="josefin text-truncate" style={{ fontSize: '0.9rem', color: checked ? '#ff7011' : '#334155', fontWeight: checked ? '700' : '400', maxWidth: '150px' }}>{name}</span>
+                    </div>
+                    <span className="badge badge-pill" style={{ fontSize: '0.75rem', backgroundColor: checked ? '#ff7011' : '#f1f5f9', color: checked ? '#fff' : '#64748b' }}>{count}</span>
+                  </label>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <hr style={{ borderColor: '#f1f5f9', margin: '16px 0' }} />
+
+        {/* Price Filter */}
+        <div className="mb-4">
+          <div className="d-flex align-items-center justify-content-between py-1"
+            onClick={() => setPriceExpanded(!priceExpanded)} style={{ cursor: 'pointer' }}>
+            <span className="font-weight-bold text-dark" style={{ fontSize: '1.05rem' }}>Price Filter</span>
+            {priceExpanded ? <ChevronUp size={18} className="text-muted" /> : <ChevronDown size={18} className="text-muted" />}
+          </div>
+          {priceExpanded && (
+            <div className="mt-3">
+              <div className="p-3 rounded" style={{ backgroundColor: '#f8fafc', borderRadius: '10px' }}>
+                <div className="d-flex justify-content-between small font-weight-bold josefin mb-2 text-dark">
+                  <span>₹{curMin}</span>
+                  <span>₹{curMax.toLocaleString('en-IN')}</span>
+                </div>
+                <input type="range" className="custom-range" min="0" max={highestCatalogPrice} step="50"
+                  value={curMax} onChange={(e) => setMax(Number(e.target.value))}
+                  style={{ accentColor: '#ff7011', cursor: 'pointer' }} />
+                <div className="text-center small josefin text-muted mt-1">
+                  Max Price: <strong>₹{curMax.toLocaleString('en-IN')}</strong>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <hr style={{ borderColor: '#f1f5f9', margin: '16px 0' }} />
+
+        {/* Discount Filter */}
+        <div className="mb-2">
+          <div className="d-flex align-items-center justify-content-between py-1"
+            onClick={() => setDiscountExpanded(!discountExpanded)} style={{ cursor: 'pointer' }}>
+            <span className="font-weight-bold text-dark" style={{ fontSize: '1.05rem' }}>Min. Discount</span>
+            {discountExpanded ? <ChevronUp size={18} className="text-muted" /> : <ChevronDown size={18} className="text-muted" />}
+          </div>
+          {discountExpanded && (
+            <div className="mt-2 d-flex flex-wrap" style={{ gap: '8px' }}>
+              {[0, 10, 30, 50, 70].map(val => (
+                <button key={val} type="button"
+                  onClick={() => setDiscount(val)}
+                  style={{
+                    padding: '5px 14px', borderRadius: '20px', border: '1px solid',
+                    borderColor: curDiscount === val ? '#ff7011' : '#e2e8f0',
+                    background: curDiscount === val ? '#ff7011' : '#fff',
+                    color: curDiscount === val ? '#fff' : '#334155',
+                    fontSize: '0.82rem', fontWeight: '600', cursor: 'pointer'
+                  }}
+                >
+                  {val === 0 ? 'Any' : `${val}%+`}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </>
+    );
+  };
+
   return (
     <div className="products-page bg-light min-vh-100">
 
-
-      {/* Breadcrumb Bar */}
+      {/* Breadcrumb */}
       <div className="bg-white border-bottom py-2">
         <div className="container">
           <nav aria-label="breadcrumb">
@@ -202,48 +404,36 @@ export default function Products() {
         </div>
       </div>
 
-      {/* Main Content Layout */}
-      <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '24px 32px' }}>
+      <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '24px 16px' }}>
         <div className="row">
-          {/* Left Sidebar Filter Panel - Matching Reference UI */}
-          <div className="col-lg-3 mb-4 mb-lg-0">
+
+          {/* ── Desktop Left Sidebar (hidden on mobile) ── */}
+          <div className="d-none d-lg-block col-lg-3 mb-4 mb-lg-0">
             <div className="bg-white shadow-sm border p-4 sticky-top" style={{ borderRadius: '16px', top: '70px', zIndex: 100 }}>
-              {/* Filter Header */}
               <div className="d-flex align-items-center justify-content-between pb-3 border-bottom mb-4">
-                <h4 className="font-weight-bold text-dark mb-0 d-flex align-items-center" style={{ fontSize: '1.25rem', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-                  <SlidersHorizontal size={20} className="mr-2 text-warning" color="#ff7011" />
+                <h4 className="font-weight-bold text-dark mb-0 d-flex align-items-center" style={{ fontSize: '1.25rem' }}>
+                  <SlidersHorizontal size={20} className="mr-2" color="#ff7011" />
                   Filters
                 </h4>
                 {activeFiltersCount > 0 && (
-                  <button
-                    onClick={handleResetAllFilters}
-                    className="btn btn-link p-0 text-danger small josefin d-flex align-items-center text-decoration-none font-weight-bold"
-                  >
+                  <button onClick={handleResetAllFilters}
+                    className="btn btn-link p-0 text-danger small josefin d-flex align-items-center text-decoration-none font-weight-bold">
                     <RotateCcw size={12} className="mr-1" /> Clear ({activeFiltersCount})
                   </button>
                 )}
               </div>
 
-              {/* Search Crackers */}
+              {/* Search — desktop only in sidebar */}
               <div className="mb-4">
                 <label className="small font-weight-bold text-dark mb-2 josefin">Search Crackers</label>
                 <div className="position-relative">
-                  <input
-                    type="text"
-                    className="form-control josefin"
-                    placeholder="Search by name or code.."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    style={{ borderRadius: '10px', paddingLeft: '36px', height: '42px', fontSize: '0.9rem', borderColor: '#e2e8f0' }}
-                  />
+                  <input type="text" className="form-control josefin" placeholder="Search by name or code.."
+                    value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{ borderRadius: '10px', paddingLeft: '36px', height: '42px', fontSize: '0.9rem', borderColor: '#e2e8f0' }} />
                   <Search size={16} className="position-absolute text-muted" style={{ left: '12px', top: '13px' }} />
                   {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchQuery('')}
-                      className="btn btn-link p-0 position-absolute text-muted"
-                      style={{ right: '10px', top: '10px' }}
-                    >
+                    <button type="button" onClick={() => setSearchQuery('')}
+                      className="btn btn-link p-0 position-absolute text-muted" style={{ right: '10px', top: '10px' }}>
                       <X size={16} />
                     </button>
                   )}
@@ -251,225 +441,63 @@ export default function Products() {
               </div>
 
               <hr className="my-4" style={{ borderColor: '#f1f5f9' }} />
-
-              {/* Collapsible Categories Section with Checkboxes */}
-              <div className="mb-4">
-                <div
-                  className="d-flex align-items-center justify-content-between cursor-pointer py-1"
-                  onClick={() => setCatExpanded(!catExpanded)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <div className="d-flex align-items-center gap-2">
-                    <span className="font-weight-bold text-dark" style={{ fontSize: '1.1rem', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-                      Categories
-                    </span>
-                    <span className="badge badge-pill badge-light text-muted px-2 py-1" style={{ fontSize: '0.75rem', backgroundColor: '#f1f5f9' }}>
-                      {categoriesList.length}
-                    </span>
-                  </div>
-                  {catExpanded ? <ChevronUp size={18} className="text-muted" /> : <ChevronDown size={18} className="text-muted" />}
-                </div>
-
-                {catExpanded && (
-                  <div className="mt-3 pr-1" style={{ maxHeight: '280px', overflowY: 'auto' }}>
-                    {/* All Categories Checkbox option */}
-                    <label
-                      className="d-flex align-items-center justify-content-between py-2 px-2 rounded cursor-pointer mb-1"
-                      style={{
-                        backgroundColor: selectedCategories.length === 0 ? '#fff3ee' : 'transparent',
-                        cursor: 'pointer',
-                        transition: 'background 0.15s ease'
-                      }}
-                    >
-                      <div className="d-flex align-items-center" style={{ gap: '10px' }}>
-                        <input
-                          type="checkbox"
-                          checked={selectedCategories.length === 0}
-                          onChange={() => toggleCategory('All')}
-                          style={{ width: '16px', height: '16px', accentColor: '#ff7011', cursor: 'pointer' }}
-                        />
-                        <span className={`josefin ${selectedCategories.length === 0 ? 'font-weight-bold text-warning' : 'text-dark'}`} style={{ fontSize: '0.9rem', color: selectedCategories.length === 0 ? '#ff7011' : '#334155' }}>
-                          All Categories
-                        </span>
-                      </div>
-                      <span className="badge badge-pill badge-light text-muted" style={{ fontSize: '0.75rem', backgroundColor: '#f1f5f9' }}>
-                        {products.length}
-                      </span>
-                    </label>
-
-                    {/* Category Checkbox Items */}
-                    {categoriesList.map(({ name, count }) => {
-                      const isChecked = selectedCategories.includes(name);
-                      return (
-                        <label
-                          key={name}
-                          className="d-flex align-items-center justify-content-between py-2 px-2 rounded cursor-pointer mb-1"
-                          style={{
-                            backgroundColor: isChecked ? '#fff3ee' : 'transparent',
-                            cursor: 'pointer',
-                            transition: 'background 0.15s ease'
-                          }}
-                        >
-                          <div className="d-flex align-items-center" style={{ gap: '10px' }}>
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={() => toggleCategory(name)}
-                              style={{ width: '16px', height: '16px', accentColor: '#ff7011', cursor: 'pointer' }}
-                            />
-                            <span
-                              className={`josefin text-truncate ${isChecked ? 'font-weight-bold' : ''}`}
-                              style={{ fontSize: '0.9rem', color: isChecked ? '#ff7011' : '#334155', maxWidth: '140px' }}
-                            >
-                              {name}
-                            </span>
-                          </div>
-                          <span
-                            className={`badge badge-pill ${isChecked ? 'badge-warning text-white' : 'badge-light text-muted'}`}
-                            style={{ fontSize: '0.75rem', backgroundColor: isChecked ? '#ff7011' : '#f1f5f9' }}
-                          >
-                            {count}
-                          </span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              <hr className="my-4" style={{ borderColor: '#f1f5f9' }} />
-
-              {/* Collapsible Price Filter Section */}
-              <div className="mb-4">
-                <div
-                  className="d-flex align-items-center justify-content-between cursor-pointer py-1"
-                  onClick={() => setPriceExpanded(!priceExpanded)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <span className="font-weight-bold text-dark" style={{ fontSize: '1.1rem', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-                    Price Filter
-                  </span>
-                  {priceExpanded ? <ChevronUp size={18} className="text-muted" /> : <ChevronDown size={18} className="text-muted" />}
-                </div>
-
-                {priceExpanded && (
-                  <div className="mt-3">
-                    {/* Price Range Slider */}
-                    <div className="p-3 bg-light rounded" style={{ backgroundColor: '#f8fafc', borderRadius: '10px' }}>
-                      <div className="d-flex align-items-center justify-content-between small font-weight-bold josefin mb-2 text-dark">
-                        <span>₹{minPrice}</span>
-                        <span>₹{maxPrice.toLocaleString('en-IN')}</span>
-                      </div>
-                      <input
-                        type="range"
-                        className="custom-range"
-                        min="0"
-                        max={highestCatalogPrice}
-                        step="50"
-                        value={maxPrice}
-                        onChange={(e) => setMaxPrice(Number(e.target.value))}
-                        style={{ accentColor: '#ff7011', cursor: 'pointer' }}
-                      />
-                      <div className="text-center small josefin text-muted mt-1">
-                        Max Price: <strong>₹{maxPrice.toLocaleString('en-IN')}</strong>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <FilterContent draft={false} />
             </div>
           </div>
 
-          {/* Right Product Grid Display */}
-          <div className="col-lg-9">
-            {/* Top Header Bar matching Reference UI */}
-            <div className="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between mb-3 pb-2 gap-3" style={{ gap: '16px' }}>
-              <div>
-                <h2 className="font-weight-bold text-dark mb-0" style={{ fontSize: '1.75rem', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-                  {selectedCategories.length === 0
-                    ? 'All Products'
-                    : selectedCategories.length === 1
-                    ? selectedCategories[0]
-                    : `Selected (${selectedCategories.length} Categories)`}
-                </h2>
+          {/* ── Right Product Grid ── */}
+          <div className="col-12 col-lg-9">
+
+            {/* Top bar */}
+            <div className="d-flex align-items-center justify-content-between mb-3 pb-2" style={{ gap: '12px', flexWrap: 'wrap', ...(isMobile ? { position: 'sticky', top: '60px', zIndex: 900, background: '#f1f5f9', padding: '10px 4px', margin: '0 -4px 12px' } : {}) }}>
+              <div className="d-flex align-items-center" style={{ gap: '10px', flex: 1, minWidth: 0 }}>
+
+                {/* Mobile Filter button */}
+                {isMobile && (
+                  <button type="button" onClick={openFilterSheet}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '6px',
+                      padding: '8px 14px', borderRadius: '10px',
+                      backgroundColor: activeFiltersCount > 0 ? '#ff7011' : '#fff',
+                      border: `1px solid ${activeFiltersCount > 0 ? '#ff7011' : '#e2e8f0'}`,
+                      color: activeFiltersCount > 0 ? '#fff' : '#334155',
+                      fontSize: '0.85rem', fontWeight: '700', cursor: 'pointer',
+                      whiteSpace: 'nowrap', flexShrink: 0
+                    }}>
+                    <SlidersHorizontal size={15} />
+                    Filter {activeFiltersCount > 0 ? `(${activeFiltersCount})` : ''}
+                  </button>
+                )}
+
+                {/* Desktop title */}
+                {!isMobile && (
+                  <h2 className="font-weight-bold text-dark mb-0" style={{ fontSize: '1.75rem' }}>
+                    {selectedCategories.length === 0 ? 'All Products'
+                      : selectedCategories.length === 1 ? selectedCategories[0]
+                      : `Selected (${selectedCategories.length} Categories)`}
+                  </h2>
+                )}
               </div>
 
-              <div className="d-flex align-items-center flex-wrap" style={{ gap: '16px' }}>
-                <span className="text-muted josefin small font-weight-bold mb-0">
-                  Showing {filteredProducts.length} of {products.length} Products
-                </span>
-
-                {/* Custom Styled Sort Dropdown */}
-                <div className="d-flex align-items-center" style={{ gap: '8px' }}>
-                  <span className="text-muted josefin small font-weight-bold mb-0">Sort by:</span>
-                  <div className="position-relative">
-                    <select
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                      className="josefin"
-                      style={{
-                        appearance: 'none',
-                        WebkitAppearance: 'none',
-                        padding: '8px 36px 8px 14px',
-                        fontSize: '0.88rem',
-                        fontWeight: '600',
-                        color: '#1e293b',
-                        backgroundColor: '#ffffff',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '10px',
-                        cursor: 'pointer',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                        outline: 'none'
-                      }}
-                    >
-                      <option value="default">Default</option>
-                      <option value="priceLow">Price: Low to High</option>
-                      <option value="priceHigh">Price: High to Low</option>
-                      <option value="discountHigh">Discount: High to Low</option>
-                      <option value="nameAsc">Name: A to Z</option>
-                    </select>
-                    <ChevronDown
-                      size={15}
-                      className="position-absolute text-muted"
-                      style={{ right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
-                    />
-                  </div>
-                </div>
+              <div className="d-flex align-items-center" style={{ gap: '10px', flexShrink: 0 }}>
+                <span className="text-muted josefin small font-weight-bold">{filteredProducts.length} Products</span>
+                <SortDropdown value={sortBy} onChange={setSortBy} />
               </div>
             </div>
 
-            {/* Selected Categories Filter Pills Row */}
+            {/* Active category pills */}
             {selectedCategories.length > 0 && (
-              <div className="d-flex flex-wrap align-items-center gap-2 mb-4" style={{ gap: '8px' }}>
+              <div className="d-flex flex-wrap align-items-center mb-3" style={{ gap: '8px' }}>
                 {selectedCategories.map(cat => (
-                  <span
-                    key={cat}
-                    className="josefin font-weight-bold d-inline-flex align-items-center"
-                    style={{
-                      padding: '4px 12px',
-                      borderRadius: '20px',
-                      backgroundColor: '#fff3ee',
-                      color: '#ff7011',
-                      border: '1px solid #ff701133',
-                      fontSize: '0.85rem'
-                    }}
-                  >
+                  <span key={cat} className="josefin font-weight-bold d-inline-flex align-items-center"
+                    style={{ padding: '4px 12px', borderRadius: '20px', backgroundColor: '#fff3ee', color: '#ff7011', border: '1px solid #ff701133', fontSize: '0.82rem' }}>
                     {cat}
-                    <X
-                      size={14}
-                      className="ml-1 cursor-pointer"
-                      onClick={() => toggleCategory(cat)}
-                      style={{ cursor: 'pointer', opacity: 0.8 }}
-                    />
+                    <X size={13} className="ml-1" onClick={() => toggleCategory(cat)} style={{ cursor: 'pointer', opacity: 0.7 }} />
                   </span>
                 ))}
-                <button
-                  type="button"
-                  onClick={() => setSelectedCategories([])}
-                  className="btn btn-link p-0 text-danger small josefin font-weight-bold text-decoration-none ml-2"
-                  style={{ fontSize: '0.85rem' }}
-                >
-                  Clear All Filters
+                <button type="button" onClick={() => setSelectedCategories([])}
+                  className="btn btn-link p-0 text-danger small josefin font-weight-bold text-decoration-none">
+                  Clear All
                 </button>
               </div>
             )}
@@ -478,51 +506,108 @@ export default function Products() {
             {shopLoading ? (
               <div className="row">
                 {Array.from({ length: 6 }).map((_, idx) => (
-                  <div key={idx} className="col-12 col-sm-6 col-md-4 mb-4">
+                  <div key={idx} className="col-6 col-sm-6 col-md-4 mb-3">
                     <div className="card h-100 shadow-sm border-0" style={{ borderRadius: '16px', overflow: 'hidden' }}>
-                      <div className="p-3 text-center" style={{ backgroundColor: '#f5f5f7', borderRadius: '16px', margin: '8px 8px 0 8px' }}>
-                        <div className="skeleton-pulse" style={{ height: '220px', borderRadius: '12px', backgroundColor: '#e2e8f0' }} />
+                      <div className="p-3 text-center" style={{ backgroundColor: '#f5f5f7', margin: '8px 8px 0 8px', borderRadius: '12px' }}>
+                        <div className="skeleton-pulse" style={{ height: '180px', borderRadius: '10px', backgroundColor: '#e2e8f0' }} />
                       </div>
-                      <div className="card-body d-flex flex-column p-3">
-                        <div className="skeleton-pulse mb-2" style={{ width: '40%', height: '14px', borderRadius: '4px', backgroundColor: '#e2e8f0' }} />
-                        <div className="skeleton-pulse mb-2" style={{ width: '85%', height: '20px', borderRadius: '4px', backgroundColor: '#e2e8f0' }} />
-                        <div className="skeleton-pulse mb-3" style={{ width: '30%', height: '12px', borderRadius: '4px', backgroundColor: '#e2e8f0' }} />
-                        <div className="mt-auto d-flex align-items-center justify-content-between">
-                          <div className="skeleton-pulse" style={{ width: '45%', height: '26px', borderRadius: '6px', backgroundColor: '#e2e8f0' }} />
-                          <div className="skeleton-pulse" style={{ width: '110px', height: '38px', borderRadius: '20px', backgroundColor: '#e2e8f0' }} />
-                        </div>
+                      <div className="card-body p-3">
+                        <div className="skeleton-pulse mb-2" style={{ width: '50%', height: '12px', borderRadius: '4px', backgroundColor: '#e2e8f0' }} />
+                        <div className="skeleton-pulse mb-3" style={{ width: '80%', height: '18px', borderRadius: '4px', backgroundColor: '#e2e8f0' }} />
+                        <div className="skeleton-pulse" style={{ width: '100%', height: '32px', borderRadius: '16px', backgroundColor: '#e2e8f0' }} />
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : filteredProducts.length === 0 ? (
-              <div className="bg-white rounded-lg border p-5 text-center my-3" style={{ borderRadius: '16px' }}>
+              <div className="bg-white rounded border p-5 text-center my-3" style={{ borderRadius: '16px' }}>
                 <div className="rounded-circle bg-light d-inline-flex p-4 mb-3">
                   <Search size={40} color="#94a3b8" />
                 </div>
-                <h4 className="acme text-dark mb-2">No Products Match Your Criteria</h4>
-                <p className="text-muted josefin mb-4 max-w-md mx-auto" style={{ maxWidth: '400px' }}>
-                  Try resetting your price range slider or clearing selected category checkboxes.
+                <h4 className="acme text-dark mb-2">No Products Found</h4>
+                <p className="text-muted josefin mb-4" style={{ maxWidth: '360px', margin: '0 auto 16px' }}>
+                  Try resetting filters or searching a different term.
                 </p>
-                <button
-                  onClick={handleResetAllFilters}
-                  className="btn btn-warning text-white font-weight-bold acme rounded-pill px-4 py-2"
-                  style={{ backgroundColor: '#ff7011', border: 'none' }}
-                >
+                <button onClick={handleResetAllFilters}
+                  className="btn text-white font-weight-bold acme rounded-pill px-4 py-2"
+                  style={{ backgroundColor: '#ff7011', border: 'none' }}>
                   Reset All Filters
                 </button>
               </div>
             ) : (
               <div className="row">
                 {filteredProducts.map((product) => (
-                  <div key={product.id} className="col-12 col-sm-6 col-md-4 mb-4">
-                    <ProductCard product={product} />
+                  <div key={product.id} className="col-6 col-sm-6 col-md-4 mb-3">
+                    {isMobile ? <MobileProductCard product={product} /> : <ProductCard product={product} />}
                   </div>
                 ))}
               </div>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* ── Mobile Filter Bottom Sheet ─────────────────────────────────────── */}
+      {/* Overlay */}
+      {filterSheetOpen && (
+        <div onClick={() => setFilterSheetOpen(false)}
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', zIndex: 299998 }} />
+      )}
+
+      {/* Drawer — slides up from bottom */}
+      <div style={{
+        position: 'fixed',
+        left: 0, right: 0, bottom: 0,
+        height: '85vh',
+        backgroundColor: '#fff',
+        borderRadius: '20px 20px 0 0',
+        zIndex: 299999,
+        transform: filterSheetOpen ? 'translateY(0)' : 'translateY(100%)',
+        transition: 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}>
+        {/* Sheet header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #f1f5f9', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <SlidersHorizontal size={18} color="#ff7011" />
+            <span style={{ fontSize: '1.1rem', fontWeight: '700', color: '#1a1a1a' }}>Filters</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <button type="button" onClick={resetDrafts}
+              style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.82rem', fontWeight: '700', cursor: 'pointer', padding: 0 }}>
+              Reset
+            </button>
+            <button type="button" onClick={() => setFilterSheetOpen(false)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: '#64748b' }}>
+              <X size={22} />
+            </button>
+          </div>
+        </div>
+
+        {/* Scrollable filter content */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px 100px' }}>
+          <FilterContent draft={true} />
+        </div>
+
+        {/* Apply button — fixed at bottom of sheet */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '14px 20px', backgroundColor: '#fff', borderTop: '1px solid #f1f5f9' }}>
+          <button type="button" onClick={applyFilters}
+            style={{
+              width: '100%', padding: '14px', borderRadius: '14px',
+              backgroundColor: '#ff7011', color: '#fff',
+              border: 'none', fontSize: '1rem', fontWeight: '700',
+              cursor: 'pointer', letterSpacing: '0.3px'
+            }}>
+            Apply Filters
+            {(draftCategories.length > 0 || draftMinDiscount > 0 || draftMaxPrice < highestCatalogPrice) && (
+              <span style={{ marginLeft: '8px', background: 'rgba(255,255,255,0.3)', borderRadius: '10px', padding: '1px 8px', fontSize: '0.82rem' }}>
+                {draftCategories.length > 0 ? draftCategories.length : ''}{draftMinDiscount > 0 ? ` ${draftMinDiscount}%+` : ''}
+              </span>
+            )}
+          </button>
         </div>
       </div>
     </div>

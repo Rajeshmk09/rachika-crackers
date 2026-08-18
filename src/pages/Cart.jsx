@@ -371,103 +371,106 @@ Kindly confirm my order. Thank you!`;
                   </button>
                 </div>
 
-                <div className="table-responsive">
-                  <table className="table table-borderless align-middle mb-0">
-                    <thead>
-                      <tr className="border-bottom text-muted small josefin text-uppercase">
-                        <th>Product</th>
-                        <th className="text-center">Price</th>
-                        <th className="text-center">Quantity</th>
-                        <th className="text-right">Subtotal</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {cartItems.map(({ product, qty }) => {
-                        const mrp = parseFloat(product.mrp || product.original_price || product.price || 0);
-                        const price = parseFloat(product.price || 0);
-                        const subtotal = price * qty;
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {cartItems.map(({ product, qty }) => {
+                    const mrp = parseFloat(product.mrp || product.original_price || product.price || 0);
+                    const price = parseFloat(product.price || 0);
+                    const subtotal = price * qty;
+                    const discount = mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0;
 
-                        const imgUrl = (() => {
-                          const raw = product.image_url || product.image;
-                          if (!raw) return '';
-                          try {
-                            const arr = JSON.parse(raw);
-                            if (Array.isArray(arr)) return arr[0];
-                          } catch (e) {}
-                          return raw;
-                        })();
+                    const imgUrl = (() => {
+                      const raw = product.image_url || product.image;
+                      if (!raw) return '';
+                      try {
+                        const arr = JSON.parse(raw);
+                        if (Array.isArray(arr)) return arr[0];
+                      } catch (e) {}
+                      return raw;
+                    })();
 
-                        return (
-                          <tr key={product.id} className="border-bottom">
-                            <td style={{ minWidth: '220px' }}>
-                              <div className="d-flex align-items-center">
-                                <div className="rounded border bg-light p-1 mr-3 flex-shrink-0" style={{ width: '60px', height: '60px' }}>
-                                  {imgUrl ? (
-                                    <img src={imgUrl} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} />
-                                  ) : (
-                                    <div className="w-100 h-100 d-flex align-items-center justify-content-center text-muted small">
-                                      📦
-                                    </div>
-                                  )}
-                                </div>
-                                <div>
-                                  <div className="font-weight-bold text-dark acme mb-1" style={{ fontSize: '1rem' }}>
-                                    {product.name}
-                                  </div>
-                                  <div className="text-muted small josefin">
-                                    {product.order_unit || product.quantity || product.unit || ''}
-                                  </div>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="text-center align-middle">
-                              <div className="font-weight-bold text-dark josefin">₹{price}</div>
+                    return (
+                      <div key={product.id} style={{
+                        background: '#fff',
+                        borderRadius: '16px',
+                        border: '1px solid #e8edf2',
+                        boxShadow: '0 2px 12px rgba(0,0,0,0.07)',
+                        overflow: 'hidden',
+                      }}>
+                        {/* Top row: image + info + delete */}
+                        <div style={{ display: 'flex', gap: '12px', padding: '14px 14px 10px' }}>
+                          {/* Image */}
+                          <div style={{
+                            width: '72px', height: '72px', borderRadius: '12px',
+                            background: '#f8fafc', border: '1px solid #e2e8f0',
+                            flexShrink: 0, overflow: 'hidden', display: 'flex',
+                            alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            {imgUrl
+                              ? <img src={imgUrl} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              : <span style={{ fontSize: '1.6rem' }}>📦</span>
+                            }
+                          </div>
+
+                          {/* Info */}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div className="acme" style={{ fontSize: '0.97rem', fontWeight: 700, color: '#1e293b', lineHeight: 1.3, marginBottom: '3px' }}>
+                              {product.name}
+                            </div>
+                            <div className="josefin" style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '6px' }}>
+                              {product.order_unit || product.quantity || product.unit || ''}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span className="josefin" style={{ fontWeight: 800, color: '#ff7011', fontSize: '1rem' }}>₹{price}</span>
                               {mrp > price && (
-                                <div className="text-muted small josefin" style={{ textDecoration: 'line-through' }}>₹{mrp}</div>
+                                <span className="josefin" style={{ fontSize: '0.75rem', color: '#94a3b8', textDecoration: 'line-through' }}>₹{mrp}</span>
                               )}
-                            </td>
-                            <td className="text-center align-middle">
-                              <div className="d-inline-flex align-items-center rounded-pill p-1 border" style={{ backgroundColor: '#fff5ee', borderColor: '#ff7011' }}>
-                                <button
-                                  type="button"
-                                  onClick={() => updateCartQty(product.id, qty - 1)}
-                                  className="btn btn-link text-danger p-0 d-flex align-items-center justify-content-center"
-                                  style={{ width: '26px', height: '26px', fontWeight: 'bold', textDecoration: 'none' }}
-                                >
-                                  -
-                                </button>
-                                <span className="font-weight-bold josefin px-2" style={{ fontSize: '1rem' }}>{qty}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => updateCartQty(product.id, qty + 1)}
-                                  className="btn btn-link text-success p-0 d-flex align-items-center justify-content-center"
-                                  style={{ width: '26px', height: '26px', fontWeight: 'bold', textDecoration: 'none' }}
-                                >
-                                  +
-                                </button>
-                              </div>
-                            </td>
-                            <td className="text-right align-middle">
-                              <span className="font-weight-bold text-warning josefin" style={{ fontSize: '1.1rem', color: '#ff7011' }}>
-                                ₹{subtotal.toLocaleString('en-IN')}
-                              </span>
-                            </td>
-                            <td className="text-right align-middle">
-                              <button
-                                type="button"
-                                onClick={() => removeFromCart(product.id)}
-                                className="btn btn-link text-danger p-1"
-                                title="Remove item"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                              {discount > 0 && (
+                                <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#16a34a', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '1px 5px' }}>
+                                  {discount}% OFF
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Delete */}
+                          <button
+                            type="button"
+                            onClick={() => removeFromCart(product.id)}
+                            style={{ background: '#fff0f0', border: 'none', borderRadius: '8px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, alignSelf: 'flex-start' }}
+                            title="Remove"
+                          >
+                            <Trash2 size={14} color="#ef4444" />
+                          </button>
+                        </div>
+
+                        {/* Bottom row: qty stepper + subtotal */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px 14px', borderTop: '1px solid #f1f5f9', background: '#fafbfc' }}>
+                          {/* Qty stepper */}
+                          <div style={{ display: 'flex', alignItems: 'center', background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: '10px', overflow: 'hidden' }}>
+                            <button
+                              type="button"
+                              onClick={() => updateCartQty(product.id, qty - 1)}
+                              style={{ width: '36px', height: '36px', border: 'none', background: 'transparent', fontWeight: 700, fontSize: '1.15rem', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            >−</button>
+                            <span className="josefin" style={{ minWidth: '32px', textAlign: 'center', fontWeight: 800, fontSize: '0.95rem', color: '#1e293b', borderLeft: '1px solid #f1f5f9', borderRight: '1px solid #f1f5f9', height: '36px', lineHeight: '36px' }}>{qty}</span>
+                            <button
+                              type="button"
+                              onClick={() => updateCartQty(product.id, qty + 1)}
+                              style={{ width: '36px', height: '36px', border: 'none', background: 'transparent', fontWeight: 700, fontSize: '1.15rem', color: '#16a34a', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            >+</button>
+                          </div>
+
+                          {/* Subtotal */}
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 600, marginBottom: '1px' }}>SUBTOTAL</div>
+                            <div className="josefin" style={{ fontWeight: 900, fontSize: '1.15rem', color: '#ff7011' }}>
+                              ₹{subtotal.toLocaleString('en-IN')}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>

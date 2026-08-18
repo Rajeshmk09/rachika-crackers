@@ -43,6 +43,7 @@ import HomeImg37 from '../assets/home_img_37.png';
 import HomeImg38 from '../assets/home_img_38.png';
 import HomeImg39 from '../assets/home_img_39.png';
 import ProductCard from '../components/ProductCard';
+import MobileProductCard from '../components/MobileProductCard';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://iplfsscpeixfxzbouhlp.supabase.co';
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwbGZzc2NwZWl4Znh6Ym91aGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NDQwNzksImV4cCI6MjEwMjUyMDA3OX0.nr2an5w0nX_L37C3g03HgzpFitueRNeOJ346TYvakZ8';
@@ -130,6 +131,13 @@ const Home = () => {
 		queryKey: ['featured-products'],
 		queryFn: fetchFeaturedProductsQuery,
 	});
+
+	const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+	useEffect(() => {
+		const fn = () => setIsMobile(window.innerWidth < 768);
+		window.addEventListener('resize', fn);
+		return () => window.removeEventListener('resize', fn);
+	}, []);
 
 	const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 	const [minTN, setMinTN] = useState(3000);
@@ -247,14 +255,12 @@ const Home = () => {
 									transition: 'opacity 0.6s ease-in-out'
 								}}
 							>
-								<Link to={b.description || b.target_url || '/products'}>
-									<img
-										src={b.image_url}
-										alt={b.name || b.title || 'Hero Banner'}
-										className="img-fluid w-100 d-block"
-										style={{ cursor: 'pointer', maxHeight: '550px', objectFit: 'cover' }}
-									/>
-								</Link>
+								<img
+									src={b.image_url}
+									alt={b.name || b.title || 'Hero Banner'}
+									className="img-fluid w-100 d-block"
+									style={{ maxHeight: '550px', objectFit: 'cover' }}
+								/>
 							</div>
 						))}
 					</div>
@@ -397,7 +403,7 @@ const Home = () => {
 				</div>
 			</div>
 
-			<div style={{ maxWidth: '1440px', margin: '0 auto', padding: '40px 32px' }}>
+			<div style={{ maxWidth: '1440px', margin: '0 auto', padding: '40px 20px' }}>
 				<div className="row justify-content-center mb-4">
 					<div className="col-lg-8 text-center">
 						<h2 className="acme clr bannerhead1" style={{ color: '#0a539f' }}>Featured Products</h2>
@@ -407,7 +413,7 @@ const Home = () => {
 				<div className="row">
 					{featuredLoading ? (
 						Array.from({ length: 8 }).map((_, idx) => (
-							<div key={idx} className="col-lg-3 col-md-6 col-12 mb-4">
+							<div key={idx} className="col-lg-3 col-md-6 col-6 mb-4">
 								<div className="card h-100 shadow-sm border-0" style={{ borderRadius: '16px', overflow: 'hidden' }}>
 									<div className="p-3 text-center" style={{ backgroundColor: '#f5f5f7', borderRadius: '16px', margin: '8px 8px 0 8px' }}>
 										<div className="skeleton-pulse" style={{ height: '220px', borderRadius: '12px', backgroundColor: '#e2e8f0' }} />
@@ -426,8 +432,11 @@ const Home = () => {
 						))
 					) : (
 						featuredProductsList.map(product => (
-							<div key={product.id} className="col-lg-3 col-md-6 col-12 mb-4">
-								<ProductCard product={product} />
+							<div key={product.id} className="col-lg-3 col-md-6 col-6 mb-3">
+								{isMobile
+									? <MobileProductCard product={product} />
+									: <ProductCard product={product} />
+								}
 							</div>
 						))
 					)}
@@ -454,7 +463,7 @@ const Home = () => {
 						<div className="row justify-content-center">
 							<div className="col-lg-12">
 								<h1 className="acme clr1">SETHU PYRO PARK RACHIKA CRACKERS</h1>
-								<div className="heading5  acme mt-1">We’re providing the best quality crackers in town.</div>
+								<div className="acme mt-1" style={{ fontSize: isMobile ? "0.85rem" : "1.1rem" }}>We're providing the best quality crackers in town.</div>
 								<div className="title title-border"></div>
 								<p className="josefin">Discover an extensive selection of firecrackers to illuminate your celebrations with dazzling displays.</p>
 							</div>
@@ -463,7 +472,7 @@ const Home = () => {
 									<ul id="counter" className="fullpad raleway">
 										<i className="bi bi-heart-fill	 text-white heading2"></i>
 										<li>
-											<span className="count percent counttext acme" data-count="2014">2014</span>
+											<span className="count percent counttext acme" data-count="2025">2025</span>
 										</li>
 										<p className="acme josefin txt-danger">SINCE</p>
 									</ul>
@@ -501,7 +510,7 @@ const Home = () => {
 
 
 
-			<div className="container pad">
+			<div className="container pad" style={isMobile ? {paddingLeft: "20px", paddingRight: "20px"} : {}}>
 				<div className="row">
 					<div className="col-lg-2 col-md-2 col-12">
 						<div className="product-shape">
@@ -525,13 +534,13 @@ const Home = () => {
 					<div className="col-lg-4 col-md-6 secpad text-center">
 						<div className="image-feature img-bottom">
 							<figure className="wp-caption box-bg">
-								<a href="/products">
+								<a href="/products?cat=Chakkars">
 									<img className="img-fluid" src={HomeImg15} alt="buy online crackers" title="buy online crackers" />
 								</a>
 								<figcaption className="widget-image-caption wp-caption-text">
 									<strong className="acme">Chakkars</strong><br />
 									<div className="pb-2 josefin">Chakkar Big, Special, Asoka...</div>
-									<div className="cat-btn josefin fw-600">Shop Now</div>
+									<div className="cat-btn josefin fw-600" style={{cursor:'pointer'}} onClick={() => window.location.href='/products?cat=Chakkars'}>Shop Now</div>
 								</figcaption>
 							</figure>
 						</div>
@@ -539,13 +548,13 @@ const Home = () => {
 					<div className="col-lg-4 col-md-6 secpad text-center">
 						<div className="image-feature">
 							<figure className="wp-caption box-bg">
-								<a href="/products">
+								<a href="/products?cat=Flower+Pots">
 									<img className="img-fluid" src={HomeImg16} alt="crackers collection 2025" title="crackers collection 2025" />
 								</a>
 								<figcaption className="widget-image-caption wp-caption-text">
 									<strong className="acme">Flower Pots</strong><br />
 									<div className="pb-2 josefin">Colour pots small, Big, Special...</div>
-									<div className="cat-btn josefin fw-600">Shop Now</div>
+									<div className="cat-btn josefin fw-600" style={{cursor:'pointer'}} onClick={() => window.location.href='/products?cat=Flower+Pots'}>Shop Now</div>
 								</figcaption>
 							</figure>
 						</div>
@@ -553,13 +562,13 @@ const Home = () => {
 					<div className="col-lg-4 col-md-6 secpad text-center">
 						<div className="image-feature">
 							<figure className="wp-caption box-bg">
-								<a href="/products">
+								<a href="/products?cat=Sparklers">
 									<img className="img-fluid" src={HomeImg17} alt="online crackers sale" title="online crackers sale" />
 								</a>
 								<figcaption className="widget-image-caption wp-caption-text">
 									<strong className="acme">Sparklers</strong><br />
 									<div className="pb-2 josefin">Red, Green, Electric....</div>
-									<div className="cat-btn josefin fw-600">Shop Now</div>
+									<div className="cat-btn josefin fw-600" style={{cursor:'pointer'}} onClick={() => window.location.href='/products?cat=Sparklers'}>Shop Now</div>
 								</figcaption>
 							</figure>
 						</div>
@@ -567,13 +576,13 @@ const Home = () => {
 					<div className="col-lg-6 col-md-6 secpad text-center">
 						<div className="image-feature">
 							<figure className="wp-caption box-bg">
-								<a href="/products">
+								<a href="/products?cat=Single+Sound+Crackers">
 									<img src={HomeImg18} className="img-fluid w-100" alt="biggest diwali sale" title="biggest diwali sale" />
 								</a>
 								<figcaption className="widget-image-caption wp-caption-text">
 									<strong className="acme">Single Sound</strong><br />
 									<div className="pb-2 josefin">Kuruvi, Lakshmi, Spider...</div>
-									<div className="cat-btn josefin fw-600">Shop Now</div>
+									<div className="cat-btn josefin fw-600" style={{cursor:'pointer'}} onClick={() => window.location.href='/products?cat=Single+Sound+Crackers'}>Shop Now</div>
 								</figcaption>
 							</figure>
 						</div>
@@ -581,13 +590,13 @@ const Home = () => {
 					<div className="col-lg-6 col-md-6 secpad text-center">
 						<div className="image-feature">
 							<figure className="wp-caption box-bg">
-								<a href="/products">
+								<a href="/products?cat=Gift+Boxes">
 									<img src={HomeImg19} className="img-fluid w-100" alt="diwali shopping" title="diwali shopping" />
 								</a>
 								<figcaption className="widget-image-caption wp-caption-text">
 									<strong className="acme">Gift Boxes</strong><br />
 									<div className="pb-2 josefin">Special, Deluxe, Grand....</div>
-									<div className="cat-btn josefin fw-600">Shop Now</div>
+									<div className="cat-btn josefin fw-600" style={{cursor:'pointer'}} onClick={() => window.location.href='/products?cat=Gift+Boxes'}>Shop Now</div>
 								</figcaption>
 							</figure>
 						</div>
@@ -659,76 +668,6 @@ const Home = () => {
 				</div>
 			</div>
 
-
-			<div className="footer">
-				<div className="container">
-					<div className="row">
-						<div className="col-lg-4 col-md-6 col-12">
-							<div className="acme heading4 pb-3 clr">Our Profile</div>
-							<p className="josefin">We "SETHU PYRO PARK RACHIKA CRACKERS" acknowledged as the renowned super stockist &amp; wholesale supplier of an exclusive range of firecrackers. </p>
-							<div className="acme heading4 pb-3 clr">Quick Links</div>
-							<div className="tagcloud">
-								<a href="/" className="josefin">Home</a>
-								<a href="/about" className="josefin">About SETHU PYRO PARK RACHIKA CRACKERS</a>
-								<a href="/products" className="josefin">Quick Purchase</a>
-								<a href="/safetytips" className="josefin">Safetytips</a>
-								<a href="/contact" className="josefin">Contact us</a>
-							</div>
-						</div>
-						<div className="col-lg-4 col-md-6 col-12 text-center align-self-center">
-							<a href="/">
-								<img src={HomeImg1} className="img-fluid w-100 mx-auto d-block" alt="SETHU PYRO PARK RACHIKA CRACKERS" title="SETHU PYRO PARK RACHIKA CRACKERS" />
-							</a>
-						</div>
-						<div className="col-lg-4 col-md-6 col-12">
-							<div className="acme heading4 pb-3 clr">Our Location</div>
-							<li className="josefin pb-2"><p><i className="bi bi-send-fill clr"></i>  </p>
-								<div className="text1 smallfnt">
-									9/296/1, Sri Anjaneya Nagar, Anupankulam,<br />Sivakasi - 626 189
-								</div>
-							</li>
-							<div className="acme py-2 heading5 clr">For Order</div>
-							<li className="josefin pb-2"><p><i className="bi bi-phone clr"></i>   </p>
-								<div className="text1 smallfnt">
-									<a href="tel:+918867390680" style={{ color: 'inherit', textDecoration: 'none', whiteSpace: 'nowrap' }}>(+91) 8867390680</a>
-								</div>
-							</li>
-							<li className="josefin pb-3"><p><i className="bi bi-envelope clr"></i>   </p>
-								<div className="text1 smallfnt">
-									sethupyropark@gmail.com							</div>
-							</li>
-
-						</div>
-						<div className="col-12 my-3">&nbsp;</div>
-						<div className="col-lg-12 text-center pt-4">
-							<p className="smallfnt josefin pb-3">As per 2018 supreme court order, online sale of firecrackers are not permitted! We value our customers and at the same time, respect jurisdiction. We request you to add your products to the cart and submit the required crackers through the enquiry button. We will contact you within 24 hrs and confirm the order through WhatsApp or phone call. Please add and submit your enquiries and enjoy your Diwali with SETHU PYRO PARK RACHIKA CRACKERS. Our License No.----. SETHU PYRO PARK RACHIKA CRACKERS as a company following 100% legal &amp; statutory compliances and all our shops, go-downs are maintained as per the explosive acts. We send the parcels through registered and legal transport service providers as like every other major companies in Sivakasi is doing so.</p>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<div className="fixed point w0">
-				<a href="https://api.whatsapp.com/send">
-					<img src={HomeImg36} className="priceicn1 float-left" alt="SETHU PYRO PARK RACHIKA CRACKERS" title="SETHU PYRO PARK RACHIKA CRACKERS" />
-				</a>
-			</div>
-			<div className="fixed point1 w0 d-none d-lg-block">
-				<span className="time-of-year">
-					<img src={HomeImg37} className="priceicn1 float-left" alt="SETHU PYRO PARK RACHIKA CRACKERS" title="SETHU PYRO PARK RACHIKA CRACKERS" />
-					<div className="tooltip text-white text-center"> For More Details Call <br />
-						<i className="bi bi-phone"></i> +91 8867390680 					</div>
-				</span>
-			</div>
-			<div className="fixed point1 w0 d-lg-none">
-				<a href="tel:+918867390680">
-					<img src={HomeImg38} className="priceicn1 float-left" alt="SETHU PYRO PARK RACHIKA CRACKERS" title="SETHU PYRO PARK RACHIKA CRACKERS" />
-				</a>
-			</div>
-			<div className="fixed point2">
-				<a href={pricelistUrl || "/products"} onClick={handleDownloadPricelist} target="_blank" rel="noopener noreferrer">
-					<img src={HomeImg39} className="priceicn2 float-right blink" alt="SETHU PYRO PARK RACHIKA CRACKERS" title="SETHU PYRO PARK RACHIKA CRACKERS" />
-				</a>
-			</div>
 
 
 

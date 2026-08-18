@@ -40,10 +40,19 @@ export default function Wishlist() {
             {wishlistCount > 0 && (
               <button
                 onClick={handleMoveAllToCart}
-                className="btn btn-warning text-white font-weight-bold acme rounded-pill px-4 py-2"
-                style={{ backgroundColor: '#ff7011', border: 'none' }}
+                className="btn text-white font-weight-bold acme rounded-pill"
+                style={{
+                  backgroundColor: '#ff7011',
+                  border: 'none',
+                  padding: '10px 20px',
+                  fontSize: '0.9rem',
+                  whiteSpace: 'nowrap',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
               >
-                <ShoppingBag size={18} className="mr-1" /> Move All to Cart
+                <ShoppingBag size={18} /> Move All to Cart
               </button>
             )}
             <Link
@@ -56,13 +65,13 @@ export default function Wishlist() {
                 color: '#1e293b',
                 border: '1.5px solid #cbd5e1',
                 borderRadius: '50px',
-                padding: '8px 20px',
+                padding: '10px 20px',
                 fontWeight: 700,
                 fontSize: '0.9rem',
                 textDecoration: 'none',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                whiteSpace: 'nowrap',
               }}
-              className="ml-2"
             >
               <ArrowLeft size={16} color="#1e293b" /> Continue Shopping
             </Link>

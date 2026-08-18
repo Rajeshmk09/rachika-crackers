@@ -123,34 +123,58 @@ export const STATUS_CONFIG = {
 /* ── Custom Select Component ─────────────────────── */
 export function CustomSelect({ value, options, onChange, placeholder = 'Select option', style = {}, minWidth }) {
   const [open, setOpen] = useState(false);
+  const [dropPos, setDropPos] = useState({ top: 0, left: 0, width: 0, openUp: false });
   const ref = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) {
-        setOpen(false);
-      }
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handleOpen = () => {
+    if (!open && ref.current) {
+      const rect = ref.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const openUp = spaceBelow < 230;
+      setDropPos({
+        left: rect.left,
+        width: Math.max(rect.width, 180),
+        top: openUp ? rect.top - 6 : rect.bottom + 6,
+        openUp,
+      });
+    }
+    setOpen(o => !o);
+  };
+
   const selectedOption = options.find(o => typeof o === 'object' ? String(o.value) === String(value) : String(o) === String(value));
   const selectedLabel = selectedOption ? (typeof selectedOption === 'object' ? selectedOption.label : selectedOption) : value || placeholder;
+
+  const dropStyle = {
+    position: 'fixed',
+    zIndex: 9999,
+    left: dropPos.left,
+    width: dropPos.width,
+    ...(dropPos.openUp
+      ? { bottom: window.innerHeight - dropPos.top, top: 'auto' }
+      : { top: dropPos.top }),
+  };
 
   return (
     <div ref={ref} className="adm-custom-select-wrap" style={{ position: 'relative', width: '100%', minWidth, ...style }}>
       <button
         type="button"
         className={`adm-custom-select-trigger ${open ? 'active' : ''}`}
-        onClick={() => setOpen(!open)}
+        onClick={handleOpen}
       >
         <span className="adm-select-val">{selectedLabel}</span>
         <ChevronDown className={`adm-select-chevron ${open ? 'open' : ''}`} />
       </button>
 
       {open && (
-        <div className="adm-custom-select-dropdown">
+        <div className="adm-custom-select-dropdown" style={dropStyle}>
           <div className="adm-custom-select-list">
             {options.map((opt, idx) => {
               const val = typeof opt === 'object' ? opt.value : opt;
@@ -160,10 +184,7 @@ export function CustomSelect({ value, options, onChange, placeholder = 'Select o
                 <div
                   key={idx}
                   className={`adm-custom-select-item ${isSelected ? 'selected' : ''}`}
-                  onClick={() => {
-                    onChange(val);
-                    setOpen(false);
-                  }}
+                  onClick={() => { onChange(val); setOpen(false); }}
                 >
                   <span>{lbl}</span>
                   {isSelected && <Check style={{ width: 14, height: 14, color: '#ff6b35' }} />}
@@ -217,6 +238,7 @@ export function CategoriesSkeleton() {
 }
 
 export function ProductsSkeleton() {
+  const isMobile = window.innerWidth < 768;
   return (
     <div className="adm-page-container">
       <div className="adm-page-header">
@@ -227,8 +249,8 @@ export function ProductsSkeleton() {
 
         <div className="adm-search-bar">
           <div className="adm-skeleton" style={{flex:1,height:44,borderRadius:10}} />
-          <div className="adm-skeleton" style={{width:220,height:44,borderRadius:10}} />
-          <div className="adm-skeleton" style={{width:135,height:44,borderRadius:9}} />
+          {!isMobile && <div className="adm-skeleton" style={{width:220,height:44,borderRadius:10}} />}
+          <div className="adm-skeleton" style={{width: isMobile ? 100 : 135,height:44,borderRadius:9}} />
         </div>
 
         <div style={{marginBottom:12}}>
@@ -236,70 +258,89 @@ export function ProductsSkeleton() {
         </div>
       </div>
 
-      <div className="adm-card adm-scroll-card">
-        <div className="adm-table-wrap">
-          <table className="adm-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Product</th>
-                <th>Category</th>
-                <th>MRP</th>
-                <th>Discount</th>
-                <th>Price</th>
-                <th>Unit</th>
-                <th>Status</th>
-                <th style={{textAlign:'right'}}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                <tr key={i}>
-                  <td style={{width:40}}>
-                    <div className="adm-skeleton" style={{width:16,height:12,borderRadius:3}} />
-                  </td>
-                  <td>
-                    <div style={{display:'flex',alignItems:'center',gap:12}}>
-                      <div className="adm-skeleton" style={{width:44,height:44,borderRadius:8,flexShrink:0}} />
-                      <div>
-                        <div className="adm-skeleton" style={{width:140 + (i % 3)*25,height:14,marginBottom:6,borderRadius:4}} />
-                        <div className="adm-skeleton" style={{width:85,height:11,borderRadius:3}} />
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div className="adm-skeleton" style={{width:110,height:13,borderRadius:4}} />
-                  </td>
-                  <td>
-                    <div className="adm-skeleton" style={{width:50,height:13,borderRadius:4}} />
-                  </td>
-                  <td>
-                    <div className="adm-skeleton" style={{width:40,height:13,borderRadius:4}} />
-                  </td>
-                  <td>
-                    <div className="adm-skeleton" style={{width:55,height:13,borderRadius:4}} />
-                  </td>
-                  <td>
-                    <div className="adm-skeleton" style={{width:45,height:12,borderRadius:3}} />
-                  </td>
-                  <td>
-                    <div style={{display:'flex',alignItems:'center',gap:8}}>
-                      <div className="adm-skeleton" style={{width:38,height:22,borderRadius:12,flexShrink:0}} />
-                      <div className="adm-skeleton" style={{width:40,height:12,borderRadius:3}} />
-                    </div>
-                  </td>
-                  <td>
-                    <div style={{display:'flex',gap:6,justifyContent:'flex-end'}}>
-                      <div className="adm-skeleton" style={{width:30,height:30,borderRadius:8}} />
-                      <div className="adm-skeleton" style={{width:30,height:30,borderRadius:8}} />
-                    </div>
-                  </td>
+      {/* Desktop table skeleton */}
+      {!isMobile && (
+        <div className="adm-card adm-scroll-card">
+          <div className="adm-table-wrap">
+            <table className="adm-table">
+              <thead>
+                <tr>
+                  <th>#</th><th>Product</th><th>Category</th><th>MRP</th>
+                  <th>Discount</th><th>Price</th><th>Unit</th><th>Status</th>
+                  <th style={{textAlign:'right'}}>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {[1,2,3,4,5,6,7,8].map(i => (
+                  <tr key={i}>
+                    <td><div className="adm-skeleton" style={{width:16,height:12,borderRadius:3}} /></td>
+                    <td>
+                      <div style={{display:'flex',alignItems:'center',gap:12}}>
+                        <div className="adm-skeleton" style={{width:44,height:44,borderRadius:8,flexShrink:0}} />
+                        <div>
+                          <div className="adm-skeleton" style={{width:140+(i%3)*25,height:14,marginBottom:6,borderRadius:4}} />
+                          <div className="adm-skeleton" style={{width:85,height:11,borderRadius:3}} />
+                        </div>
+                      </div>
+                    </td>
+                    <td><div className="adm-skeleton" style={{width:110,height:13,borderRadius:4}} /></td>
+                    <td><div className="adm-skeleton" style={{width:50,height:13,borderRadius:4}} /></td>
+                    <td><div className="adm-skeleton" style={{width:40,height:13,borderRadius:4}} /></td>
+                    <td><div className="adm-skeleton" style={{width:55,height:13,borderRadius:4}} /></td>
+                    <td><div className="adm-skeleton" style={{width:45,height:12,borderRadius:3}} /></td>
+                    <td>
+                      <div style={{display:'flex',alignItems:'center',gap:8}}>
+                        <div className="adm-skeleton" style={{width:38,height:22,borderRadius:12,flexShrink:0}} />
+                        <div className="adm-skeleton" style={{width:40,height:12,borderRadius:3}} />
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{display:'flex',gap:6,justifyContent:'flex-end'}}>
+                        <div className="adm-skeleton" style={{width:30,height:30,borderRadius:8}} />
+                        <div className="adm-skeleton" style={{width:30,height:30,borderRadius:8}} />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Mobile card skeletons */}
+      {isMobile && (
+        <div style={{display:'flex',flexDirection:'column',gap:10}}>
+          {[1,2,3,4,5,6].map(i => (
+            <div key={i} style={{background:'#fff',borderRadius:14,border:'1px solid #e8edf2',boxShadow:'0 2px 8px rgba(0,0,0,0.06)',overflow:'hidden'}}>
+              {/* Top row */}
+              <div style={{display:'flex',gap:12,padding:'12px 12px 10px',alignItems:'flex-start'}}>
+                <div className="adm-skeleton" style={{width:58,height:58,borderRadius:10,flexShrink:0}} />
+                <div style={{flex:1,minWidth:0}}>
+                  <div className="adm-skeleton" style={{width:'80%',height:14,borderRadius:4,marginBottom:6}} />
+                  <div className="adm-skeleton" style={{width:60,height:10,borderRadius:3,marginBottom:8}} />
+                  <div className="adm-skeleton" style={{width:90,height:18,borderRadius:6}} />
+                </div>
+                <div className="adm-skeleton" style={{width:38,height:22,borderRadius:12,flexShrink:0}} />
+              </div>
+              {/* Price strip */}
+              <div style={{display:'flex',gap:8,padding:'8px 12px',background:'#fafbfc',borderTop:'1px solid #f1f5f9',borderBottom:'1px solid #f1f5f9'}}>
+                {[50,40,55,45].map((w,j) => (
+                  <div key={j} style={{flex:1}}>
+                    <div className="adm-skeleton" style={{width:'60%',height:9,borderRadius:3,marginBottom:5}} />
+                    <div className="adm-skeleton" style={{width:`${w}%`,height:13,borderRadius:4}} />
+                  </div>
+                ))}
+              </div>
+              {/* Actions row */}
+              <div style={{display:'flex',justifyContent:'flex-end',gap:8,padding:'8px 12px'}}>
+                <div className="adm-skeleton" style={{width:64,height:30,borderRadius:8}} />
+                <div className="adm-skeleton" style={{width:64,height:30,borderRadius:8}} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -323,7 +364,7 @@ export function AdminLogin() {
   const handleLogin = async (e) => {
     e.preventDefault(); setError(''); setLoading(true);
     await new Promise(r => setTimeout(r, 500));
-    if (email === 'arjunansri21@gmail.com' && password === '12345678') {
+    if (email === 'mkrajesh16@gmail.com' && password === 'rajesh@2026') {
       sessionStorage.setItem('admin_logged_in', 'true');
       navigate('/admin/categories', { replace: true });
     } else {
@@ -506,7 +547,7 @@ export function AdminLayout() {
   ];
 
   return (
-    <AdminCtx.Provider value={{ products, categories, categoryData, saveCategory, deleteCategory, loading, fetchAll }}>
+    <AdminCtx.Provider value={{ products, setProducts, categories, categoryData, saveCategory, deleteCategory, loading, fetchAll }}>
       <div className="adm">
         <div className="adm-layout">
           {sidebarOpen && <div className="sb-ov" onClick={()=>setSidebarOpen(false)} />}
@@ -537,7 +578,7 @@ export function AdminLayout() {
             </nav>
             <div className="sb-section">Account</div>
             <div style={{padding:'4px 20px 12px',fontSize:12,color:'#64748b'}}>
-              <div style={{fontWeight:600,color:'#94a3b8',marginBottom:2}}>arjunansri21@gmail.com</div>
+              <div style={{fontWeight:600,color:'#94a3b8',marginBottom:2}}>mkrajesh16@gmail.com</div>
               <div>Super Administrator</div>
             </div>
             <div className="sb-footer">
@@ -621,10 +662,7 @@ function CategoryModal({ category, onClose, onSave }) {
         setImageUrl(data.secure_url);
       }
     } catch (err) {
-      console.warn('Cloudinary upload notice:', err.message);
-      const reader = new FileReader();
-      reader.onloadend = () => setImageUrl(reader.result);
-      reader.readAsDataURL(file);
+      setErr('Image upload failed: ' + err.message);
     } finally {
       setUploading(false);
     }
@@ -1030,16 +1068,7 @@ function ProductModal({ product, categories, onClose, onSaved }) {
         });
       }
     } catch (err) {
-      console.warn('Cloudinary upload notice:', err.message);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImages(prev => {
-          const next = [...prev];
-          next[slotIdx] = reader.result;
-          return next;
-        });
-      };
-      reader.readAsDataURL(file);
+      setErr('Image upload failed: ' + err.message);
     } finally {
       setUploadingIdx(null);
     }
@@ -1335,12 +1364,18 @@ function ProductModal({ product, categories, onClose, onSaved }) {
 }
 
 export function AdminProducts() {
-  const { products, categories, loading, fetchAll } = useAdmin();
+  const { products, setProducts, categories, loading, fetchAll } = useAdmin();
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('');
   const [modalProd, setModalProd] = useState(null);
   const [confirm, setConfirm] = useState(null);
   const [toggling, setToggling] = useState(null);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  useEffect(() => {
+    const fn = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', fn);
+    return () => window.removeEventListener('resize', fn);
+  }, []);
 
   // Support ?cat= from categories page
   useEffect(() => {
@@ -1355,9 +1390,15 @@ export function AdminProducts() {
   });
 
   const toggleActive = async (prod) => {
+    const newVal = !prod.is_active;
     setToggling(prod.id);
-    try { await api(`/products?id=eq.${prod.id}`,{method:'PATCH',body:JSON.stringify({is_active:!prod.is_active})}); fetchAll(); }
-    catch(e){alert(e.message);}
+    setProducts(prev => prev.map(p => p.id === prod.id ? { ...p, is_active: newVal } : p));
+    try {
+      await api(`/products?id=eq.${prod.id}`, { method: 'PATCH', body: JSON.stringify({ is_active: newVal }) });
+    } catch(e) {
+      setProducts(prev => prev.map(p => p.id === prod.id ? { ...p, is_active: prod.is_active } : p));
+      alert(e.message);
+    }
     setToggling(null);
   };
 
@@ -1424,7 +1465,8 @@ export function AdminProducts() {
         </div>
       </div>
 
-      <div className="adm-card adm-scroll-card">
+      {/* ── Desktop table ── */}
+      <div className="adm-card adm-scroll-card" style={{display: isMobile ? 'none' : ''}}>
         <div className="adm-table-wrap">
           <table className="adm-table">
             <thead><tr><th>#</th><th>Product</th><th>Category</th><th>MRP</th><th>Discount</th><th>Price</th><th>Unit</th><th>Status</th><th style={{textAlign:'right'}}>Actions</th></tr></thead>
@@ -1465,14 +1507,12 @@ export function AdminProducts() {
                   <td style={{fontSize:12,color:'#64748b'}}>{p.order_unit || p.quantity || p.unit || '—'}</td>
                   <td>
                     <button
-                      className={`adm-toggle-sw ${p.is_active !== false ? 'on' : ''}`}
+                      className={`adm-toggle-sw ${p.is_active !== false ? 'on' : ''} ${toggling === p.id ? 'toggling' : ''}`}
                       onClick={() => toggleActive(p)}
                       disabled={toggling === p.id}
                       title={p.is_active !== false ? 'Active (Click to deactivate)' : 'Inactive (Click to activate)'}
                     >
-                      <span className="adm-toggle-track">
-                        <span className="adm-toggle-thumb" />
-                      </span>
+                      <span className="adm-toggle-track"><span className="adm-toggle-thumb" /></span>
                       <span className="adm-toggle-lbl">{p.is_active !== false ? 'Active' : 'Inactive'}</span>
                     </button>
                   </td>
@@ -1487,6 +1527,84 @@ export function AdminProducts() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* ── Mobile cards ── */}
+      <div style={{display: isMobile ? 'flex' : 'none', flexDirection:'column', gap:'10px'}}>
+        {filtered.length === 0 ? (
+          <div className="adm-empty-state"><Package /><p>No products found</p></div>
+        ) : filtered.map((p, idx) => {
+          const thumb = (() => {
+            let t = p.image_url;
+            if (t) { try { const arr = JSON.parse(t); if (Array.isArray(arr) && arr.length > 0) t = arr[0]; } catch(e) {} }
+            return t;
+          })();
+          const disc = (() => {
+            const m = parseFloat(p.mrp), pr = parseFloat(p.price);
+            if (!isNaN(m) && !isNaN(pr) && m > 0 && m >= pr) return `${Math.round(((m - pr) / m) * 100)}%`;
+            return p.discount ? `${p.discount}%` : null;
+          })();
+          const isActive = p.is_active !== false;
+          return (
+            <div key={p.id} style={{background:'#fff', borderRadius:'14px', border:'1px solid #e8edf2', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', overflow:'hidden'}}>
+              {/* Top row */}
+              <div style={{display:'flex', gap:'12px', padding:'12px 12px 10px'}}>
+                {/* Image */}
+                <div style={{width:'58px', height:'58px', borderRadius:'10px', background:'#f8fafc', border:'1px solid #e2e8f0', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden'}}>
+                  {thumb
+                    ? <img src={thumb} alt="" style={{width:'100%', height:'100%', objectFit:'cover'}} onError={e=>{e.target.style.display='none'}} />
+                    : <Box style={{width:22, height:22, color:'#94a3b8'}} />
+                  }
+                </div>
+                {/* Info */}
+                <div style={{flex:1, minWidth:0}}>
+                  <div style={{fontSize:'0.88rem', fontWeight:700, color:'#0f172a', lineHeight:1.3, marginBottom:'2px'}}>{p.name}</div>
+                  <div style={{fontSize:'0.7rem', color:'#94a3b8', fontFamily:'monospace', marginBottom:'4px'}}>{p.product_code}</div>
+                  <span style={{fontSize:'0.68rem', fontWeight:700, color:'#6366f1', background:'#eef2ff', borderRadius:'6px', padding:'1px 7px'}}>{p.category}</span>
+                </div>
+                {/* Status toggle */}
+                <button
+                  className={`adm-toggle-sw ${isActive ? 'on' : ''} ${toggling === p.id ? 'toggling' : ''}`}
+                  onClick={() => toggleActive(p)}
+                  disabled={toggling === p.id}
+                  style={{alignSelf:'flex-start', flexShrink:0}}
+                >
+                  <span className="adm-toggle-track"><span className="adm-toggle-thumb" /></span>
+                </button>
+              </div>
+              {/* Price row */}
+              <div style={{display:'flex', alignItems:'center', gap:'8px', padding:'8px 12px', background:'#fafbfc', borderTop:'1px solid #f1f5f9', borderBottom:'1px solid #f1f5f9'}}>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:'0.68rem', color:'#94a3b8', fontWeight:600, marginBottom:'1px'}}>MRP</div>
+                  <div style={{fontSize:'0.82rem', color:'#64748b', textDecoration:'line-through'}}>{p.mrp ? `₹${p.mrp}` : '—'}</div>
+                </div>
+                {disc && (
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:'0.68rem', color:'#94a3b8', fontWeight:600, marginBottom:'1px'}}>DISCOUNT</div>
+                    <div style={{fontSize:'0.82rem', color:'#f59e0b', fontWeight:700}}>{disc}</div>
+                  </div>
+                )}
+                <div style={{flex:1}}>
+                  <div style={{fontSize:'0.68rem', color:'#94a3b8', fontWeight:600, marginBottom:'1px'}}>PRICE</div>
+                  <div style={{fontSize:'0.95rem', color:'#10b981', fontWeight:800}}>{p.price ? `₹${p.price}` : '—'}</div>
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:'0.68rem', color:'#94a3b8', fontWeight:600, marginBottom:'1px'}}>UNIT</div>
+                  <div style={{fontSize:'0.78rem', color:'#64748b'}}>{p.order_unit || p.quantity || p.unit || '—'}</div>
+                </div>
+              </div>
+              {/* Actions row */}
+              <div style={{display:'flex', alignItems:'center', justifyContent:'flex-end', gap:'8px', padding:'8px 12px'}}>
+                <button className="adm-btn adm-btn-secondary adm-btn-sm" onClick={()=>setModalProd(p)} style={{display:'flex', alignItems:'center', gap:'5px'}}>
+                  <Edit2 style={{width:13,height:13}} /> Edit
+                </button>
+                <button className="adm-btn adm-btn-danger adm-btn-sm" onClick={()=>setConfirm(p)} style={{display:'flex', alignItems:'center', gap:'5px'}}>
+                  <Trash2 style={{width:13,height:13}} /> Delete
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -2617,10 +2735,6 @@ export function AdminOrders() {
           </h1>
           <p className="adm-sub">Manage customer enquiries, update order statuses, and download print-ready PDF invoice sheets.</p>
         </div>
-        <button className="adm-btn adm-btn-secondary" onClick={fetchOrders} disabled={loading}>
-          <RefreshCw style={{ width: 14, height: 14 }} className={loading ? 'spinning' : ''} />
-          {loading ? 'Loading...' : 'Refresh'}
-        </button>
       </div>
 
       {/* Search Bar */}
@@ -2638,134 +2752,120 @@ export function AdminOrders() {
       </div>
 
       <div className="adm-card adm-scroll-card">
-        <div className="adm-table-wrap">
-          <table className="adm-table">
-            <thead>
-              <tr>
-                <th style={{ width: '130px' }}>Order Date</th>
-                <th>Customer</th>
-                <th>Region &amp; Address</th>
-                <th>Total Value</th>
-                <th style={{ width: '130px' }}>Status</th>
-                <th style={{ textAlign: 'right', width: '220px' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', padding: '40px 0', color: '#64748b' }}>
-                    <RefreshCw size={24} className="spinning mb-2" style={{ display: 'block', margin: '0 auto' }} />
-                    Loading enquiries...
-                  </td>
-                </tr>
-              ) : filteredOrders.length === 0 ? (
-                <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', padding: '40px 0', color: '#64748b' }}>
-                    {searchQuery ? 'No matching enquiries found.' : 'No order enquiries found.'}
-                  </td>
-                </tr>
-              ) : (
-                filteredOrders.map((order) => {
-                  let items = [];
-                  try {
-                    items = typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []);
-                  } catch (e) {}
+        <div className="adm-scroll-list" style={{ padding: '12px' }}>
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748b' }}>
+              <RefreshCw size={24} className="spinning" style={{ display: 'block', margin: '0 auto 8px' }} />
+              Loading enquiries...
+            </div>
+          ) : filteredOrders.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748b' }}>
+              {searchQuery ? 'No matching enquiries found.' : 'No order enquiries found.'}
+            </div>
+          ) : (
+            filteredOrders.map((order) => {
+              let items = [];
+              try {
+                items = typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []);
+              } catch (e) {}
 
-                  const totalVal = items.reduce((acc, i) => acc + (parseFloat(i.price || 0) * (i.quantity || 0)), 0);
-                  const itemCount = items.reduce((acc, i) => acc + (i.quantity || 0), 0);
+              const totalVal = items.reduce((acc, i) => acc + (parseFloat(i.price || 0) * (i.quantity || 0)), 0);
+              const itemCount = items.reduce((acc, i) => acc + (i.quantity || 0), 0);
 
-                  // Extract state region prefix
-                  let region = 'Tamil Nadu';
-                  let cleanAddress = order.address || '';
-                  if (cleanAddress.startsWith('[Other State]')) {
-                    region = 'Other State';
-                    cleanAddress = cleanAddress.replace('[Other State]', '').trim();
-                  } else if (cleanAddress.startsWith('[Tamil Nadu]')) {
-                    region = 'Tamil Nadu';
-                    cleanAddress = cleanAddress.replace('[Tamil Nadu]', '').trim();
-                  }
+              let region = 'Tamil Nadu';
+              let cleanAddress = order.address || '';
+              if (cleanAddress.startsWith('[Other State]')) {
+                region = 'Other State';
+                cleanAddress = cleanAddress.replace('[Other State]', '').trim();
+              } else if (cleanAddress.startsWith('[Tamil Nadu]')) {
+                region = 'Tamil Nadu';
+                cleanAddress = cleanAddress.replace('[Tamil Nadu]', '').trim();
+              }
 
-                  return (
-                    <tr key={order.id}>
-                      <td>
-                        <div style={{ fontWeight: 600, color: '#1e293b' }}>{fmtDate(order.created_at)}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>ID: #{String(order.id).substring(0, 8)}</div>
-                      </td>
-                      <td>
-                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{order.customer_name || '—'}</div>
-                        <div style={{ fontSize: '0.85rem', color: '#475569' }}>📞 {order.phone || '—'}</div>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
-                          <span style={{
-                            backgroundColor: region === 'Tamil Nadu' ? '#fff7ed' : '#eff6ff',
-                            color: region === 'Tamil Nadu' ? '#c2410c' : '#1d4ed8',
-                            border: `1px solid ${region === 'Tamil Nadu' ? '#fed7aa' : '#bfdbfe'}`,
-                            padding: '1px 6px',
-                            borderRadius: '4px',
-                            fontSize: '0.72rem',
-                            fontWeight: 700
-                          }}>
-                            {region === 'Tamil Nadu' ? '🏛️ TN' : '🇮🇳 Other States'}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: '0.85rem', color: '#64748b', whiteSpace: 'normal', wordBreak: 'break-all', maxWidth: '300px', lineHeight: 1.4 }}>
-                          {cleanAddress || <span style={{ fontStyle: 'italic', color: '#94a3b8' }}>No address provided</span>}
-                        </div>
-                      </td>
-                      <td>
-                        <div style={{ fontWeight: 800, color: '#ff6b35', fontSize: '0.98rem' }}>₹{totalVal.toLocaleString('en-IN')}</div>
-                        <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{itemCount} item{itemCount !== 1 ? 's' : ''}</div>
-                      </td>
-                      <td>
-                        <span style={getStatusColorStyle(order.status || 'Payment Pending')}>
-                          {order.status || 'Payment Pending'}
-                        </span>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                          <button
-                            onClick={() => downloadOrderPDF(order)}
-                            className="adm-btn adm-btn-sm adm-btn-secondary"
-                            style={{ padding: '6px 12px', fontSize: '0.8rem', fontWeight: 600 }}
-                            title="Download PDF Invoice"
-                          >
-                            <Download size={13} style={{ marginRight: '4px' }} /> PDF
-                          </button>
-                          
-                          <CustomSelect
-                            value={order.status || 'Payment Pending'}
-                            options={[
-                              { label: 'Payment Pending', value: 'Payment Pending' },
-                              { label: 'Payment Confirmed', value: 'Payment Confirmed' },
-                              { label: 'Shipped', value: 'Shipped' },
-                              { label: 'Delivered', value: 'Delivered' }
-                            ]}
-                            onChange={(val) => handleUpdateStatus(order.id, val)}
-                            style={{ width: '170px' }}
-                          />
+              const regionStyle = {
+                backgroundColor: region === 'Tamil Nadu' ? '#fff7ed' : '#eff6ff',
+                color: region === 'Tamil Nadu' ? '#c2410c' : '#1d4ed8',
+                border: `1px solid ${region === 'Tamil Nadu' ? '#fed7aa' : '#bfdbfe'}`,
+                padding: '2px 8px',
+                borderRadius: '4px',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                display: 'inline-block',
+              };
 
-                          <button
-                            onClick={() => handleDeleteOrder(order.id)}
-                            className="adm-btn adm-btn-sm"
-                            style={{
-                              backgroundColor: '#fef2f2',
-                              borderColor: '#fca5a5',
-                              color: '#dc2626',
-                              padding: '6px 8px'
-                            }}
-                            title="Delete Enquiry"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+              return (
+                <div key={order.id} className="order-card">
+                  {/* Top row: ID + date + status */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                    <div>
+                      <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontFamily: 'monospace', marginBottom: 2 }}>
+                        #{String(order.id).substring(0, 8)}
+                      </div>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#475569' }}>
+                        {fmtDate(order.created_at)}
+                      </div>
+                    </div>
+                    <span style={getStatusColorStyle(order.status || 'Payment Pending')}>
+                      {order.status || 'Payment Pending'}
+                    </span>
+                  </div>
+
+                  {/* Customer + region row */}
+                  <div style={{ display: 'flex', gap: 12, marginBottom: 10, flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1, minWidth: 140 }}>
+                      <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.95rem', marginBottom: 2 }}>
+                        {order.customer_name || '—'}
+                      </div>
+                      <div style={{ fontSize: '0.82rem', color: '#475569' }}>📞 {order.phone || '—'}</div>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 140 }}>
+                      <span style={regionStyle}>{region === 'Tamil Nadu' ? '🏛️ TN' : '🇮🇳 Other States'}</span>
+                      <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: 4, lineHeight: 1.4, wordBreak: 'break-word' }}>
+                        {cleanAddress || <span style={{ fontStyle: 'italic', color: '#94a3b8' }}>No address</span>}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Total + actions */}
+                  <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                    <div>
+                      <div style={{ fontWeight: 800, color: '#ff6b35', fontSize: '1rem' }}>₹{totalVal.toLocaleString('en-IN')}</div>
+                      <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{itemCount} item{itemCount !== 1 ? 's' : ''}</div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <button
+                        onClick={() => downloadOrderPDF(order)}
+                        className="adm-btn adm-btn-sm adm-btn-secondary"
+                        style={{ padding: '6px 12px', fontSize: '0.78rem', fontWeight: 600 }}
+                        title="Download PDF Invoice"
+                      >
+                        <Download size={12} style={{ marginRight: 4 }} /> PDF
+                      </button>
+                      <CustomSelect
+                        value={order.status || 'Payment Pending'}
+                        options={[
+                          { label: 'Payment Pending', value: 'Payment Pending' },
+                          { label: 'Payment Confirmed', value: 'Payment Confirmed' },
+                          { label: 'Shipped', value: 'Shipped' },
+                          { label: 'Delivered', value: 'Delivered' },
+                        ]}
+                        onChange={val => handleUpdateStatus(order.id, val)}
+                        style={{ width: '160px' }}
+                      />
+                      <button
+                        onClick={() => handleDeleteOrder(order.id)}
+                        className="adm-btn adm-btn-sm"
+                        style={{ backgroundColor: '#fef2f2', borderColor: '#fca5a5', color: '#dc2626', padding: '6px 8px' }}
+                        title="Delete Enquiry"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
     </div>
