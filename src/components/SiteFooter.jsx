@@ -89,7 +89,7 @@ export default function SiteFooter() {
 
       {/* WhatsApp floating button */}
       <div className="fixed point w0">
-        <a href="https://api.whatsapp.com/send">
+        <a href="https://wa.me/918867390680" target="_blank" rel="noopener noreferrer">
           <img src={WhatsappImg} className="priceicn1 float-left" alt="SETHU PYRO PARK RACHIKA CRACKERS" title="SETHU PYRO PARK RACHIKA CRACKERS" />
         </a>
       </div>

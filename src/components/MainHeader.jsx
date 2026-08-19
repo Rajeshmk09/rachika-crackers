@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Heart, ShoppingCart, PhoneCall, X } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
+import { toast } from 'react-hot-toast';
 
 import HomeImg1 from '../assets/websitelogo.png';
 import HomeImg2 from '../assets/home_img_2.jpeg';
@@ -10,7 +11,7 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://iplfsscpeixfx
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwbGZzc2NwZWl4Znh6Ym91aGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NDQwNzksImV4cCI6MjEwMjUyMDA3OX0.nr2an5w0nX_L37C3g03HgzpFitueRNeOJ346TYvakZ8';
 
 export default function MainHeader() {
-  const { wishlistCount, cartCount, cartTotalPrice, pricelistUrl } = useShop();
+  const { wishlistCount, cartCount, cartTotalPrice, pricelistUrl, setCartModalOpen } = useShop();
   const location = useLocation();
 
   const [marqueeMessage, setMarqueeMessage] = useState('');
@@ -90,7 +91,10 @@ export default function MainHeader() {
     return () => window.removeEventListener('marquee_updated', handleUpdate);
   }, []);
 
-  if (location.pathname.startsWith('/admin')) return null;
+  const handleCartClick = (e) => {
+    e.preventDefault();
+    setCartModalOpen(true);
+  };
 
   const isActive = (path) => location.pathname === path;
 
@@ -101,6 +105,8 @@ export default function MainHeader() {
     { to: '/safetytips', label: 'Safety Tips' },
     { to: '/contact', label: 'Contact' },
   ];
+
+  if (location.pathname.startsWith('/admin')) return null;
 
   return (
     <>
@@ -168,6 +174,7 @@ export default function MainHeader() {
           {/* Mobile: Cart Icon and info next to hamburger */}
           <Link 
             to="/cart" 
+            onClick={handleCartClick}
             className="d-lg-none d-inline-flex align-items-center" 
             style={{ 
               textDecoration: 'none', 

@@ -226,6 +226,8 @@ export const ShopProvider = ({ children }) => {
     cartItems.map(item => [item.product.id, item])
   );
 
+  const [cartModalOpen, setCartModalOpen] = useState(false);
+
   return (
     <ShopContext.Provider
       value={{
@@ -253,6 +255,8 @@ export const ShopProvider = ({ children }) => {
         loading,
         fetchProducts,
         pricelistUrl,
+        cartModalOpen,
+        setCartModalOpen,
       }}
     >
       {children}

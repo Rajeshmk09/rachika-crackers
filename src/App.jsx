@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ShopProvider } from './context/ShopContext';
 import MainHeader from './components/MainHeader';
+import CartModal from './components/CartModal';
 import ScrollToTop from './components/ScrollToTop';
 import SiteFooter from './components/SiteFooter';
 
@@ -28,13 +29,23 @@ const queryClient = new QueryClient({
   },
 });
 
+import { Toaster } from 'react-hot-toast';
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ShopProvider>
         <Router>
           <ScrollToTop />
-<MainHeader />
+          <Toaster 
+            position="top-center" 
+            reverseOrder={false} 
+            containerStyle={{
+              zIndex: 1000000,
+            }}
+          />
+          <CartModal />
+          <MainHeader />
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />

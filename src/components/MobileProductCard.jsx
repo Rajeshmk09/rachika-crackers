@@ -54,13 +54,11 @@ export default function MobileProductCard({ product }) {
 
   return (
     <div
-      onClick={() => product?.id && navigate(`/product/${product.id}`)}
       style={{
         borderRadius: '14px',
         overflow: 'hidden',
         background: '#fff',
         boxShadow: '0 2px 10px rgba(0,0,0,0.09)',
-        cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
@@ -111,7 +109,10 @@ export default function MobileProductCard({ product }) {
         </button>
 
         {/* Product image */}
-        <div style={{ height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div 
+          onClick={() => product?.id && navigate(`/product/${product.id}`)}
+          style={{ height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+        >
           <img
             src={imgSrc}
             alt={product.name}
@@ -159,7 +160,7 @@ export default function MobileProductCard({ product }) {
         </div>
 
         {/* Add to Cart */}
-        <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 'auto' }}>
+        <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', width: '100%', alignItems: 'center' }}>
           {product.is_active === false ? (
             <button
               type="button"
@@ -176,22 +177,84 @@ export default function MobileProductCard({ product }) {
               Out of Stock
             </button>
           ) : (
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              backgroundColor: '#ff7011', borderRadius: '20px',
-              padding: '4px 8px', height: '32px',
-            }}>
-              <button
-                type="button"
-                onClick={dec}
-                disabled={qty === 0}
-                style={{ background: 'none', border: 'none', color: '#fff', fontSize: '1.1rem', fontWeight: '700', cursor: qty === 0 ? 'not-allowed' : 'pointer', lineHeight: 1, opacity: qty === 0 ? 0.5 : 1 }}
-              >
-                -
-              </button>
-              <span style={{ color: '#fff', fontWeight: '700', fontSize: '0.9rem' }}>{qty}</span>
-              <button type="button" onClick={inc} style={{ background: 'none', border: 'none', color: '#fff', fontSize: '1.1rem', fontWeight: '700', cursor: 'pointer', lineHeight: 1 }}>+</button>
-            </div>
+            <>
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                backgroundColor: '#ffffff', border: '1.5px solid #ff7011', borderRadius: '20px',
+                padding: '0 4px', height: '32px', width: '100%'
+              }}>
+                <style>{`
+                  input::-webkit-outer-spin-button,
+                  input::-webkit-inner-spin-button {
+                    -webkit-appearance: none;
+                    margin: 0;
+                  }
+                  input[type=number] {
+                    -moz-appearance: textfield;
+                  }
+                `}</style>
+                <button
+                  type="button"
+                  onClick={dec}
+                  disabled={qty === 0}
+                  style={{
+                    background: 'none', border: 'none', color: qty === 0 ? '#cbd5e1' : '#ff7011',
+                    fontSize: '1.1rem', fontWeight: '700',
+                    cursor: qty === 0 ? 'not-allowed' : 'pointer', lineHeight: 1,
+                    width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  value={qty === 0 ? '' : qty}
+                  placeholder="0"
+                  onFocus={(e) => e.target.select()}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    updateCartQty(product.id, isNaN(val) || val < 0 ? 0 : val);
+                  }}
+                  min="0"
+                  style={{
+                    width: '32px',
+                    textAlign: 'center',
+                    fontWeight: '800',
+                    fontSize: '0.85rem',
+                    color: '#ff7011',
+                    border: 'none',
+                    background: 'transparent',
+                    outline: 'none',
+                    padding: 0,
+                    margin: 0,
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={inc}
+                  style={{
+                    background: 'none', border: 'none', color: '#ff7011',
+                    fontSize: '1.1rem', fontWeight: '700',
+                    cursor: 'pointer', lineHeight: 1,
+                    width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}
+                >
+                  +
+                </button>
+              </div>
+              {qty > 0 && (
+                <div style={{
+                  fontSize: '0.75rem',
+                  fontWeight: '800',
+                  color: '#ff7011',
+                  marginTop: '4px',
+                  fontFamily: 'var(--josefin-font, sans-serif)',
+                  textAlign: 'center'
+                }}>
+                  Total: ₹{(qty * price).toLocaleString('en-IN')}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

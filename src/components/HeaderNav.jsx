@@ -2,9 +2,10 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Heart, ShoppingCart } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
+import { toast } from 'react-hot-toast';
 
 export default function HeaderNav() {
-  const { wishlistCount, cartCount, cartTotalPrice, pricelistUrl } = useShop();
+  const { wishlistCount, cartCount, cartTotalPrice, pricelistUrl, setCartModalOpen } = useShop();
   const location = useLocation();
 
   const handleDownloadPricelist = (e) => {
@@ -33,6 +34,11 @@ export default function HeaderNav() {
         window.open(pricelistUrl, '_blank');
       }
     }
+  };
+
+  const handleCartClick = (e) => {
+    e.preventDefault();
+    setCartModalOpen(true);
   };
 
   const isActive = (path) => location.pathname === path;
@@ -77,6 +83,7 @@ export default function HeaderNav() {
               <Link
                 className="nav-link d-inline-flex align-items-center"
                 to="/cart"
+                onClick={handleCartClick}
                 style={{ color: cartCount > 0 ? '#ff7011' : 'inherit', fontWeight: cartCount > 0 ? '700' : 'normal' }}
               >
                 <ShoppingCart size={16} className="mr-1" color={cartCount > 0 ? "#ff7011" : "currentColor"} />

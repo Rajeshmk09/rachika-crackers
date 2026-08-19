@@ -75,9 +75,8 @@ export default function ProductCard({ product }) {
 
   return (
     <div
-      onClick={handleCardClick}
-      className="card product-card-premium h-100 shadow-sm border-0 cursor-pointer"
-      style={{ borderRadius: '16px', overflow: 'hidden', cursor: 'pointer', transition: 'transform 0.2s ease, box-shadow 0.2s ease' }}
+      className="card product-card-premium h-100 shadow-sm border-0"
+      style={{ borderRadius: '16px', overflow: 'hidden', transition: 'transform 0.2s ease, box-shadow 0.2s ease' }}
     >
       <div className="position-relative p-3 text-center" style={{ backgroundColor: '#f5f5f7', borderRadius: '16px', margin: '8px 8px 0 8px' }}>
         {/* Wishlist Button */}
@@ -120,7 +119,10 @@ export default function ProductCard({ product }) {
         )}
 
         {/* Product Image */}
-        <div style={{ height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+        <div 
+          onClick={handleCardClick}
+          style={{ height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: 'pointer' }}
+        >
           <img
             src={displayImg}
             alt={product.name}
@@ -206,7 +208,7 @@ export default function ProductCard({ product }) {
               </div>
             </div>
 
-            <div style={{ width: '130px' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ width: '130px', display: 'flex', flexDirection: 'column', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
               {product.is_active === false ? (
                 <button
                   type="button"
@@ -217,35 +219,87 @@ export default function ProductCard({ product }) {
                   Out of Stock
                 </button>
               ) : (
-                <div className="d-flex align-items-center justify-content-between rounded-pill p-1" style={{ backgroundColor: '#ff7011', height: '38px' }}>
-                  <button
-                    type="button"
-                    onClick={decrement}
-                    disabled={currentCartQty === 0}
-                    className="btn btn-link text-white p-0 d-flex align-items-center justify-content-center"
-                    style={{
-                      width: '28px',
-                      height: '28px',
-                      fontSize: '1.2rem',
-                      fontWeight: 'bold',
-                      textDecoration: 'none',
-                      boxShadow: 'none',
-                      cursor: currentCartQty === 0 ? 'not-allowed' : 'pointer',
-                      opacity: currentCartQty === 0 ? 0.5 : 1
-                    }}
-                  >
-                    -
-                  </button>
-                  <span className="font-weight-bold josefin text-white px-2" style={{ fontSize: '1.1rem' }}>{currentCartQty}</span>
-                  <button
-                    type="button"
-                    onClick={increment}
-                    className="btn btn-link text-white p-0 d-flex align-items-center justify-content-center"
-                    style={{ width: '28px', height: '28px', fontSize: '1.2rem', fontWeight: 'bold', textDecoration: 'none', boxShadow: 'none' }}
-                  >
-                    +
-                  </button>
-                </div>
+                <>
+                  <div className="d-flex align-items-center justify-content-between rounded-pill" style={{ backgroundColor: '#ffffff', border: '2px solid #ff7011', height: '38px', padding: '0 4px', width: '130px', overflow: 'hidden' }}>
+                    <style>{`
+                      input::-webkit-outer-spin-button,
+                      input::-webkit-inner-spin-button {
+                        -webkit-appearance: none;
+                        margin: 0;
+                      }
+                      input[type=number] {
+                        -moz-appearance: textfield;
+                      }
+                    `}</style>
+                    <button
+                      type="button"
+                      onClick={decrement}
+                      disabled={currentCartQty === 0}
+                      className="btn btn-link text-decoration-none p-0 d-flex align-items-center justify-content-center"
+                      style={{
+                        width: '28px',
+                        height: '28px',
+                        fontSize: '1.2rem',
+                        fontWeight: 'bold',
+                        color: currentCartQty === 0 ? '#cbd5e1' : '#ff7011',
+                        cursor: currentCartQty === 0 ? 'not-allowed' : 'pointer',
+                        boxShadow: 'none',
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        lineHeight: 1
+                      }}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      value={currentCartQty === 0 ? '' : currentCartQty}
+                      placeholder="0"
+                      onFocus={(e) => e.target.select()}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        updateCartQty(product.id, isNaN(val) || val < 0 ? 0 : val);
+                      }}
+                      min="0"
+                      style={{
+                        width: '40px',
+                        textAlign: 'center',
+                        fontWeight: '800',
+                        fontSize: '0.95rem',
+                        color: '#ff7011',
+                        border: 'none',
+                        background: 'transparent',
+                        outline: 'none',
+                        padding: 0,
+                        margin: 0,
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={increment}
+                      className="btn btn-link text-decoration-none p-0 d-flex align-items-center justify-content-center"
+                      style={{
+                        width: '28px',
+                        height: '28px',
+                        fontSize: '1.2rem',
+                        fontWeight: 'bold',
+                        color: '#ff7011',
+                        cursor: 'pointer',
+                        boxShadow: 'none',
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        lineHeight: 1
+                      }}
+                    >
+                      +
+                    </button>
+                  </div>
+                  {currentCartQty > 0 && (
+                    <div className="josefin font-weight-bold" style={{ fontSize: '0.8rem', color: '#ff7011', marginTop: '4px', textAlign: 'center' }}>
+                      Total: ₹{(currentCartQty * priceVal).toLocaleString('en-IN')}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

@@ -4,6 +4,7 @@ import { jsPDF } from 'jspdf';
 import { ShoppingCart, Trash2, ArrowLeft, CheckCircle2, ShieldCheck, Truck, User, Phone, MapPin, Tag, ShoppingBag, AlertTriangle } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 import HeaderNav from '../components/HeaderNav';
+import { toast } from 'react-hot-toast';
 
 import HomeImg1 from '../assets/home_img_11.png';
 import HomeImg2 from '../assets/home_img_12.webp';
@@ -24,15 +25,6 @@ export default function Cart() {
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [error, setError] = useState('');
   const [settings, setSettings] = useState({ min_order_tn: 0, min_order_other: 0 });
-  const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
-
-  // Auto-hide toast after 4 seconds
-  useEffect(() => {
-    if (toast.show) {
-      const t = setTimeout(() => setToast(prev => ({ ...prev, show: false })), 4000);
-      return () => clearTimeout(t);
-    }
-  }, [toast.show]);
 
   // Load minimum order amount from Supabase (with localStorage fallback)
   useEffect(() => {
@@ -91,22 +83,18 @@ export default function Cart() {
     e.preventDefault();
     if (!orderForm.name || !orderForm.phone) {
       setError('Please provide your Name and Mobile Number.');
-      setToast({ show: true, message: 'Please provide your Name and Mobile Number.', type: 'error' });
+      toast.error('Please provide your Name and Mobile Number.');
       return;
     }
     const hasInactive = cartItems.some(i => i.product.is_active === false);
     if (hasInactive) {
-      setError('Your cart contains out-of-stock items. Please remove them to proceed.');
-      setToast({ show: true, message: 'Your cart contains out-of-stock items. Please remove them.', type: 'error' });
+      setError('Your cart contains out-of-stock items. Please remove them.');
+      toast.error('Your cart contains out-of-stock items. Please remove them.');
       return;
     }
     if (belowMinimum) {
       setError(`Minimum order amount for ${orderForm.isTamilNadu ? 'Tamil Nadu' : 'other states'} is ₹${minOrderAmount.toLocaleString('en-IN')}. Please add more items to your cart.`);
-      setToast({ 
-        show: true, 
-        message: `Minimum order amount required is ₹${minOrderAmount.toLocaleString('en-IN')}. (Your total is ₹${cartTotalPrice.toLocaleString('en-IN')})`,
-        type: 'error' 
-      });
+      toast.error(`Minimum order amount required is ₹${minOrderAmount.toLocaleString('en-IN')}. Current: ₹${cartTotalPrice.toLocaleString('en-IN')}`);
       return;
     }
     setError('');
@@ -493,13 +481,49 @@ Kindly confirm my order. Thank you!`;
                         {/* Bottom row: qty stepper + subtotal */}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px 14px', borderTop: '1px solid #f1f5f9', background: '#fafbfc' }}>
                           {/* Qty stepper */}
-                          <div style={{ display: 'flex', alignItems: 'center', background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: '10px', overflow: 'hidden' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', background: '#ffffff', border: '1.5px solid #ff7011', borderRadius: '10px', overflow: 'hidden' }}>
+                            <style>{`
+                              input::-webkit-outer-spin-button,
+                              input::-webkit-inner-spin-button {
+                                -webkit-appearance: none;
+                                margin: 0;
+                              }
+                              input[type=number] {
+                                -moz-appearance: textfield;
+                              }
+                            `}</style>
                             <button
                               type="button"
                               onClick={() => updateCartQty(product.id, qty - 1)}
-                              style={{ width: '36px', height: '36px', border: 'none', background: 'transparent', fontWeight: 700, fontSize: '1.15rem', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              style={{ width: '36px', height: '36px', border: 'none', background: 'transparent', fontWeight: 700, fontSize: '1.15rem', color: '#ff7011', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                             >−</button>
-                            <span className="josefin" style={{ minWidth: '32px', textAlign: 'center', fontWeight: 800, fontSize: '0.95rem', color: '#1e293b', borderLeft: '1px solid #f1f5f9', borderRight: '1px solid #f1f5f9', height: '36px', lineHeight: '36px' }}>{qty}</span>
+                            <input
+                              type="number"
+                              value={qty === 0 ? '' : qty}
+                              placeholder="0"
+                              onFocus={(e) => e.target.select()}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value, 10);
+                                updateCartQty(product.id, isNaN(val) || val < 0 ? 0 : val);
+                              }}
+                              min="0"
+                              style={{
+                                width: '36px',
+                                height: '36px',
+                                textAlign: 'center',
+                                fontWeight: 800,
+                                fontSize: '0.95rem',
+                                color: '#ff7011',
+                                borderLeft: '1px solid #ff701133',
+                                borderRight: '1px solid #ff701133',
+                                borderTop: 'none',
+                                borderBottom: 'none',
+                                background: 'transparent',
+                                outline: 'none',
+                                padding: 0,
+                                margin: 0,
+                              }}
+                            />
                             <button
                               type="button"
                               disabled={product.is_active === false}
@@ -507,7 +531,7 @@ Kindly confirm my order. Thank you!`;
                               style={{
                                 width: '36px', height: '36px', border: 'none',
                                 background: 'transparent', fontWeight: 700, fontSize: '1.15rem',
-                                color: product.is_active === false ? '#cbd5e1' : '#16a34a',
+                                color: product.is_active === false ? '#cbd5e1' : '#ff7011',
                                 cursor: product.is_active === false ? 'not-allowed' : 'pointer',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center'
                               }}
@@ -737,46 +761,6 @@ Kindly confirm my order. Thank you!`;
 
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Custom Toast Notification */}
-        {toast.show && (
-          <div style={{
-            position: 'fixed',
-            top: '20px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            backgroundColor: '#ef4444',
-            color: '#ffffff',
-            padding: '14px 20px',
-            borderRadius: '12px',
-            boxShadow: '0 10px 25px rgba(239, 68, 68, 0.25)',
-            zIndex: 100000,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            width: '90%',
-            maxWidth: '400px',
-            animation: 'toast-slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-          }}>
-            <style>{`
-              @keyframes toast-slide-in {
-                from { transform: translate(-50%, -30px); opacity: 0; }
-                to { transform: translate(-50%, 0); opacity: 1; }
-              }
-            `}</style>
-            <span style={{ fontSize: '1.2rem' }}>⚠️</span>
-            <div style={{ flex: 1, fontSize: '0.88rem', fontWeight: 600 }}>
-              {toast.message}
-            </div>
-            <button 
-              type="button"
-              onClick={() => setToast({ ...toast, show: false })}
-              style={{ background: 'none', border: 'none', color: '#ffffff', fontSize: '1.1rem', cursor: 'pointer', opacity: 0.8, padding: 0 }}
-            >
-              ✕
-            </button>
           </div>
         )}
       </div>

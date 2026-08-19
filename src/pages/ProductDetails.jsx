@@ -198,6 +198,26 @@ export default function ProductDetails() {
           <div className="row">
             {/* Left Column: Image Showcase & Bottom 3 Slide Thumbnails */}
             <div className="col-lg-6 mb-4 mb-lg-0">
+              <div className="mb-3 w-100" style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => navigate(-1)}
+                  className="d-flex align-items-center justify-content-center btn btn-light rounded-pill px-3 py-1 font-weight-bold josefin text-dark border btn-effect1"
+                  style={{ 
+                    fontSize: '0.85rem', 
+                    color: '#ff7011', 
+                    borderColor: '#ff7011',
+                    backgroundColor: '#ffffff',
+                    gap: '6px',
+                    transition: 'all 0.2s ease',
+                    cursor: 'pointer',
+                    boxShadow: 'none'
+                  }}
+                >
+                  <ArrowLeft size={14} color="#ff7011" />
+                  Back
+                </button>
+              </div>
               <div className="position-relative bg-light rounded-lg p-4 text-center border mb-3" style={{ borderRadius: '16px', backgroundColor: '#f8fafc' }}>
                 <button
                   type="button"
@@ -335,24 +355,57 @@ export default function ProductDetails() {
                     Out of Stock
                   </button>
                 ) : (
-                  <div className="d-flex align-items-center justify-content-between rounded-pill p-2 border w-100" style={{ backgroundColor: '#ff7011', minHeight: '52px' }}>
+                  <div className="d-flex align-items-center justify-content-between rounded-pill p-2 border w-100" style={{ backgroundColor: '#ffffff', border: '2px solid #ff7011', minHeight: '52px' }}>
+                    <style>{`
+                      input::-webkit-outer-spin-button,
+                      input::-webkit-inner-spin-button {
+                        -webkit-appearance: none;
+                        margin: 0;
+                      }
+                      input[type=number] {
+                        -moz-appearance: textfield;
+                      }
+                    `}</style>
                     <button
                       type="button"
                       onClick={() => updateCartQty(product.id, currentCartQty - 1)}
                       disabled={currentCartQty === 0}
-                      className="btn btn-link text-white p-0 d-flex align-items-center justify-content-center"
-                      style={{ width: '38px', height: '38px', fontSize: '1.4rem', fontWeight: 'bold', textDecoration: 'none', cursor: currentCartQty === 0 ? 'not-allowed' : 'pointer', opacity: currentCartQty === 0 ? 0.5 : 1 }}
+                      className="btn btn-link p-0 d-flex align-items-center justify-content-center"
+                      style={{ width: '38px', height: '38px', fontSize: '1.4rem', fontWeight: 'bold', textDecoration: 'none', color: currentCartQty === 0 ? '#cbd5e1' : '#ff7011', cursor: currentCartQty === 0 ? 'not-allowed' : 'pointer' }}
                     >
                       -
                     </button>
-                    <span className="font-weight-bold josefin text-white px-3" style={{ fontSize: '1.25rem' }}>
-                      {currentCartQty} in Cart
-                    </span>
+                    <div className="d-flex align-items-center justify-content-center">
+                      <input
+                        type="number"
+                        value={currentCartQty === 0 ? '' : currentCartQty}
+                        placeholder="0"
+                        onFocus={(e) => e.target.select()}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          updateCartQty(product.id, isNaN(val) || val < 0 ? 0 : val);
+                        }}
+                        min="0"
+                        style={{
+                          width: '50px',
+                          textAlign: 'center',
+                          fontWeight: '800',
+                          fontSize: '1.25rem',
+                          color: '#ff7011',
+                          border: 'none',
+                          background: 'transparent',
+                          outline: 'none',
+                          padding: 0,
+                          margin: 0,
+                        }}
+                      />
+                      <span className="font-weight-bold josefin pl-1" style={{ fontSize: '1.25rem', color: '#ff7011' }}>in Cart</span>
+                    </div>
                     <button
                       type="button"
                       onClick={() => currentCartQty === 0 ? addToCart(product, 1) : updateCartQty(product.id, currentCartQty + 1)}
-                      className="btn btn-link text-white p-0 d-flex align-items-center justify-content-center"
-                      style={{ width: '38px', height: '38px', fontSize: '1.4rem', fontWeight: 'bold', textDecoration: 'none' }}
+                      className="btn btn-link p-0 d-flex align-items-center justify-content-center"
+                      style={{ width: '38px', height: '38px', fontSize: '1.4rem', fontWeight: 'bold', textDecoration: 'none', color: '#ff7011', cursor: 'pointer' }}
                     >
                       +
                     </button>
