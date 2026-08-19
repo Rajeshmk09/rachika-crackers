@@ -14,33 +14,30 @@ export default function HeaderNav() {
 
   useEffect(() => {
     const fetchMinSetting = async () => {
+      // First try from localStorage cache (correct key)
       try {
-        const cached = localStorage.getItem('sethupyropark_min_order_settings');
+        const cached = localStorage.getItem('sethupyropark_site_settings');
         if (cached) {
           const parsed = JSON.parse(cached);
-          if (parsed.min_order_tn) {
-            setMinOrderTn(parseFloat(parsed.min_order_tn) || 3000);
+          if (parsed.min_order_tn != null) {
+            setMinOrderTn(parseFloat(parsed.min_order_tn) || 0);
           }
         }
       } catch (e) {}
 
+      // Then fetch live from DB (same approach as CartModal)
       try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/settings`, {
-          headers: {
-            apikey: SUPABASE_KEY,
-            Authorization: `Bearer ${SUPABASE_KEY}`
-          }
-        });
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/products?category=eq.__SITE_SETTINGS__&limit=1`,
+          { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+        );
         if (res.ok) {
           const data = await res.json();
           if (data && data.length > 0) {
-            const val = parseFloat(data[0].min_order_tn) || 3000;
+            const s = JSON.parse(data[0].description || '{}');
+            const val = parseFloat(s.min_order_tn) || 0;
             setMinOrderTn(val);
-            const newSet = {
-              min_order_tn: val,
-              min_order_other: parseFloat(data[0].min_order_other) || 5000
-            };
-            localStorage.setItem('sethupyropark_min_order_settings', JSON.stringify(newSet));
+            try { localStorage.setItem('sethupyropark_site_settings', JSON.stringify(s)); } catch {}
           }
         }
       } catch (err) {
