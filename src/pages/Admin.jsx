@@ -358,7 +358,7 @@ export function AdminLogin() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (localStorage.getItem('sethupyropark_admin_logged_in') === 'true') navigate('/admin/categories', { replace: true });
+    if (localStorage.getItem('sethupyropark_admin_logged_in') === 'true') navigate('/admin/orders', { replace: true });
   }, [navigate]);
 
   const handleLogin = async (e) => {
@@ -366,7 +366,7 @@ export function AdminLogin() {
     await new Promise(r => setTimeout(r, 500));
     if (email === 'mkrajesh16@gmail.com' && password === 'rajesh@2026') {
       localStorage.setItem('sethupyropark_admin_logged_in', 'true');
-      navigate('/admin/categories', { replace: true });
+      navigate('/admin/orders', { replace: true });
     } else {
       setError('Invalid email or password. Please try again.');
     }
@@ -538,12 +538,12 @@ export function AdminLayout() {
   };
 
   const navItems = [
+    { to: '/admin/orders',       label: 'Orders',            icon: ShoppingCart },
     { to: '/admin/categories',   label: 'Categories',        icon: Tag,             badge: categoryData.length || null },
     { to: '/admin/products',     label: 'Products',          icon: Package,         badge: products.length || null },
     { to: '/admin/banners',      label: 'Hero Banners',      icon: Image },
     { to: '/admin/announcement', label: 'Important Message', icon: Megaphone },
     { to: '/admin/settings',     label: 'Settings',          icon: Settings },
-    { to: '/admin/orders',       label: 'Orders',            icon: ShoppingCart },
   ];
 
   return (

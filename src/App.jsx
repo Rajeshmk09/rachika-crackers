@@ -57,7 +57,7 @@ function App() {
             <Route path="/safetytips" element={<SafetyTips />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<Navigate to="/admin/categories" replace />} />
+              <Route index element={<Navigate to="/admin/orders" replace />} />
               <Route path="categories" element={<AdminCategories />} />
               <Route path="products" element={<AdminProducts />} />
 
