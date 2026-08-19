@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { jsPDF } from 'jspdf';
+import { generateOrderPDF } from '../utils/generateOrderPDF';
 import { ShoppingCart, Trash2, X, CheckCircle2, ShoppingBag, MapPin, Phone, User, Tag, AlertTriangle, FileText } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 import { toast } from 'react-hot-toast';
@@ -77,141 +77,9 @@ export default function CartModal() {
   const minOrderAmount = orderForm.isTamilNadu ? settings.min_order_tn : settings.min_order_other;
   const belowMinimum = minOrderAmount > 0 && cartTotalPrice < minOrderAmount;
 
-  // Generate Receipt PDF
-  const generatePDF = () => {
-    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-    const W = 210;
-    const margin = 14;
-    const col2 = W - margin;
-    let y = 0;
-
-    const INR = (n) => `Rs. ${parseFloat(n).toLocaleString('en-IN')}`;
-    const lineH = 7;
-
-    // Header banner
-    doc.setFillColor(255, 112, 17);
-    doc.rect(0, 0, W, 28, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.text('SETHU PYRO PARK', margin, 12);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Rachika Crackers', margin, 19);
-    doc.text('+91 8867390680', col2, 12, { align: 'right' });
-    doc.text('Order Enquiry', col2, 19, { align: 'right' });
-
-    y = 36;
-
-    // Title
-    doc.setTextColor(15, 23, 42);
-    doc.setFontSize(13);
-    doc.setFont('helvetica', 'bold');
-    doc.text('ORDER ENQUIRY DETAILS', margin, y);
-    doc.setDrawColor(255, 112, 17);
-    doc.setLineWidth(0.8);
-    doc.line(margin, y + 2, col2, y + 2);
-
-    y += 12;
-
-    // Customer info box
-    doc.setFillColor(248, 250, 252);
-    doc.roundedRect(margin, y, W - margin * 2, 33, 3, 3, 'F');
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(100, 116, 139);
-    doc.text('CUSTOMER DETAILS', margin + 4, y + 6);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(15, 23, 42);
-    doc.setFontSize(10);
-    doc.text(`Name:    ${orderForm.name}`, margin + 4, y + 13);
-    doc.text(`Phone:   ${orderForm.phone}`, margin + 4, y + 20);
-    doc.text(`Region:  ${orderForm.isTamilNadu ? 'Tamil Nadu' : 'Other State'}`, margin + 4, y + 27);
-    if (orderForm.address) {
-      const addrLines = doc.splitTextToSize(`Address: ${orderForm.address}`, W - margin * 2 - 8);
-      doc.text(addrLines, margin + 4, y + 34);
-      y += addrLines.length * 5;
-    }
-
-    y += 40;
-
-    // Items table header
-    doc.setFillColor(15, 23, 42);
-    doc.rect(margin, y, W - margin * 2, 8, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.text('#', margin + 3, y + 5.5);
-    doc.text('Product', margin + 10, y + 5.5);
-    doc.text('Unit', margin + 95, y + 5.5);
-    doc.text('Qty', margin + 118, y + 5.5);
-    doc.text('Price', margin + 130, y + 5.5);
-    doc.text('Subtotal', col2 - 2, y + 5.5, { align: 'right' });
-
-    y += 8;
-
-    // Items rows
-    cartItems.forEach(({ product, qty }, idx) => {
-      const price = parseFloat(product.price || 0);
-      const sub = price * qty;
-      const unit = product.order_unit || product.quantity || product.unit || '—';
-      const rowBg = idx % 2 === 0 ? [255, 255, 255] : [248, 250, 252];
-      doc.setFillColor(...rowBg);
-      doc.rect(margin, y, W - margin * 2, lineH, 'F');
-
-      doc.setTextColor(15, 23, 42);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9);
-      doc.text(String(idx + 1), margin + 3, y + 5);
-
-      const nameLines = doc.splitTextToSize(product.name, 82);
-      doc.text(nameLines[0], margin + 10, y + 5);
-
-      doc.text(String(unit).substring(0, 14), margin + 95, y + 5);
-      doc.text(String(qty), margin + 120, y + 5);
-      doc.text(INR(price), margin + 130, y + 5);
-      doc.setFont('helvetica', 'bold');
-      doc.text(INR(sub), col2 - 2, y + 5, { align: 'right' });
-
-      // thin separator
-      doc.setDrawColor(226, 232, 240);
-      doc.setLineWidth(0.2);
-      doc.line(margin, y + lineH, col2, y + lineH);
-
-      y += lineH;
-    });
-
-    y += 6;
-
-    // Totals box
-    const totW = 80;
-    const totX = col2 - totW;
-    // Total amount highlight
-    doc.setFillColor(255, 112, 17);
-    doc.roundedRect(totX, y, totW, 10, 2, 2, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10.5);
-    doc.text('Total Payable:', totX + 4, y + 6.5);
-    doc.text(INR(cartTotalPrice), col2 - 4, y + 6.5, { align: 'right' });
-
-    y += 20;
-
-    // Footer
-    doc.setDrawColor(226, 232, 240);
-    doc.setLineWidth(0.4);
-    doc.line(margin, y, col2, y);
-    y += 6;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.5);
-    doc.setTextColor(100, 116, 139);
-    doc.text(`Generated: ${new Date().toLocaleString('en-IN')}`, col2, y, { align: 'right' });
-
-    const cleanName = (orderForm.name || 'Customer').replace(/\s+/g, '_');
-    const cleanPhone = (orderForm.phone || 'NoPhone').replace(/\s+/g, '_');
-    const fileName = `${cleanName}_${cleanPhone}.pdf`;
-    doc.save(fileName);
+  // Generate Receipt PDF (Tamil-safe via html2canvas)
+  const generatePDF = async () => {
+    await generateOrderPDF({ orderForm, cartItems, cartTotalPrice });
   };
 
   const handleEnquiry = (e) => {
