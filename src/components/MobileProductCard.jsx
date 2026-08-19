@@ -15,6 +15,7 @@ export default function MobileProductCard({ product }) {
 
   const isWishlisted = isInWishlist(product.id);
   const qty = cart[product.id]?.qty || 0;
+  const [showTooltip, setShowTooltip] = useState(false);
 
   const mrp   = parseFloat(product.mrp || product.original_price || product.price || 0);
   const price = parseFloat(product.price || 0);
@@ -127,14 +128,52 @@ export default function MobileProductCard({ product }) {
         </div>
 
         {/* Name */}
-        <div style={{
-          fontSize: '0.82rem', fontWeight: '700', color: '#1a1a1a',
-          lineHeight: '1.2',
-          display: '-webkit-box', WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical', overflow: 'hidden',
-          marginBottom: '3px',
-        }}>
-          {product.name}
+        <div style={{ position: 'relative' }}>
+          <div
+            style={{
+              fontSize: '0.82rem', fontWeight: '700', color: '#1a1a1a',
+              lineHeight: '1.2',
+              display: '-webkit-box', WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical', overflow: 'hidden',
+              marginBottom: '3px',
+              cursor: 'pointer',
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowTooltip(true);
+              setTimeout(() => setShowTooltip(false), 3000);
+            }}
+          >
+            {product.name}
+          </div>
+          {showTooltip && (
+            <div
+              onClick={(e) => { e.stopPropagation(); setShowTooltip(false); }}
+              style={{
+                position: 'absolute',
+                top: '100%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                marginTop: '4px',
+                background: 'rgba(15,23,42,0.93)',
+                color: '#fff',
+                fontSize: '0.78rem',
+                fontWeight: '600',
+                padding: '7px 11px',
+                borderRadius: '8px',
+                whiteSpace: 'normal',
+                wordBreak: 'break-word',
+                zIndex: 9999,
+                width: 'max-content',
+                maxWidth: '220px',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.22)',
+                lineHeight: '1.4',
+                pointerEvents: 'auto',
+              }}
+            >
+              {product.name}
+            </div>
+          )}
         </div>
 
         {/* Unit */}
