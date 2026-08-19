@@ -627,9 +627,9 @@ function CategoryModal({ category, onClose, onSave }) {
   const [imageUrl, setImageUrl] = useState(category?.image_url || '');
   const [uploading, setUploading] = useState(false);
   const [err, setErr] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
 
-  const handleImageUpload = async (e) => {
-    const file = e.target.files?.[0];
+  const uploadFile = async (file) => {
     if (!file) return;
 
     if (imageUrl) {
@@ -666,6 +666,11 @@ function CategoryModal({ category, onClose, onSave }) {
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) uploadFile(file);
   };
 
   const handleSubmit = (e) => {
@@ -740,13 +745,35 @@ function CategoryModal({ category, onClose, onSave }) {
                 </div>
               </div>
             ) : (
-              <label className="adm-gallery-dropzone" style={{cursor:'pointer',height:90}}>
+              <label
+                className="adm-gallery-dropzone"
+                style={{
+                  cursor: 'pointer',
+                  height: 90,
+                  border: isDragging ? '2.5px dashed #ff6b35' : '1.5px dashed #cbd5e1',
+                  background: isDragging ? '#fff5ee' : '#ffffff',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  borderRadius: '12px'
+                }}
+                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDragging(false);
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) uploadFile(file);
+                }}
+              >
                 {uploading ? (
                   <RefreshCw className="spinning" style={{width:20,height:20,color:'#ff6b35'}} />
                 ) : (
                   <>
                     <Plus style={{width:20,height:20,color:'#ff6b35'}} />
-                    <span style={{fontSize:12,fontWeight:600,color:'#ff6b35'}}>Upload Category Banner Image</span>
+                    <span style={{fontSize:12,fontWeight:600,color:'#ff6b35'}}>Upload or Drag & Drop Category Image</span>
                   </>
                 )}
                 <input type="file" accept="image/*" onChange={handleImageUpload} style={{display:'none'}} disabled={uploading} />
@@ -1046,8 +1073,9 @@ function ProductModal({ product, categories, onClose, onSaved }) {
     return 0;
   };
 
-  const handleSlotImageUpload = async (e, slotIdx) => {
-    const file = e.target.files?.[0];
+  const [dragOverIdx, setDragOverIdx] = useState(null);
+
+  const uploadSlotFile = async (file, slotIdx) => {
     if (!file) return;
 
     // Delete previous image from Cloudinary storage if replacing photo
@@ -1090,6 +1118,11 @@ function ProductModal({ product, categories, onClose, onSaved }) {
     } finally {
       setUploadingIdx(null);
     }
+  };
+
+  const handleSlotImageUpload = (e, slotIdx) => {
+    const file = e.target.files?.[0];
+    if (file) uploadSlotFile(file, slotIdx);
   };
 
   const removeSlotImage = async (slotIdx) => {
@@ -1320,7 +1353,23 @@ function ProductModal({ product, categories, onClose, onSaved }) {
                       </div>
                     </div>
                   ) : (
-                    <label className="adm-gallery-dropzone main-dropzone" style={{cursor:'pointer'}}>
+                    <label
+                      className="adm-gallery-dropzone main-dropzone"
+                      style={{
+                        cursor: 'pointer',
+                        border: dragOverIdx === 0 ? '2.5px dashed #ff6b35' : '1.5px dashed #cbd5e1',
+                        background: dragOverIdx === 0 ? '#fff5ee' : '#ffffff',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onDragOver={(e) => { e.preventDefault(); setDragOverIdx(0); }}
+                      onDragLeave={() => setDragOverIdx(null)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setDragOverIdx(null);
+                        const file = e.dataTransfer.files?.[0];
+                        if (file) uploadSlotFile(file, 0);
+                      }}
+                    >
                       {uploadingIdx === 0 ? (
                         <div className="adm-dropzone-content">
                           <RefreshCw className="spinning" style={{width:22,height:22,color:'#ff6b35'}} />
@@ -1332,7 +1381,7 @@ function ProductModal({ product, categories, onClose, onSaved }) {
                             <Plus style={{width:20,height:20,color:'#ff6b35'}} />
                           </div>
                           <div>
-                            <div style={{fontSize:13,fontWeight:600,color:'#0f172a'}}>Click to Upload Main Display Image</div>
+                            <div style={{fontSize:13,fontWeight:600,color:'#0f172a'}}>Click or Drag & Drop Main Display Image</div>
                             <div style={{fontSize:11,color:'#94a3b8',marginTop:2}}>Primary thumbnail for product card</div>
                           </div>
                         </div>
@@ -1366,7 +1415,23 @@ function ProductModal({ product, categories, onClose, onSaved }) {
                           </div>
                         </>
                       ) : (
-                        <label className="adm-gallery-dropzone" style={{cursor:'pointer'}}>
+                        <label
+                          className="adm-gallery-dropzone"
+                          style={{
+                            cursor: 'pointer',
+                            border: dragOverIdx === slotIdx ? '2.5px dashed #ff6b35' : '1.5px dashed #cbd5e1',
+                            background: dragOverIdx === slotIdx ? '#fff5ee' : '#ffffff',
+                            transition: 'all 0.2s ease',
+                          }}
+                          onDragOver={(e) => { e.preventDefault(); setDragOverIdx(slotIdx); }}
+                          onDragLeave={() => setDragOverIdx(null)}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            setDragOverIdx(null);
+                            const file = e.dataTransfer.files?.[0];
+                            if (file) uploadSlotFile(file, slotIdx);
+                          }}
+                        >
                           {uploadingIdx === slotIdx ? (
                             <RefreshCw className="spinning" style={{width:18,height:18,color:'#64748b'}} />
                           ) : (
@@ -1875,8 +1940,9 @@ export function AdminHeroBanners() {
     fetchBanners();
   }, [fetchBanners]);
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
+  const [isDragging, setIsDragging] = useState(false);
+
+  const uploadBannerFile = async (file) => {
     if (!file) return;
     setUploading(true);
     try {
@@ -1890,6 +1956,11 @@ export function AdminHeroBanners() {
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) uploadBannerFile(file);
   };
 
   const openAddModal = () => {
@@ -2163,14 +2234,22 @@ export function AdminHeroBanners() {
                       alignItems: 'center',
                       justifyContent: 'center',
                       padding: imageUrl ? '16px' : '35px 20px',
-                      border: imageUrl ? '2px solid #22c55e' : '2px dashed #cbd5e1',
+                      border: isDragging ? '2.5px dashed #ff6b35' : (imageUrl ? '2px solid #22c55e' : '2px dashed #cbd5e1'),
                       borderRadius: '16px',
-                      backgroundColor: imageUrl ? '#f0fdf4' : '#f8fafc',
+                      backgroundColor: isDragging ? '#fff5ee' : (imageUrl ? '#f0fdf4' : '#f8fafc'),
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
                       textAlign: 'center',
                       position: 'relative',
                       minHeight: '180px'
+                    }}
+                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsDragging(false);
+                      const file = e.dataTransfer.files?.[0];
+                      if (file) uploadBannerFile(file);
                     }}
                   >
                     {uploading ? (
