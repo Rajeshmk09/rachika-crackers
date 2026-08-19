@@ -640,7 +640,7 @@ function CategoryModal({ category, onClose, onSave }) {
     setErr('');
 
     const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'ler130g0';
-    const preset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'ml_default';
+    const preset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'pyropark_uploads';
 
     const formData = new FormData();
     formData.append('file', file);
@@ -1042,7 +1042,7 @@ function ProductModal({ product, categories, onClose, onSaved }) {
     setErr('');
 
     const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'ler130g0';
-    const preset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'ml_default';
+    const preset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'pyropark_uploads';
 
     const formData = new FormData();
     formData.append('file', file);
