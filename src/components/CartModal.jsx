@@ -3,6 +3,7 @@ import { jsPDF } from 'jspdf';
 import { ShoppingCart, Trash2, X, CheckCircle2, ShoppingBag, MapPin, Phone, User, Tag, AlertTriangle, FileText } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 import { toast } from 'react-hot-toast';
+import fallbackImg from '../assets/fallbackimage.png';
 
 export default function CartModal() {
   const {
@@ -546,11 +547,12 @@ Kindly confirm my order. Thank you!`;
                       flexShrink: 0,
                       border: '1px solid #f1f5f9',
                     }}>
-                      {displayImg ? (
-                        <img src={displayImg} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                      ) : (
-                        <ShoppingCart size={20} color="#94a3b8" />
-                      )}
+                      <img 
+                        src={displayImg || fallbackImg} 
+                        alt={product.name} 
+                        style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+                        onError={(e) => { e.target.onerror = null; e.target.src = fallbackImg; }}
+                      />
                     </div>
 
                     {/* Item Details */}

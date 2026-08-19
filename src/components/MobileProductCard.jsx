@@ -3,19 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 
-import FallbackImg15 from '../assets/home_img_15.webp';
-import FallbackImg16 from '../assets/home_img_16.webp';
-import FallbackImg17 from '../assets/home_img_17.webp';
-import FallbackImg18 from '../assets/home_img_18.webp';
-import FallbackImg19 from '../assets/home_img_19.webp';
+import fallbackImg from '../assets/fallbackimage.png';
 
-const getFallback = (cat = '') => {
-  const c = String(cat).toLowerCase();
-  if (c.includes('pot')) return FallbackImg16;
-  if (c.includes('sparkler') || c.includes('star')) return FallbackImg17;
-  if (c.includes('sound') || c.includes('bomb') || c.includes('lakshmi')) return FallbackImg18;
-  if (c.includes('fountain') || c.includes('peacock') || c.includes('flower')) return FallbackImg19;
-  return FallbackImg15;
+const getFallback = () => {
+  return fallbackImg;
 };
 
 export default function MobileProductCard({ product }) {

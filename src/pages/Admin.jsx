@@ -715,7 +715,25 @@ function CategoryModal({ category, onClose, onSave }) {
                       <RefreshCw style={{width:11,height:11}} /> Change
                       <input type="file" accept="image/*" onChange={handleImageUpload} style={{display:'none'}} disabled={uploading} />
                     </label>
-                    <button type="button" className="adm-btn adm-btn-danger adm-btn-sm" onClick={() => { deleteFromCloudinary(imageUrl); setImageUrl(''); }} style={{padding:'4px 8px',fontSize:11}}>
+                    <button
+                      type="button"
+                      className="adm-btn adm-btn-danger adm-btn-sm"
+                      onClick={() => {
+                        if (imageUrl) {
+                          deleteFromCloudinary(imageUrl);
+                        }
+                        setImageUrl('');
+                        if (category?.id) {
+                          onSave({
+                            id: category.id,
+                            name: name.trim() || category.name,
+                            oldName: category.name,
+                            image_url: '',
+                          });
+                        }
+                      }}
+                      style={{padding:'4px 8px',fontSize:11}}
+                    >
                       <Trash2 style={{width:11,height:11}} /> Remove
                     </button>
                   </div>
@@ -1074,16 +1092,32 @@ function ProductModal({ product, categories, onClose, onSaved }) {
     }
   };
 
-  const removeSlotImage = (slotIdx) => {
+  const removeSlotImage = async (slotIdx) => {
     const oldUrl = images[slotIdx];
     if (oldUrl) {
       deleteFromCloudinary(oldUrl);
     }
-    setImages(prev => {
-      const next = [...prev];
-      next[slotIdx] = '';
-      return next;
-    });
+    const nextImages = [...images];
+    nextImages[slotIdx] = '';
+    setImages(nextImages);
+
+    if (isEdit && product?.id) {
+      const activeImgs = nextImages.filter(url => url && url.trim() !== '');
+      let finalImageUrl = null;
+      if (activeImgs.length === 1) {
+        finalImageUrl = activeImgs[0];
+      } else if (activeImgs.length > 1) {
+        finalImageUrl = JSON.stringify(activeImgs);
+      }
+      try {
+        await api(`/products?id=eq.${product.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ image_url: finalImageUrl })
+        });
+      } catch (e) {
+        console.error('Failed to immediately clear image from Supabase:', e);
+      }
+    }
   };
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));

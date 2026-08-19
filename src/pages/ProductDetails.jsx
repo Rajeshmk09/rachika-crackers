@@ -10,19 +10,10 @@ import TopMarquee from '../components/TopMarquee';
 import HomeImg1 from '../assets/websitelogo.png';
 import HomeImg2 from '../assets/home_img_2.jpeg';
 
-import FallbackImg15 from '../assets/home_img_15.webp';
-import FallbackImg16 from '../assets/home_img_16.webp';
-import FallbackImg17 from '../assets/home_img_17.webp';
-import FallbackImg18 from '../assets/home_img_18.webp';
-import FallbackImg19 from '../assets/home_img_19.webp';
+import fallbackImg from '../assets/fallbackimage.png';
 
-const getCategoryFallbackImage = (catName = '') => {
-  const cat = String(catName).toLowerCase();
-  if (cat.includes('pot')) return FallbackImg16;
-  if (cat.includes('sparkler') || cat.includes('star')) return FallbackImg17;
-  if (cat.includes('sound') || cat.includes('bomb') || cat.includes('lakshmi')) return FallbackImg18;
-  if (cat.includes('fountain') || cat.includes('peacock') || cat.includes('flower')) return FallbackImg19;
-  return FallbackImg15;
+const getCategoryFallbackImage = () => {
+  return fallbackImg;
 };
 
 export default function ProductDetails() {

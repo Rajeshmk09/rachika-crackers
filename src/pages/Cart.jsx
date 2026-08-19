@@ -5,6 +5,7 @@ import { ShoppingCart, Trash2, ArrowLeft, CheckCircle2, ShieldCheck, Truck, User
 import { useShop } from '../context/ShopContext';
 import HeaderNav from '../components/HeaderNav';
 import { toast } from 'react-hot-toast';
+import fallbackImg from '../assets/fallbackimage.png';
 
 import HomeImg1 from '../assets/home_img_11.png';
 import HomeImg2 from '../assets/home_img_12.webp';
@@ -435,10 +436,12 @@ Kindly confirm my order. Thank you!`;
                             flexShrink: 0, overflow: 'hidden', display: 'flex',
                             alignItems: 'center', justifyContent: 'center',
                           }}>
-                            {imgUrl
-                              ? <img src={imgUrl} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                              : <span style={{ fontSize: '1.6rem' }}>📦</span>
-                            }
+                            <img 
+                              src={imgUrl || fallbackImg} 
+                              alt={product.name} 
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                              onError={(e) => { e.target.onerror = null; e.target.src = fallbackImg; }}
+                            />
                           </div>
 
                           {/* Info */}
