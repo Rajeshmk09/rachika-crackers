@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
 
 import LogoImg from '../assets/websitelogo.png';
@@ -96,9 +96,9 @@ export default function SiteFooter() {
 
       {/* Pricelist floating button */}
       <div className="fixed point2">
-        <a href={pricelistUrl || '/products'} onClick={handleDownloadPricelist} target="_blank" rel="noopener noreferrer">
+        <Link to="/products">
           <img src={PricelistImg} className="priceicn2 float-right blink" alt="SETHU PYRO PARK RACHIKA CRACKERS" title="SETHU PYRO PARK RACHIKA CRACKERS" />
-        </a>
+        </Link>
       </div>
     </>
   );
