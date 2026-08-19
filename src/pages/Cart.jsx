@@ -24,6 +24,15 @@ export default function Cart() {
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [error, setError] = useState('');
   const [settings, setSettings] = useState({ min_order_tn: 0, min_order_other: 0 });
+  const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
+
+  // Auto-hide toast after 4 seconds
+  useEffect(() => {
+    if (toast.show) {
+      const t = setTimeout(() => setToast(prev => ({ ...prev, show: false })), 4000);
+      return () => clearTimeout(t);
+    }
+  }, [toast.show]);
 
   // Load minimum order amount from Supabase (with localStorage fallback)
   useEffect(() => {
@@ -82,15 +91,22 @@ export default function Cart() {
     e.preventDefault();
     if (!orderForm.name || !orderForm.phone) {
       setError('Please provide your Name and Mobile Number.');
+      setToast({ show: true, message: 'Please provide your Name and Mobile Number.', type: 'error' });
       return;
     }
     const hasInactive = cartItems.some(i => i.product.is_active === false);
     if (hasInactive) {
       setError('Your cart contains out-of-stock items. Please remove them to proceed.');
+      setToast({ show: true, message: 'Your cart contains out-of-stock items. Please remove them.', type: 'error' });
       return;
     }
     if (belowMinimum) {
       setError(`Minimum order amount for ${orderForm.isTamilNadu ? 'Tamil Nadu' : 'other states'} is ₹${minOrderAmount.toLocaleString('en-IN')}. Please add more items to your cart.`);
+      setToast({ 
+        show: true, 
+        message: `Minimum order amount required is ₹${minOrderAmount.toLocaleString('en-IN')}. (Your total is ₹${cartTotalPrice.toLocaleString('en-IN')})`,
+        type: 'error' 
+      });
       return;
     }
     setError('');
@@ -698,27 +714,22 @@ Kindly confirm my order. Thank you!`;
                     {/* Row 3: Enquiry button — full width */}
                     <button
                       type="submit"
-                      disabled={belowMinimum}
                       style={{
                         width: '100%',
                         padding: '13px 32px',
                         borderRadius: '12px',
                         border: 'none',
-                        background: belowMinimum ? '#94a3b8' : '#ff7011',
+                        background: '#ff7011',
                         color: 'white',
                         fontWeight: 800,
                         fontSize: '1rem',
-                        cursor: belowMinimum ? 'not-allowed' : 'pointer',
-                        boxShadow: belowMinimum ? 'none' : '0 4px 15px rgba(255,112,17,0.35)',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 15px rgba(255,112,17,0.35)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                        opacity: belowMinimum ? 0.7 : 1,
                       }}
                     >
                       <ShoppingBag size={18} color="white" />
-                      {belowMinimum
-                        ? `Min. Order ₹${minOrderAmount.toLocaleString('en-IN')}`
-                        : `Enquiry · ₹${cartTotalPrice.toLocaleString('en-IN')}`
-                      }
+                      {`Enquiry · ₹${cartTotalPrice.toLocaleString('en-IN')}`}
                     </button>
 
                   </form>
@@ -726,6 +737,46 @@ Kindly confirm my order. Thank you!`;
 
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Custom Toast Notification */}
+        {toast.show && (
+          <div style={{
+            position: 'fixed',
+            top: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: '#ef4444',
+            color: '#ffffff',
+            padding: '14px 20px',
+            borderRadius: '12px',
+            boxShadow: '0 10px 25px rgba(239, 68, 68, 0.25)',
+            zIndex: 100000,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            width: '90%',
+            maxWidth: '400px',
+            animation: 'toast-slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+          }}>
+            <style>{`
+              @keyframes toast-slide-in {
+                from { transform: translate(-50%, -30px); opacity: 0; }
+                to { transform: translate(-50%, 0); opacity: 1; }
+              }
+            `}</style>
+            <span style={{ fontSize: '1.2rem' }}>⚠️</span>
+            <div style={{ flex: 1, fontSize: '0.88rem', fontWeight: 600 }}>
+              {toast.message}
+            </div>
+            <button 
+              type="button"
+              onClick={() => setToast({ ...toast, show: false })}
+              style={{ background: 'none', border: 'none', color: '#ffffff', fontSize: '1.1rem', cursor: 'pointer', opacity: 0.8, padding: 0 }}
+            >
+              ✕
+            </button>
           </div>
         )}
       </div>
