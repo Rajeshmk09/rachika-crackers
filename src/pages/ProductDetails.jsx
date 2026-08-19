@@ -334,22 +334,14 @@ export default function ProductDetails() {
                   >
                     Out of Stock
                   </button>
-                ) : currentCartQty === 0 ? (
-                  <button
-                    type="button"
-                    onClick={() => addToCart(product, 1)}
-                    className="btn btn-warning btn-block font-weight-bold acme rounded-pill text-white shadow-sm"
-                    style={{ backgroundColor: '#ff7011', border: 'none', fontSize: isMobile ? '1rem' : '1.15rem', padding: isMobile ? '10px' : '14px' }}
-                  >
-                    <ShoppingBag size={20} className="mr-2" /> Add to Cart
-                  </button>
                 ) : (
                   <div className="d-flex align-items-center justify-content-between rounded-pill p-2 border w-100" style={{ backgroundColor: '#ff7011', minHeight: '52px' }}>
                     <button
                       type="button"
                       onClick={() => updateCartQty(product.id, currentCartQty - 1)}
+                      disabled={currentCartQty === 0}
                       className="btn btn-link text-white p-0 d-flex align-items-center justify-content-center"
-                      style={{ width: '38px', height: '38px', fontSize: '1.4rem', fontWeight: 'bold', textDecoration: 'none' }}
+                      style={{ width: '38px', height: '38px', fontSize: '1.4rem', fontWeight: 'bold', textDecoration: 'none', cursor: currentCartQty === 0 ? 'not-allowed' : 'pointer', opacity: currentCartQty === 0 ? 0.5 : 1 }}
                     >
                       -
                     </button>
@@ -358,7 +350,7 @@ export default function ProductDetails() {
                     </span>
                     <button
                       type="button"
-                      onClick={() => updateCartQty(product.id, currentCartQty + 1)}
+                      onClick={() => currentCartQty === 0 ? addToCart(product, 1) : updateCartQty(product.id, currentCartQty + 1)}
                       className="btn btn-link text-white p-0 d-flex align-items-center justify-content-center"
                       style={{ width: '38px', height: '38px', fontSize: '1.4rem', fontWeight: 'bold', textDecoration: 'none' }}
                     >

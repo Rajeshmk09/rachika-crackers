@@ -216,22 +216,23 @@ export default function ProductCard({ product }) {
                 >
                   Out of Stock
                 </button>
-              ) : currentCartQty === 0 ? (
-                <button
-                  type="button"
-                  onClick={increment}
-                  className="btn btn-block font-weight-bold acme rounded-pill text-white py-2 btn-effect1"
-                  style={{ backgroundColor: '#ff7011', border: 'none', fontSize: '0.9rem', boxShadow: 'none' }}
-                >
-                  Add to Cart
-                </button>
               ) : (
                 <div className="d-flex align-items-center justify-content-between rounded-pill p-1" style={{ backgroundColor: '#ff7011', height: '38px' }}>
                   <button
                     type="button"
                     onClick={decrement}
+                    disabled={currentCartQty === 0}
                     className="btn btn-link text-white p-0 d-flex align-items-center justify-content-center"
-                    style={{ width: '28px', height: '28px', fontSize: '1.2rem', fontWeight: 'bold', textDecoration: 'none', boxShadow: 'none' }}
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      fontSize: '1.2rem',
+                      fontWeight: 'bold',
+                      textDecoration: 'none',
+                      boxShadow: 'none',
+                      cursor: currentCartQty === 0 ? 'not-allowed' : 'pointer',
+                      opacity: currentCartQty === 0 ? 0.5 : 1
+                    }}
                   >
                     -
                   </button>

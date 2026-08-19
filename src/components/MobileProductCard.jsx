@@ -175,27 +175,20 @@ export default function MobileProductCard({ product }) {
             >
               Out of Stock
             </button>
-          ) : qty === 0 ? (
-            <button
-              type="button"
-              onClick={inc}
-              style={{
-                width: '100%', padding: '7px 0',
-                backgroundColor: '#ff7011', color: '#fff',
-                border: 'none', borderRadius: '20px',
-                fontSize: '0.78rem', fontWeight: '700',
-                cursor: 'pointer', letterSpacing: '0.3px',
-              }}
-            >
-              Add to Cart
-            </button>
           ) : (
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               backgroundColor: '#ff7011', borderRadius: '20px',
               padding: '4px 8px', height: '32px',
             }}>
-              <button type="button" onClick={dec} style={{ background: 'none', border: 'none', color: '#fff', fontSize: '1.1rem', fontWeight: '700', cursor: 'pointer', lineHeight: 1 }}>-</button>
+              <button
+                type="button"
+                onClick={dec}
+                disabled={qty === 0}
+                style={{ background: 'none', border: 'none', color: '#fff', fontSize: '1.1rem', fontWeight: '700', cursor: qty === 0 ? 'not-allowed' : 'pointer', lineHeight: 1, opacity: qty === 0 ? 0.5 : 1 }}
+              >
+                -
+              </button>
               <span style={{ color: '#fff', fontWeight: '700', fontSize: '0.9rem' }}>{qty}</span>
               <button type="button" onClick={inc} style={{ background: 'none', border: 'none', color: '#fff', fontSize: '1.1rem', fontWeight: '700', cursor: 'pointer', lineHeight: 1 }}>+</button>
             </div>

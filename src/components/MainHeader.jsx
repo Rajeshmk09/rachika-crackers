@@ -165,6 +165,28 @@ export default function MainHeader() {
             <img src={HomeImg1} alt="SETHU PYRO PARK" style={{ height: '48px', width: 'auto', objectFit: 'contain' }} />
           </Link>
 
+          {/* Mobile: Cart Icon and info next to hamburger */}
+          <Link 
+            to="/cart" 
+            className="d-lg-none d-inline-flex align-items-center" 
+            style={{ 
+              textDecoration: 'none', 
+              color: '#ffffff', 
+              marginRight: '12px',
+              backgroundColor: 'rgba(255, 255, 255, 0.15)',
+              padding: '6px 12px',
+              borderRadius: '30px',
+              border: '1px solid rgba(255, 255, 255, 0.25)',
+              transition: 'background-color 0.2s ease',
+              fontFamily: 'var(--josefin-font, sans-serif)'
+            }}
+          >
+            <ShoppingCart size={15} color="white" />
+            <span style={{ fontSize: '0.78rem', fontWeight: '800', marginLeft: '6px', color: '#ffffff' }}>
+              {cartCount} {cartTotalPrice > 0 ? `(₹${cartTotalPrice.toLocaleString('en-IN')})` : '(₹0)'}
+            </span>
+          </Link>
+
           {/* Mobile: hamburger right — opens sidebar */}
           <button
             className="d-lg-none"
