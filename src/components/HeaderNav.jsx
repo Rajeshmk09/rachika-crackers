@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://iplfsscpeixfxzbouhlp.supabase.co';
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwbGZzc2NwZWl4Znh6Ym91aGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NDQwNzksImV4cCI6MjEwMjUyMDA3OX0.nr2an5w0nX_L37C3g03HgzpFitueRNeOJ346TYvakZ8';
 import { Heart, ShoppingCart } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 import { toast } from 'react-hot-toast';
@@ -7,6 +10,45 @@ import { toast } from 'react-hot-toast';
 export default function HeaderNav() {
   const { wishlistCount, cartCount, cartTotalPrice, pricelistUrl, setCartModalOpen } = useShop();
   const location = useLocation();
+  const [minOrderTn, setMinOrderTn] = useState(3000);
+
+  useEffect(() => {
+    const fetchMinSetting = async () => {
+      try {
+        const cached = localStorage.getItem('sethupyropark_min_order_settings');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed.min_order_tn) {
+            setMinOrderTn(parseFloat(parsed.min_order_tn) || 3000);
+          }
+        }
+      } catch (e) {}
+
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/settings`, {
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.length > 0) {
+            const val = parseFloat(data[0].min_order_tn) || 3000;
+            setMinOrderTn(val);
+            const newSet = {
+              min_order_tn: val,
+              min_order_other: parseFloat(data[0].min_order_other) || 5000
+            };
+            localStorage.setItem('sethupyropark_min_order_settings', JSON.stringify(newSet));
+          }
+        }
+      } catch (err) {
+        console.warn('DB min settings fetch error:', err);
+      }
+    };
+    fetchMinSetting();
+  }, []);
 
   const handleDownloadPricelist = (e) => {
     if (pricelistUrl && pricelistUrl.startsWith('data:')) {
@@ -39,23 +81,13 @@ export default function HeaderNav() {
   const handleCartClick = (e) => {
     e.preventDefault();
 
-    // Check minimum order limits
-    let minTN = 3000;
-    try {
-      const cached = localStorage.getItem('sethupyropark_min_order_settings');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (parsed.min_order_tn) minTN = parseFloat(parsed.min_order_tn);
-      }
-    } catch (err) {}
-
     if (cartTotalPrice === 0) {
       toast.error("Your cart is empty! Please add crackers to your cart first.");
       return;
     }
 
-    if (cartTotalPrice < minTN) {
-      toast.error(`Minimum order amount is ₹${minTN.toLocaleString('en-IN')}. (Current: ₹${cartTotalPrice.toLocaleString('en-IN')})`);
+    if (cartTotalPrice < minOrderTn) {
+      toast.error(`Minimum order amount is ₹${minOrderTn.toLocaleString('en-IN')}. (Current: ₹${cartTotalPrice.toLocaleString('en-IN')})`);
       return;
     }
 

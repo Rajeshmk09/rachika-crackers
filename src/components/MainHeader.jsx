@@ -16,6 +16,45 @@ export default function MainHeader() {
 
   const [marqueeMessage, setMarqueeMessage] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [minOrderTn, setMinOrderTn] = useState(3000);
+
+  useEffect(() => {
+    const fetchMinSetting = async () => {
+      try {
+        const cached = localStorage.getItem('sethupyropark_min_order_settings');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed.min_order_tn) {
+            setMinOrderTn(parseFloat(parsed.min_order_tn) || 3000);
+          }
+        }
+      } catch (e) {}
+
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/settings`, {
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.length > 0) {
+            const val = parseFloat(data[0].min_order_tn) || 3000;
+            setMinOrderTn(val);
+            const newSet = {
+              min_order_tn: val,
+              min_order_other: parseFloat(data[0].min_order_other) || 5000
+            };
+            localStorage.setItem('sethupyropark_min_order_settings', JSON.stringify(newSet));
+          }
+        }
+      } catch (err) {
+        console.warn('DB min settings fetch error:', err);
+      }
+    };
+    fetchMinSetting();
+  }, []);
 
   const closeSidebar = () => setSidebarOpen(false);
 
@@ -94,23 +133,13 @@ export default function MainHeader() {
   const handleCartClick = (e) => {
     e.preventDefault();
 
-    // Check minimum order limits
-    let minTN = 3000;
-    try {
-      const cached = localStorage.getItem('sethupyropark_min_order_settings');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (parsed.min_order_tn) minTN = parseFloat(parsed.min_order_tn);
-      }
-    } catch (err) {}
-
     if (cartTotalPrice === 0) {
       toast.error("Your cart is empty! Please add crackers to your cart first.");
       return;
     }
 
-    if (cartTotalPrice < minTN) {
-      toast.error(`Minimum order amount is ₹${minTN.toLocaleString('en-IN')}. (Current: ₹${cartTotalPrice.toLocaleString('en-IN')})`);
+    if (cartTotalPrice < minOrderTn) {
+      toast.error(`Minimum order amount is ₹${minOrderTn.toLocaleString('en-IN')}. (Current: ₹${cartTotalPrice.toLocaleString('en-IN')})`);
       return;
     }
 
