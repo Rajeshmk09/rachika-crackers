@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
+import NameTooltip from './NameTooltip';
 
 import fallbackImg from '../assets/fallbackimage.png';
 
@@ -15,7 +16,7 @@ export default function MobileProductCard({ product }) {
 
   const isWishlisted = isInWishlist(product.id);
   const qty = cart[product.id]?.qty || 0;
-  const [showTooltip, setShowTooltip] = useState(false);
+  const [tipAnchor, setTipAnchor] = useState(null);
 
   const mrp   = parseFloat(product.mrp || product.original_price || product.price || 0);
   const price = parseFloat(product.price || 0);
@@ -128,53 +129,23 @@ export default function MobileProductCard({ product }) {
         </div>
 
         {/* Name */}
-        <div style={{ position: 'relative' }}>
-          <div
-            style={{
-              fontSize: '0.82rem', fontWeight: '700', color: '#1a1a1a',
-              lineHeight: '1.2',
-              display: '-webkit-box', WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical', overflow: 'hidden',
-              marginBottom: '3px',
-              cursor: 'pointer',
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowTooltip(true);
-              setTimeout(() => setShowTooltip(false), 3000);
-            }}
-          >
-            {product.name}
-          </div>
-          {showTooltip && (
-            <div
-              onClick={(e) => { e.stopPropagation(); setShowTooltip(false); }}
-              style={{
-                position: 'absolute',
-                top: '100%',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                marginTop: '4px',
-                background: 'rgba(15,23,42,0.93)',
-                color: '#fff',
-                fontSize: '0.78rem',
-                fontWeight: '600',
-                padding: '7px 11px',
-                borderRadius: '8px',
-                whiteSpace: 'normal',
-                wordBreak: 'break-word',
-                zIndex: 9999,
-                width: 'max-content',
-                maxWidth: '220px',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.22)',
-                lineHeight: '1.4',
-                pointerEvents: 'auto',
-              }}
-            >
-              {product.name}
-            </div>
-          )}
+        <div
+          style={{
+            fontSize: '0.82rem', fontWeight: '700', color: '#1a1a1a',
+            lineHeight: '1.2',
+            display: '-webkit-box', WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical', overflow: 'hidden',
+            marginBottom: '3px',
+            cursor: 'pointer',
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            setTipAnchor({ rect: e.currentTarget.getBoundingClientRect(), text: product.name });
+          }}
+        >
+          {product.name}
         </div>
+        <NameTooltip anchor={tipAnchor} onClose={() => setTipAnchor(null)} />
 
         {/* Unit */}
         <div style={{ fontSize: '0.68rem', color: '#94a3b8', marginBottom: '6px' }}>

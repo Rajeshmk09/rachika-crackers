@@ -4,6 +4,7 @@ import { ShoppingCart, Trash2, X, CheckCircle2, ShoppingBag, MapPin, Phone, User
 import { useShop } from '../context/ShopContext';
 import { toast } from 'react-hot-toast';
 import fallbackImg from '../assets/fallbackimage.png';
+import NameTooltip from './NameTooltip';
 
 export default function CartModal() {
   const {
@@ -23,7 +24,7 @@ export default function CartModal() {
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [error, setError] = useState('');
   const [settings, setSettings] = useState({ min_order_tn: 3000, min_order_other: 5000 });
-  const [tooltipId, setTooltipId] = useState(null);
+  const [tipAnchor, setTipAnchor] = useState(null);
 
   // Load minimum order settings
   useEffect(() => {
@@ -426,49 +427,20 @@ Kindly confirm my order. Thank you!`;
 
                     {/* Item Details */}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ position: 'relative' }}>
-                        <div
-                          style={{
-                            fontWeight: 700, fontSize: '0.85rem', color: '#1e293b',
-                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                            cursor: 'pointer',
-                          }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setTooltipId(product.id);
-                            setTimeout(() => setTooltipId(null), 3000);
-                          }}
-                        >
-                          {product.name}
-                        </div>
-                        {tooltipId === product.id && (
-                          <div
-                            onClick={(e) => { e.stopPropagation(); setTooltipId(null); }}
-                            style={{
-                              position: 'absolute',
-                              top: '100%',
-                              left: 0,
-                              marginTop: '4px',
-                              background: 'rgba(15,23,42,0.93)',
-                              color: '#fff',
-                              fontSize: '0.78rem',
-                              fontWeight: '600',
-                              padding: '7px 11px',
-                              borderRadius: '8px',
-                              whiteSpace: 'normal',
-                              wordBreak: 'break-word',
-                              zIndex: 9999,
-                              width: 'max-content',
-                              maxWidth: '240px',
-                              boxShadow: '0 4px 16px rgba(0,0,0,0.22)',
-                              lineHeight: '1.4',
-                              pointerEvents: 'auto',
-                            }}
-                          >
-                            {product.name}
-                          </div>
-                        )}
+                      <div
+                        style={{
+                          fontWeight: 700, fontSize: '0.85rem', color: '#1e293b',
+                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                          cursor: 'pointer',
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTipAnchor({ rect: e.currentTarget.getBoundingClientRect(), text: product.name });
+                        }}
+                      >
+                        {product.name}
                       </div>
+                      <NameTooltip anchor={tipAnchor} onClose={() => setTipAnchor(null)} />
                       <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px' }}>
                         {product.order_unit || product.quantity || product.unit || '1 Box'}
                       </div>
