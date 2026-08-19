@@ -38,6 +38,27 @@ export default function HeaderNav() {
 
   const handleCartClick = (e) => {
     e.preventDefault();
+
+    // Check minimum order limits
+    let minTN = 3000;
+    try {
+      const cached = localStorage.getItem('sethupyropark_min_order_settings');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.min_order_tn) minTN = parseFloat(parsed.min_order_tn);
+      }
+    } catch (err) {}
+
+    if (cartTotalPrice === 0) {
+      toast.error("Your cart is empty! Please add crackers to your cart first.");
+      return;
+    }
+
+    if (cartTotalPrice < minTN) {
+      toast.error(`Minimum order amount is ₹${minTN.toLocaleString('en-IN')}. (Current: ₹${cartTotalPrice.toLocaleString('en-IN')})`);
+      return;
+    }
+
     setCartModalOpen(true);
   };
 
