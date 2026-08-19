@@ -95,11 +95,13 @@ export default function SiteFooter() {
       </div>
 
       {/* Pricelist floating button */}
-      <div className="fixed point2">
-        <Link to="/products">
-          <img src={PricelistImg} className="priceicn2 float-right blink" alt="SETHU PYRO PARK RACHIKA CRACKERS" title="SETHU PYRO PARK RACHIKA CRACKERS" />
-        </Link>
-      </div>
+      {location.pathname !== '/products' && (
+        <div className="fixed point2">
+          <Link to="/products">
+            <img src={PricelistImg} className="priceicn2 float-right blink" alt="SETHU PYRO PARK RACHIKA CRACKERS" title="SETHU PYRO PARK RACHIKA CRACKERS" />
+          </Link>
+        </div>
+      )}
     </>
   );
 }
