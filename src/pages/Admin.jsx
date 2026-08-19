@@ -358,14 +358,14 @@ export function AdminLogin() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (sessionStorage.getItem('admin_logged_in') === 'true') navigate('/admin/categories', { replace: true });
+    if (localStorage.getItem('sethupyropark_admin_logged_in') === 'true') navigate('/admin/categories', { replace: true });
   }, [navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault(); setError(''); setLoading(true);
     await new Promise(r => setTimeout(r, 500));
     if (email === 'mkrajesh16@gmail.com' && password === 'rajesh@2026') {
-      sessionStorage.setItem('admin_logged_in', 'true');
+      localStorage.setItem('sethupyropark_admin_logged_in', 'true');
       navigate('/admin/categories', { replace: true });
     } else {
       setError('Invalid email or password. Please try again.');
@@ -450,7 +450,7 @@ export function AdminLayout() {
   const [loading, setLoading]   = useState(false);
 
   // Auth guard
-  if (sessionStorage.getItem('admin_logged_in') !== 'true') {
+  if (localStorage.getItem('sethupyropark_admin_logged_in') !== 'true') {
     return <Navigate to="/admin/login" replace />;
   }
 
@@ -533,7 +533,7 @@ export function AdminLayout() {
   const categories = categoryData.map(c => c.name);
 
   const handleLogout = () => {
-    sessionStorage.removeItem('admin_logged_in');
+    localStorage.removeItem('sethupyropark_admin_logged_in');
     navigate('/admin/login', { replace: true });
   };
 
