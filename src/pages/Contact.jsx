@@ -1,6 +1,6 @@
 import ContactImg1 from '../assets/websitelogo.png';
 import ContactImg2 from '../assets/contact_img_2.jpeg';
-import ContactImg3 from '../assets/contact_img_3.jpeg';
+import ContactImg3 from '../assets/contact_banner.png';
 import ContactImg4 from '../assets/contact_img_4.png';
 import ContactImg5 from '../assets/contact_img_5.png';
 import ContactImg7 from '../assets/contact_img_7.png';

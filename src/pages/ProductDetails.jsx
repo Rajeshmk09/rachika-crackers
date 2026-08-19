@@ -230,7 +230,7 @@ export default function ProductDetails() {
 
               {/* Bottom 3 Slide Image Thumbnails */}
               {allImages.length > 0 && (
-                <div className="d-flex align-items-center justify-content-start gap-2 mt-3" style={{ gap: '10px' }}>
+                <div className="d-flex align-items-center justify-content-start gap-2 mt-3 mx-auto mx-lg-0" style={{ gap: '10px', flexWrap: 'nowrap', width: 'fit-content' }}>
                   {allImages.map((img, idx) => (
                     <button
                       key={idx}
@@ -238,8 +238,9 @@ export default function ProductDetails() {
                       onClick={() => setActiveImgIdx(idx)}
                       className="btn p-0 border-0"
                       style={{
-                        width: '80px',
-                        height: '80px',
+                        width: isMobile ? '60px' : '80px',
+                        height: isMobile ? '60px' : '80px',
+                        flexShrink: 0,
                         borderRadius: '12px',
                         overflow: 'hidden',
                         border: activeImgIdx === idx ? '3px solid #ff7011' : '1px solid #e2e8f0',
