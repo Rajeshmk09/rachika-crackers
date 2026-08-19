@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ShopProvider } from './context/ShopContext';
@@ -37,9 +37,9 @@ function App() {
       <ShopProvider>
         <Router>
           <ScrollToTop />
-          <Toaster 
-            position="top-center" 
-            reverseOrder={false} 
+          <Toaster
+            position="top-center"
+            reverseOrder={false}
             containerStyle={{
               zIndex: 1000000,
             }}
