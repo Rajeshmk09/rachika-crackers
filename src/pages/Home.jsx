@@ -70,7 +70,7 @@ const fetchHeroBannersQuery = async () => {
 // Fetch featured products
 const fetchFeaturedProductsQuery = async () => {
 	const headers = { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` };
-	const response = await fetch(`${SUPABASE_URL}/rest/v1/products?is_active=neq.false&limit=8&order=product_code.asc`, { headers });
+	const response = await fetch(`${SUPABASE_URL}/rest/v1/products?limit=8&order=product_code.asc`, { headers });
 	if (!response.ok) return [];
 	const data = await response.json();
 	const cleanData = (data || []).filter(p => !p.category || !p.category.startsWith('__'));

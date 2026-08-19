@@ -273,11 +273,17 @@ export default function ProductDetails() {
                 {product.name}
               </h1>
 
-              {/* In Stock Badge */}
+              {/* Stock Badge */}
               <div className="mb-3">
-                <span className="badge rounded-pill josefin" style={{ backgroundColor: '#ecfdf5', color: '#059669', border: '1px solid #05966933', fontSize: isMobile ? '0.72rem' : '0.85rem', padding: isMobile ? '4px 10px' : '6px 14px' }}>
-                  ✓ In Stock
-                </span>
+                {product.is_active !== false ? (
+                  <span className="badge rounded-pill josefin" style={{ backgroundColor: '#ecfdf5', color: '#059669', border: '1px solid #05966933', fontSize: isMobile ? '0.72rem' : '0.85rem', padding: isMobile ? '4px 10px' : '6px 14px' }}>
+                    ✓ In Stock
+                  </span>
+                ) : (
+                  <span className="badge rounded-pill josefin" style={{ backgroundColor: '#fee2e2', color: '#ef4444', border: '1px solid #ef444433', fontSize: isMobile ? '0.72rem' : '0.85rem', padding: isMobile ? '4px 10px' : '6px 14px' }}>
+                    ✗ Out of Stock
+                  </span>
+                )}
               </div>
 
               {/* Pricing Display */}
@@ -318,7 +324,16 @@ export default function ProductDetails() {
 
               {/* Action Button: Add to Cart */}
               <div className="mb-2">
-                {currentCartQty === 0 ? (
+                {product.is_active === false ? (
+                  <button
+                    type="button"
+                    disabled
+                    className="btn btn-secondary btn-block font-weight-bold acme rounded-pill text-white shadow-sm"
+                    style={{ backgroundColor: '#94a3b8', border: 'none', fontSize: isMobile ? '1rem' : '1.15rem', padding: isMobile ? '10px' : '14px', cursor: 'not-allowed', opacity: 0.9 }}
+                  >
+                    Out of Stock
+                  </button>
+                ) : currentCartQty === 0 ? (
                   <button
                     type="button"
                     onClick={() => addToCart(product, 1)}

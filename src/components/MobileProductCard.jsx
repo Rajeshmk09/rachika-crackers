@@ -70,7 +70,7 @@ export default function MobileProductCard({ product }) {
       <div style={{ position: 'relative', backgroundColor: '#f5f5f7', padding: '8px' }}>
 
         {/* Discount badge */}
-        {disc > 0 && (
+        {disc > 0 && product.is_active !== false && (
           <span style={{
             position: 'absolute', top: '6px', left: '6px',
             background: '#e53935', color: '#fff',
@@ -78,6 +78,19 @@ export default function MobileProductCard({ product }) {
             padding: '2px 6px', borderRadius: '4px', zIndex: 2,
           }}>
             -{disc}%
+          </span>
+        )}
+
+        {/* Out of Stock badge */}
+        {product.is_active === false && (
+          <span style={{
+            position: 'absolute', top: '6px', left: '6px',
+            background: '#ef4444', color: '#fff',
+            fontSize: '0.6rem', fontWeight: '700',
+            padding: '2px 6px', borderRadius: '4px', zIndex: 10,
+            textTransform: 'uppercase',
+          }}>
+            Out of Stock
           </span>
         )}
 
@@ -102,7 +115,7 @@ export default function MobileProductCard({ product }) {
           <img
             src={imgSrc}
             alt={product.name}
-            style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
+            style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain', filter: product.is_active === false ? 'grayscale(0.8) opacity(0.6)' : 'none' }}
             onError={(e) => { e.target.onerror = null; e.target.src = fallback; }}
           />
         </div>
@@ -147,7 +160,22 @@ export default function MobileProductCard({ product }) {
 
         {/* Add to Cart */}
         <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 'auto' }}>
-          {qty === 0 ? (
+          {product.is_active === false ? (
+            <button
+              type="button"
+              disabled
+              style={{
+                width: '100%', padding: '7px 0',
+                backgroundColor: '#94a3b8', color: '#fff',
+                border: 'none', borderRadius: '20px',
+                fontSize: '0.78rem', fontWeight: '700',
+                cursor: 'not-allowed', letterSpacing: '0.3px',
+                opacity: 0.9,
+              }}
+            >
+              Out of Stock
+            </button>
+          ) : qty === 0 ? (
             <button
               type="button"
               onClick={inc}

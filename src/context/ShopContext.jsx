@@ -87,6 +87,9 @@ export const ShopProvider = ({ children }) => {
     fetchProducts();
   }, [fetchProducts]);
 
+  // Map stored IDs to live product objects fetched from API
+  const productsMap = new Map(products.map(p => [String(p.id), p]));
+
   // Wishlist actions
   const toggleWishlist = (productOrId) => {
     const id = typeof productOrId === 'object' ? String(productOrId.id) : String(productOrId);
@@ -113,6 +116,13 @@ export const ShopProvider = ({ children }) => {
   const addToCart = (productOrId, qty = 1) => {
     const id = typeof productOrId === 'object' ? String(productOrId.id) : String(productOrId);
     if (!id) return;
+
+    // Block adding inactive / out of stock items
+    const prod = productsMap.get(id);
+    if (prod && prod.is_active === false) {
+      return;
+    }
+
     setCartQtys(prev => {
       const currentQty = prev[id] || 0;
       const nextQty = currentQty + qty;
@@ -130,6 +140,14 @@ export const ShopProvider = ({ children }) => {
 
   const updateCartQty = (productId, qty) => {
     const id = String(productId);
+
+    // Block incrementing quantity if the item is inactive / out of stock
+    const prod = productsMap.get(id);
+    const currentQty = cartQtys[id] || 0;
+    if (prod && prod.is_active === false && qty > currentQty) {
+      return;
+    }
+
     setCartQtys(prev => {
       if (qty <= 0) {
         const next = { ...prev };
@@ -159,16 +177,20 @@ export const ShopProvider = ({ children }) => {
       const next = { ...prev };
       wishlistIds.forEach(id => {
         const key = String(id);
-        next[key] = (next[key] || 0) + 1;
+        const prod = productsMap.get(key);
+        // Only move to cart if product is active
+        if (prod && prod.is_active !== false) {
+          next[key] = (next[key] || 0) + 1;
+        }
       });
       return next;
     });
-    // Clear all wishlist items after moving to cart
-    setWishlistIds([]);
+    // Keep inactive items in wishlist, clear only active ones moved to cart
+    setWishlistIds(prev => prev.filter(id => {
+      const prod = productsMap.get(String(id));
+      return !prod || prod.is_active === false;
+    }));
   };
-
-  // Map stored IDs to live product objects fetched from API
-  const productsMap = new Map(products.map(p => [String(p.id), p]));
 
   const wishlist = wishlistIds
     .map(id => productsMap.get(id))

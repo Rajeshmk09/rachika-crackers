@@ -84,6 +84,11 @@ export default function Cart() {
       setError('Please provide your Name and Mobile Number.');
       return;
     }
+    const hasInactive = cartItems.some(i => i.product.is_active === false);
+    if (hasInactive) {
+      setError('Your cart contains out-of-stock items. Please remove them to proceed.');
+      return;
+    }
     if (belowMinimum) {
       setError(`Minimum order amount for ${orderForm.isTamilNadu ? 'Tamil Nadu' : 'other states'} is ₹${minOrderAmount.toLocaleString('en-IN')}. Please add more items to your cart.`);
       return;
@@ -361,15 +366,36 @@ Kindly confirm my order. Thank you!`;
             {/* Cart Items List */}
             <div className="col-12 mb-4">
               <div className="bg-white rounded-lg shadow-sm border p-3 p-md-4 mb-3">
-                <div className="d-flex align-items-center justify-content-between pb-3 border-bottom mb-3">
+                {/* Cart header */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', paddingBottom: '12px', borderBottom: '1.5px solid #f8fafc' }}>
                   <span className="font-weight-bold acme text-dark h5 mb-0">Added Items ({cartItems.length})</span>
                   <button
+                    type="button"
                     onClick={clearCart}
                     className="btn btn-link text-danger p-0 small josefin font-weight-bold text-decoration-none"
                   >
                     Clear All Items
                   </button>
                 </div>
+
+                {cartItems.some(i => i.product.is_active === false) && (
+                  <div style={{
+                    backgroundColor: '#fee2e2',
+                    border: '1px solid #fca5a5',
+                    borderRadius: '12px',
+                    padding: '12px 16px',
+                    marginBottom: '16px',
+                    color: '#b91c1c',
+                    fontSize: '0.88rem',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <span>⚠️</span>
+                    <span>Your cart contains out-of-stock items. Please remove them before placing an enquiry.</span>
+                  </div>
+                )}
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {cartItems.map(({ product, qty }) => {
@@ -416,6 +442,11 @@ Kindly confirm my order. Thank you!`;
                             <div className="acme" style={{ fontSize: '0.97rem', fontWeight: 700, color: '#1e293b', lineHeight: 1.3, marginBottom: '3px' }}>
                               {product.name}
                             </div>
+                            {product.is_active === false && (
+                              <div style={{ fontSize: '0.72rem', fontWeight: 'bold', color: '#ef4444', marginBottom: '4px', textTransform: 'uppercase' }}>
+                                ✗ Out of Stock (Please remove this item)
+                              </div>
+                            )}
                             <div className="josefin" style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '6px' }}>
                               {product.order_unit || product.quantity || product.unit || ''}
                             </div>
@@ -455,8 +486,15 @@ Kindly confirm my order. Thank you!`;
                             <span className="josefin" style={{ minWidth: '32px', textAlign: 'center', fontWeight: 800, fontSize: '0.95rem', color: '#1e293b', borderLeft: '1px solid #f1f5f9', borderRight: '1px solid #f1f5f9', height: '36px', lineHeight: '36px' }}>{qty}</span>
                             <button
                               type="button"
+                              disabled={product.is_active === false}
                               onClick={() => updateCartQty(product.id, qty + 1)}
-                              style={{ width: '36px', height: '36px', border: 'none', background: 'transparent', fontWeight: 700, fontSize: '1.15rem', color: '#16a34a', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              style={{
+                                width: '36px', height: '36px', border: 'none',
+                                background: 'transparent', fontWeight: 700, fontSize: '1.15rem',
+                                color: product.is_active === false ? '#cbd5e1' : '#16a34a',
+                                cursor: product.is_active === false ? 'not-allowed' : 'pointer',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                              }}
                             >+</button>
                           </div>
 

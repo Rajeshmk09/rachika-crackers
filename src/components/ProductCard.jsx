@@ -105,13 +105,27 @@ export default function ProductCard({ product }) {
           <Heart size={18} fill={isWishlisted ? "#ff4d4f" : "none"} color={isWishlisted ? "#ff4d4f" : "#64748b"} />
         </button>
 
+        {/* Out of Stock Badge */}
+        {product.is_active === false && (
+          <span style={{
+            position: 'absolute', top: '15px', left: '15px',
+            background: '#ef4444', color: '#fff',
+            fontSize: '0.7rem', fontWeight: '700',
+            padding: '4px 10px', borderRadius: '20px', zIndex: 10,
+            textTransform: 'uppercase',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          }}>
+            Out of Stock
+          </span>
+        )}
+
         {/* Product Image */}
         <div style={{ height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
           <img
             src={displayImg}
             alt={product.name}
             className="img-fluid"
-            style={{ maxHeight: '100%', objectFit: 'contain' }}
+            style={{ maxHeight: '100%', objectFit: 'contain', filter: product.is_active === false ? 'grayscale(0.8) opacity(0.6)' : 'none' }}
             onError={(e) => {
               e.target.onerror = null;
               e.target.src = fallbackImg;
@@ -193,7 +207,16 @@ export default function ProductCard({ product }) {
             </div>
 
             <div style={{ width: '130px' }} onClick={(e) => e.stopPropagation()}>
-              {currentCartQty === 0 ? (
+              {product.is_active === false ? (
+                <button
+                  type="button"
+                  disabled
+                  className="btn btn-block font-weight-bold acme rounded-pill text-white py-2"
+                  style={{ backgroundColor: '#94a3b8', border: 'none', fontSize: '0.9rem', cursor: 'not-allowed', opacity: 0.9 }}
+                >
+                  Out of Stock
+                </button>
+              ) : currentCartQty === 0 ? (
                 <button
                   type="button"
                   onClick={increment}
