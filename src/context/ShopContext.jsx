@@ -196,7 +196,8 @@ export const ShopProvider = ({ children }) => {
 
   const wishlist = wishlistIds
     .map(id => productsMap.get(id))
-    .filter(Boolean);
+    .filter(Boolean)
+    .sort((a, b) => (parseInt(a.product_code, 10) || 0) - (parseInt(b.product_code, 10) || 0));
 
   const cartItems = Object.entries(cartQtys)
     .map(([id, qty]) => {
@@ -204,7 +205,8 @@ export const ShopProvider = ({ children }) => {
       if (!product) return null;
       return { product, qty };
     })
-    .filter(Boolean);
+    .filter(Boolean)
+    .sort((a, b) => (parseInt(a.product.product_code, 10) || 0) - (parseInt(b.product.product_code, 10) || 0));
 
   // Computations
   const wishlistCount = wishlistIds.length;

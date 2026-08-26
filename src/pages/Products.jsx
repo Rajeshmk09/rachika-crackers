@@ -248,7 +248,7 @@ export default function Products() {
       if (sortBy === 'priceHigh') return pB - pA;
       if (sortBy === 'discountHigh') return dB - dA;
       if (sortBy === 'nameAsc') return (a.name || '').localeCompare(b.name || '');
-      return 0;
+      return (parseInt(a.product_code, 10) || 0) - (parseInt(b.product_code, 10) || 0);
     });
   }, [products, selectedCategories, searchQuery, minPrice, maxPrice, selectedPriceRanges, minDiscount, sortBy]);
 
