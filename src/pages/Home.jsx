@@ -73,7 +73,9 @@ const fetchFeaturedProductsQuery = async () => {
 	const response = await fetch(`${SUPABASE_URL}/rest/v1/products?limit=8&order=product_code.asc`, { headers });
 	if (!response.ok) return [];
 	const data = await response.json();
-	const cleanData = (data || []).filter(p => !p.category || !p.category.startsWith('__'));
+	const cleanData = (data || [])
+		.filter(p => !p.category || !p.category.startsWith('__'))
+		.sort((a, b) => (parseInt(a.product_code, 10) || 0) - (parseInt(b.product_code, 10) || 0));
 	return cleanData.map(p => {
 		let fallbackImg = HomeImg15;
 		const cat = (p.category || '').toLowerCase();

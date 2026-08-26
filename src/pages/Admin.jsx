@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback, createContext, useContext, useRef } from 'react';
 import { Outlet, NavLink, useNavigate, Navigate } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { toast } from 'react-hot-toast';
 import {
   Package, Tag, LogOut, Menu, X,
   Search, Plus, Edit2, Trash2, ToggleLeft, ToggleRight,
   Eye, EyeOff, Zap, Sun, Star, Flame,
   Sparkles, Box, Gift, Layers, Shield, TrendingUp, Users,
-  CheckCircle, Clock, XCircle, ArrowUpRight, RefreshCw, Save, Lock, Mail, ChevronDown, Check, Megaphone, Bell, Image, Upload, Settings, ShoppingCart, Download
+  CheckCircle, Clock, XCircle, ArrowUpRight, RefreshCw, Save, Lock, Mail, ChevronDown, Check, Megaphone, Bell, Image, Upload, Settings, ShoppingCart, Download, GripVertical
 } from 'lucide-react';
 import './Admin.css';
 
@@ -14,9 +16,31 @@ import './Admin.css';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://iplfsscpeixfxzbouhlp.supabase.co';
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwbGZzc2NwZWl4Znh6Ym91aGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NDQwNzksImV4cCI6MjEwMjUyMDA3OX0.nr2an5w0nX_L37C3g03HgzpFitueRNeOJ346TYvakZ8';
 const headers = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' };
+export const parseSupabaseError = (rawText) => {
+  if (!rawText) return 'An unexpected error occurred.';
+  try {
+    const json = typeof rawText === 'string' ? JSON.parse(rawText) : rawText;
+    const msg = json.message || json.details || (typeof rawText === 'string' ? rawText : JSON.stringify(rawText));
+    if (typeof msg === 'string') {
+      if (msg.includes('null value in column "price"')) return 'Selling Price (₹) is required.';
+      if (msg.includes('null value in column "name"')) return 'Product Name is required.';
+      if (msg.includes('null value in column "category"')) return 'Category is required.';
+      if (msg.includes('null value in column "product_code"')) return 'Product Code is required.';
+      if (msg.includes('duplicate key value violates unique constraint')) return 'A product with this information already exists.';
+      return msg;
+    }
+    return String(msg);
+  } catch (e) {
+    return String(rawText);
+  }
+};
+
 export const api = async (path, options = {}) => {
   const res = await fetch(`${SUPABASE_URL}/rest/v1${path}`, { headers, ...options });
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(parseSupabaseError(text));
+  }
   const text = await res.text();
   return text ? JSON.parse(text) : null;
 };
@@ -455,12 +479,16 @@ export function AdminLayout() {
   }
 
   const fetchAll = useCallback(async () => {
-    setLoading(true);
+    if (products.length === 0) {
+      setLoading(true);
+    }
     try {
       const [prods] = await Promise.all([
         api('/products?order=product_code.asc'),
       ]);
-      const ps = (prods || []).filter(p => !p.category || !p.category.startsWith('__'));
+      const ps = (prods || [])
+        .filter(p => !p.category || !p.category.startsWith('__'))
+        .sort((a, b) => (parseInt(a.product_code, 10) || 0) - (parseInt(b.product_code, 10) || 0));
       setProducts(ps);
 
       // Merge any category names found in DB products into categoryData
@@ -482,7 +510,7 @@ export function AdminLayout() {
       });
     } catch (e) { console.error(e); }
     setLoading(false);
-  }, []);
+  }, [products.length]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
@@ -997,8 +1025,12 @@ function ConfirmDialog({ title, message, onConfirm, onCancel }) {
 
 function ProductModal({ product, categories, onClose, onSaved }) {
   const isEdit = !!product;
+  const { products } = useAdmin();
+  const nameRef = useRef(null);
+  const priceRef = useRef(null);
+  const [fieldErrors, setFieldErrors] = useState({ category: false, name: false, price: false });
+
   const [form, setForm] = useState({
-    product_code: product?.product_code || '',
     name: product?.name || '',
     category: product?.category || categories[0] || '',
     mrp: product?.mrp || '',
@@ -1078,7 +1110,6 @@ function ProductModal({ product, categories, onClose, onSaved }) {
   const uploadSlotFile = async (file, slotIdx) => {
     if (!file) return;
 
-    // Delete previous image from Cloudinary storage if replacing photo
     const oldUrl = images[slotIdx];
     if (oldUrl) {
       deleteFromCloudinary(oldUrl);
@@ -1153,10 +1184,46 @@ function ProductModal({ product, categories, onClose, onSaved }) {
     }
   };
 
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const set = (k, v) => {
+    setForm(f => ({ ...f, [k]: v }));
+    if (fieldErrors[k]) {
+      setFieldErrors(prev => ({ ...prev, [k]: false }));
+    }
+  };
 
   const save = async () => {
-    if (!form.product_code||!form.name||!form.category) { setErr('Product Code, Name and Category are required.'); return; }
+    const errs = {
+      category: !form.category,
+      name: !form.name || !form.name.trim(),
+      price: !form.price || isNaN(parseFloat(form.price)),
+    };
+
+    if (errs.category || errs.name || errs.price) {
+      setFieldErrors(errs);
+      if (errs.category) {
+        const msg = 'Please select a Category';
+        setErr(msg);
+        toast.error(msg);
+      } else if (errs.name) {
+        const msg = 'Please fill out Product Name';
+        setErr(msg);
+        toast.error(msg);
+        if (nameRef.current) {
+          nameRef.current.focus();
+          nameRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      } else if (errs.price) {
+        const msg = 'Please fill out Selling Price (₹)';
+        setErr(msg);
+        toast.error(msg);
+        if (priceRef.current) {
+          priceRef.current.focus();
+          priceRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+      return;
+    }
+    setFieldErrors({ category: false, name: false, price: false });
     setSaving(true); setErr('');
     try {
       const disc = calcDiscount(form.mrp, form.price);
@@ -1168,8 +1235,17 @@ function ProductModal({ product, categories, onClose, onSaved }) {
         finalImageUrl = JSON.stringify(activeImgs);
       }
 
+      let assignedCode = product?.product_code;
+      if (!isEdit || !assignedCode) {
+        const maxCodeNum = (products || []).reduce((max, p) => {
+          const n = parseInt(p.product_code, 10);
+          return !isNaN(n) && n > max ? n : max;
+        }, 0);
+        assignedCode = String(maxCodeNum + 1);
+      }
+
       const body = {
-        product_code: form.product_code,
+        product_code: assignedCode,
         name: form.name,
         category: form.category,
         mrp: form.mrp ? parseFloat(form.mrp) : null,
@@ -1182,7 +1258,11 @@ function ProductModal({ product, categories, onClose, onSaved }) {
       if (isEdit) await api(`/products?id=eq.${product.id}`,{method:'PATCH',body:JSON.stringify(body)});
       else await api('/products',{method:'POST',body:JSON.stringify(body)});
       onSaved();
-    } catch(e) { setErr(e.message); }
+    } catch(e) {
+      const errMsg = parseSupabaseError(e.message);
+      setErr(errMsg);
+      toast.error(errMsg);
+    }
     setSaving(false);
   };
 
@@ -1195,24 +1275,35 @@ function ProductModal({ product, categories, onClose, onSaved }) {
         </div>
         <div className="adm-modal-body">
           {err && <div className="adm-err-box" style={{marginBottom:16}}>{err}</div>}
-          <div className="adm-form-row">
-            <div className="adm-form-group">
-              <label className="adm-form-lbl">Product Code *</label>
-              <input className="adm-form-input" placeholder="e.g. A001" value={form.product_code} onChange={e=>set('product_code',e.target.value)} />
-            </div>
-            <div className="adm-form-group">
-              <label className="adm-form-lbl">Category *</label>
-              <CustomSelect
-                value={form.category}
-                options={categories}
-                onChange={val => set('category', val)}
-                placeholder="Select category"
-              />
-            </div>
+          <div className="adm-form-group">
+            <label className="adm-form-lbl">Category <span style={{color:'#ef4444'}}>*</span></label>
+            <CustomSelect
+              value={form.category}
+              options={categories}
+              onChange={val => set('category', val)}
+              placeholder="Select category"
+            />
+            {fieldErrors.category && (
+              <div style={{fontSize:11, color:'#ef4444', marginTop:4, fontWeight:600}}>
+                ⚠️ Please select a Category
+              </div>
+            )}
           </div>
           <div className="adm-form-group">
-            <label className="adm-form-lbl">Product Name *</label>
-            <input className="adm-form-input" placeholder="e.g. Premium Sparklers 4 inch" value={form.name} onChange={e=>set('name',e.target.value)} />
+            <label className="adm-form-lbl">Product Name <span style={{color:'#ef4444'}}>*</span></label>
+            <input
+              ref={nameRef}
+              className="adm-form-input"
+              style={fieldErrors.name ? { border: '1.5px solid #ef4444', backgroundColor: '#fef2f2' } : {}}
+              placeholder="e.g. Premium Sparklers 4 inch"
+              value={form.name}
+              onChange={e=>set('name',e.target.value)}
+            />
+            {fieldErrors.name && (
+              <div style={{fontSize:11, color:'#ef4444', marginTop:4, fontWeight:600}}>
+                ⚠️ Please fill out Product Name
+              </div>
+            )}
           </div>
           <div className="adm-form-row-3">
             <div className="adm-form-group">
@@ -1220,8 +1311,21 @@ function ProductModal({ product, categories, onClose, onSaved }) {
               <input className="adm-form-input" type="number" placeholder="e.g. 1000" value={form.mrp} onChange={e=>set('mrp',e.target.value)} />
             </div>
             <div className="adm-form-group">
-              <label className="adm-form-lbl">Selling Price (₹)</label>
-              <input className="adm-form-input" type="number" placeholder="e.g. 800" value={form.price} onChange={e=>set('price',e.target.value)} />
+              <label className="adm-form-lbl">Selling Price (₹) <span style={{color:'#ef4444'}}>*</span></label>
+              <input
+                ref={priceRef}
+                className="adm-form-input"
+                type="number"
+                style={fieldErrors.price ? { border: '1.5px solid #ef4444', backgroundColor: '#fef2f2' } : {}}
+                placeholder="e.g. 800"
+                value={form.price}
+                onChange={e=>set('price',e.target.value)}
+              />
+              {fieldErrors.price && (
+                <div style={{fontSize:11, color:'#ef4444', marginTop:4, fontWeight:600}}>
+                  ⚠️ Please fill out Selling Price
+                </div>
+              )}
             </div>
             <div className="adm-form-group">
               <label className="adm-form-lbl">Discount (%)</label>
@@ -1496,7 +1600,7 @@ export function AdminProducts() {
       await api(`/products?id=eq.${prod.id}`, { method: 'PATCH', body: JSON.stringify({ is_active: newVal }) });
     } catch(e) {
       setProducts(prev => prev.map(p => p.id === prod.id ? { ...p, is_active: prod.is_active } : p));
-      alert(e.message);
+      toast.error(parseSupabaseError(e.message));
     }
     setToggling(null);
   };
@@ -1522,190 +1626,298 @@ export function AdminProducts() {
       await api(`/products?id=eq.${targetId}`, { method: 'DELETE' });
       fetchAll();
     } catch(e) {
-      alert(e.message);
+      toast.error(parseSupabaseError(e.message));
     }
     setConfirm(null);
   };
 
-  if (loading) return <ProductsSkeleton />;
+  const handleDragEnd = async (result) => {
+    const { destination, source } = result;
+    if (!destination) return;
+    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
+
+    let updatedProducts = [...products];
+
+    if (catFilter || search) {
+      const sourceProd = filtered[source.index];
+      const destProd = filtered[destination.index];
+
+      const realSourceIdx = updatedProducts.findIndex(p => p.id === sourceProd.id);
+      const realDestIdx = updatedProducts.findIndex(p => p.id === destProd.id);
+
+      if (realSourceIdx !== -1 && realDestIdx !== -1) {
+        const [moved] = updatedProducts.splice(realSourceIdx, 1);
+        updatedProducts.splice(realDestIdx, 0, moved);
+      }
+    } else {
+      const [moved] = updatedProducts.splice(source.index, 1);
+      updatedProducts.splice(destination.index, 0, moved);
+    }
+
+    const changedProducts = [];
+    const resequencedProducts = updatedProducts.map((p, idx) => {
+      const newCode = String(idx + 1);
+      if (p.product_code !== newCode) {
+        changedProducts.push({ id: p.id, product_code: newCode });
+        return { ...p, product_code: newCode };
+      }
+      return p;
+    });
+
+    // 2. Set UI state immediately — item stays at dropped location with zero flicker
+    setProducts(resequencedProducts);
+
+    // 3. Persist to API in background quietly. On success, DO NOT touch products state!
+    if (changedProducts.length > 0) {
+      try {
+        await Promise.all(
+          changedProducts.map(cp =>
+            api(`/products?id=eq.${cp.id}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ product_code: cp.product_code })
+            })
+          )
+        );
+      } catch (err) {
+        console.error('Failed to save reordered products:', err);
+        toast.error('Failed to save product order');
+        fetchAll();
+      }
+    }
+  };
+
+  if (loading && products.length === 0) return <ProductsSkeleton />;
 
   return (
-    <div className="adm-page-container">
-      {modalProd !== null && <ProductModal product={modalProd||null} categories={categories} onClose={()=>setModalProd(null)} onSaved={()=>{setModalProd(null);fetchAll();}} />}
-      {confirm && <ConfirmDialog title="Delete Product?" message={`Permanently delete "${confirm.name}"? This cannot be undone.`} onConfirm={()=>deleteProduct(confirm)} onCancel={()=>setConfirm(null)} />}
+    <DragDropContext onDragEnd={handleDragEnd}>
+      <div className="adm-page-container">
+        {modalProd !== null && <ProductModal product={modalProd||null} categories={categories} onClose={()=>setModalProd(null)} onSaved={()=>{setModalProd(null);fetchAll();}} />}
+        {confirm && <ConfirmDialog title="Delete Product?" message={`Permanently delete "${confirm.name}"? This cannot be undone.`} onConfirm={()=>deleteProduct(confirm)} onCancel={()=>setConfirm(null)} />}
 
-      <div className="adm-page-header">
-        <div style={{marginBottom:16}}>
-          <div className="pg-title">Products</div>
-          <div className="pg-sub">{products.length} products in catalog</div>
-        </div>
-
-        <div className="adm-search-bar">
-          <div className="adm-search-wrap">
-            <Search className="si" />
-            <input className="adm-form-input" placeholder="Search by name or product code..." value={search} onChange={e=>setSearch(e.target.value)} />
+        <div className="adm-page-header">
+          <div style={{marginBottom:16}}>
+            <div className="pg-title">Products</div>
+            <div className="pg-sub">{products.length} products in catalog • Drag & drop rows to reorder</div>
           </div>
-          <div style={{minWidth:220}}>
-            <CustomSelect
-              value={catFilter}
-              options={[
-                { label: 'All Categories', value: '' },
-                ...categories.map(c => ({ label: c, value: c }))
-              ]}
-              onChange={val => setCatFilter(val)}
-              placeholder="All Categories"
-            />
-          </div>
-          <button className="adm-btn adm-btn-primary" onClick={()=>setModalProd(false)}><Plus />Add Product</button>
-        </div>
 
-        <div style={{marginBottom:12,fontSize:13,color:'#64748b'}}>
-          Showing {filtered.length} of {products.length} products{catFilter&&<span> in <strong style={{color:'#ff6b35'}}>{catFilter}</strong></span>}
-        </div>
-      </div>
-
-      {/* ── Desktop table ── */}
-      <div className="adm-card adm-scroll-card" style={{display: isMobile ? 'none' : ''}}>
-        <div className="adm-table-wrap">
-          <table className="adm-table">
-            <thead><tr><th>#</th><th>Product</th><th>Category</th><th>MRP</th><th>Discount</th><th>Price</th><th>Unit</th><th>Status</th><th style={{textAlign:'right'}}>Actions</th></tr></thead>
-            <tbody>
-              {filtered.length===0 ? (
-                <tr><td colSpan={9}><div className="adm-empty-state"><Package /><p>No products found</p></div></td></tr>
-              ) : filtered.map((p, idx) => (
-                <tr key={p.id}>
-                  <td style={{color:'#94a3b8',fontFamily:'monospace',fontSize:11}}>{idx+1}</td>
-                  <td>
-                    <div style={{display:'flex',alignItems:'center',gap:12}}>
-                      {(() => {
-                        let thumb = p.image_url;
-                        if (thumb) {
-                          try {
-                            const arr = JSON.parse(thumb);
-                            if (Array.isArray(arr) && arr.length > 0) thumb = arr[0];
-                          } catch(e) {}
-                        }
-                        return thumb ? <img src={thumb} alt="" className="prod-thumb" onError={e=>{e.target.style.display='none'}} /> : <div className="prod-thumb-ph"><Box style={{width:18,height:18}} /></div>;
-                      })()}
-                      <div><div className="prod-name">{p.name}</div><div className="prod-code">{p.product_code}</div></div>
-                    </div>
-                  </td>
-                  <td style={{fontSize:12,color:'#94a3b8',maxWidth:180}}>{p.category}</td>
-                  <td style={{fontSize:13,color:'#64748b'}}>{p.mrp?`₹${p.mrp}`:'—'}</td>
-                  <td style={{fontSize:13,color:'#f59e0b',fontWeight:600}}>
-                    {(() => {
-                      const m = parseFloat(p.mrp);
-                      const pr = parseFloat(p.price);
-                      if (!isNaN(m) && !isNaN(pr) && m > 0 && m >= pr) {
-                        return `${Math.round(((m - pr) / m) * 100)}%`;
-                      }
-                      return p.discount ? `${p.discount}%` : '—';
-                    })()}
-                  </td>
-                  <td style={{fontSize:13,fontWeight:700,color:'#10b981'}}>{p.price?`₹${p.price}`:'—'}</td>
-                  <td style={{fontSize:12,color:'#64748b'}}>{p.order_unit || p.quantity || p.unit || '—'}</td>
-                  <td>
-                    <button
-                      className={`adm-toggle-sw ${p.is_active !== false ? 'on' : ''} ${toggling === p.id ? 'toggling' : ''}`}
-                      onClick={() => toggleActive(p)}
-                      disabled={toggling === p.id}
-                      title={p.is_active !== false ? 'Active (Click to deactivate)' : 'Inactive (Click to activate)'}
-                    >
-                      <span className="adm-toggle-track"><span className="adm-toggle-thumb" /></span>
-                      <span className="adm-toggle-lbl">{p.is_active !== false ? 'Active' : 'Inactive'}</span>
-                    </button>
-                  </td>
-                  <td>
-                    <div style={{display:'flex',gap:6,justifyContent:'flex-end'}}>
-                      <button className="adm-btn adm-btn-secondary adm-btn-icon adm-btn-sm" onClick={()=>setModalProd(p)} title="Edit"><Edit2 style={{width:14,height:14}} /></button>
-                      <button className="adm-btn adm-btn-danger adm-btn-icon adm-btn-sm" onClick={()=>setConfirm(p)} title="Delete"><Trash2 style={{width:14,height:14}} /></button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* ── Mobile cards ── */}
-      <div style={{display: isMobile ? 'flex' : 'none', flexDirection:'column', gap:'10px'}}>
-        {filtered.length === 0 ? (
-          <div className="adm-empty-state"><Package /><p>No products found</p></div>
-        ) : filtered.map((p, idx) => {
-          const thumb = (() => {
-            let t = p.image_url;
-            if (t) { try { const arr = JSON.parse(t); if (Array.isArray(arr) && arr.length > 0) t = arr[0]; } catch(e) {} }
-            return t;
-          })();
-          const disc = (() => {
-            const m = parseFloat(p.mrp), pr = parseFloat(p.price);
-            if (!isNaN(m) && !isNaN(pr) && m > 0 && m >= pr) return `${Math.round(((m - pr) / m) * 100)}%`;
-            return p.discount ? `${p.discount}%` : null;
-          })();
-          const isActive = p.is_active !== false;
-          return (
-            <div key={p.id} style={{background:'#fff', borderRadius:'14px', border:'1px solid #e8edf2', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', overflow:'hidden'}}>
-              {/* Top row */}
-              <div style={{display:'flex', gap:'12px', padding:'12px 12px 10px'}}>
-                {/* Image */}
-                <div style={{width:'58px', height:'58px', borderRadius:'10px', background:'#f8fafc', border:'1px solid #e2e8f0', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden'}}>
-                  {thumb
-                    ? <img src={thumb} alt="" style={{width:'100%', height:'100%', objectFit:'cover'}} onError={e=>{e.target.style.display='none'}} />
-                    : <Box style={{width:22, height:22, color:'#94a3b8'}} />
-                  }
-                </div>
-                {/* Info */}
-                <div style={{flex:1, minWidth:0}}>
-                  <div style={{fontSize:'0.88rem', fontWeight:700, color:'#0f172a', lineHeight:1.3, marginBottom:'2px'}}>{p.name}</div>
-                  <div style={{fontSize:'0.7rem', color:'#94a3b8', fontFamily:'monospace', marginBottom:'4px'}}>{p.product_code}</div>
-                  <span style={{fontSize:'0.68rem', fontWeight:700, color:'#6366f1', background:'#eef2ff', borderRadius:'6px', padding:'1px 7px'}}>{p.category}</span>
-                </div>
-                {/* Status toggle */}
-                <button
-                  className={`adm-toggle-sw ${isActive ? 'on' : ''} ${toggling === p.id ? 'toggling' : ''}`}
-                  onClick={() => toggleActive(p)}
-                  disabled={toggling === p.id}
-                  style={{alignSelf:'flex-start', flexShrink:0}}
-                >
-                  <span className="adm-toggle-track"><span className="adm-toggle-thumb" /></span>
-                </button>
-              </div>
-              {/* Price row */}
-              <div style={{display:'flex', alignItems:'center', gap:'8px', padding:'8px 12px', background:'#fafbfc', borderTop:'1px solid #f1f5f9', borderBottom:'1px solid #f1f5f9'}}>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:'0.68rem', color:'#94a3b8', fontWeight:600, marginBottom:'1px'}}>MRP</div>
-                  <div style={{fontSize:'0.82rem', color:'#64748b', textDecoration:'line-through'}}>{p.mrp ? `₹${p.mrp}` : '—'}</div>
-                </div>
-                {disc && (
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:'0.68rem', color:'#94a3b8', fontWeight:600, marginBottom:'1px'}}>DISCOUNT</div>
-                    <div style={{fontSize:'0.82rem', color:'#f59e0b', fontWeight:700}}>{disc}</div>
-                  </div>
-                )}
-                <div style={{flex:1}}>
-                  <div style={{fontSize:'0.68rem', color:'#94a3b8', fontWeight:600, marginBottom:'1px'}}>PRICE</div>
-                  <div style={{fontSize:'0.95rem', color:'#10b981', fontWeight:800}}>{p.price ? `₹${p.price}` : '—'}</div>
-                </div>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:'0.68rem', color:'#94a3b8', fontWeight:600, marginBottom:'1px'}}>UNIT</div>
-                  <div style={{fontSize:'0.78rem', color:'#64748b'}}>{p.order_unit || p.quantity || p.unit || '—'}</div>
-                </div>
-              </div>
-              {/* Actions row */}
-              <div style={{display:'flex', alignItems:'center', justifyContent:'flex-end', gap:'8px', padding:'8px 12px'}}>
-                <button className="adm-btn adm-btn-secondary adm-btn-sm" onClick={()=>setModalProd(p)} style={{display:'flex', alignItems:'center', gap:'5px'}}>
-                  <Edit2 style={{width:13,height:13}} /> Edit
-                </button>
-                <button className="adm-btn adm-btn-danger adm-btn-sm" onClick={()=>setConfirm(p)} style={{display:'flex', alignItems:'center', gap:'5px'}}>
-                  <Trash2 style={{width:13,height:13}} /> Delete
-                </button>
-              </div>
+          <div className="adm-search-bar">
+            <div className="adm-search-wrap">
+              <Search className="si" />
+              <input className="adm-form-input" placeholder="Search by name or order code..." value={search} onChange={e=>setSearch(e.target.value)} />
             </div>
-          );
-        })}
+            <div style={{minWidth:220}}>
+              <CustomSelect
+                value={catFilter}
+                options={[
+                  { label: 'All Categories', value: '' },
+                  ...categories.map(c => ({ label: c, value: c }))
+                ]}
+                onChange={val => setCatFilter(val)}
+                placeholder="All Categories"
+              />
+            </div>
+            <button className="adm-btn adm-btn-primary" onClick={()=>setModalProd(false)}><Plus />Add Product</button>
+          </div>
+
+          <div style={{marginBottom:12,fontSize:13,color:'#64748b',display:'flex',alignItems:'center',justify:'space-between'}}>
+            <span>Showing {filtered.length} of {products.length} products{catFilter&&<span> in <strong style={{color:'#ff6b35'}}>{catFilter}</strong></span>}</span>
+            <span style={{fontSize:12,color:'#94a3b8'}}><GripVertical style={{width:14,height:14,display:'inline',verticalAlign:'middle',marginRight:4}} />Drag grip handle to reorder list</span>
+          </div>
+        </div>
+
+        {/* ── Desktop table ── */}
+        <div className="adm-card adm-scroll-card" style={{display: isMobile ? 'none' : ''}}>
+          <div className="adm-table-wrap">
+            <table className="adm-table">
+              <thead><tr><th style={{width:40}}></th><th>#</th><th>Product</th><th>Category</th><th>MRP</th><th>Discount</th><th>Price</th><th>Unit</th><th>Status</th><th style={{textAlign:'right'}}>Actions</th></tr></thead>
+              <Droppable droppableId="admin-products-table-droppable">
+                {(provided) => (
+                  <tbody ref={provided.innerRef} {...provided.droppableProps}>
+                    {filtered.length===0 ? (
+                      <tr><td colSpan={10}><div className="adm-empty-state"><Package /><p>No products found</p></div></td></tr>
+                    ) : filtered.map((p, idx) => (
+                      <Draggable key={String(p.id)} draggableId={String(p.id)} index={idx}>
+                        {(provided, snapshot) => (
+                          <tr
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            style={{
+                              ...provided.draggableProps.style,
+                              display: snapshot.isDragging ? 'table' : undefined,
+                              background: snapshot.isDragging ? '#f0f9ff' : undefined,
+                              boxShadow: snapshot.isDragging ? '0 4px 12px rgba(0,0,0,0.1)' : undefined,
+                            }}
+                          >
+                            <td {...provided.dragHandleProps} style={{cursor:'grab',width:36,color:'#94a3b8',textAlign:'center'}}>
+                              <GripVertical style={{width:16,height:16}} />
+                            </td>
+                            <td style={{color:'#94a3b8',fontFamily:'monospace',fontSize:11,fontWeight:600}}>{p.product_code || String(idx+1)}</td>
+                            <td>
+                              <div style={{display:'flex',alignItems:'center',gap:12}}>
+                                {(() => {
+                                  let thumb = p.image_url;
+                                  if (thumb) {
+                                    try {
+                                      const arr = JSON.parse(thumb);
+                                      if (Array.isArray(arr) && arr.length > 0) thumb = arr[0];
+                                    } catch(e) {}
+                                  }
+                                  return thumb ? <img src={thumb} alt="" className="prod-thumb" onError={e=>{e.target.style.display='none'}} /> : <div className="prod-thumb-ph"><Box style={{width:18,height:18}} /></div>;
+                                })()}
+                                <div><div className="prod-name">{p.name}</div><div className="prod-code">Code: {p.product_code}</div></div>
+                              </div>
+                            </td>
+                            <td style={{fontSize:12,color:'#94a3b8',maxWidth:180}}>{p.category}</td>
+                            <td style={{fontSize:13,color:'#64748b'}}>{p.mrp?`₹${p.mrp}`:'—'}</td>
+                            <td style={{fontSize:13,color:'#f59e0b',fontWeight:600}}>
+                              {(() => {
+                                const m = parseFloat(p.mrp);
+                                const pr = parseFloat(p.price);
+                                if (!isNaN(m) && !isNaN(pr) && m > 0 && m >= pr) {
+                                  return `${Math.round(((m - pr) / m) * 100)}%`;
+                                }
+                                return p.discount ? `${p.discount}%` : '—';
+                              })()}
+                            </td>
+                            <td style={{fontSize:13,fontWeight:700,color:'#10b981'}}>{p.price?`₹${p.price}`:'—'}</td>
+                            <td style={{fontSize:12,color:'#64748b'}}>{p.order_unit || p.quantity || p.unit || '—'}</td>
+                            <td>
+                              <button
+                                className={`adm-toggle-sw ${p.is_active !== false ? 'on' : ''} ${toggling === p.id ? 'toggling' : ''}`}
+                                onClick={() => toggleActive(p)}
+                                disabled={toggling === p.id}
+                                title={p.is_active !== false ? 'Active (Click to deactivate)' : 'Inactive (Click to activate)'}
+                              >
+                                <span className="adm-toggle-track"><span className="adm-toggle-thumb" /></span>
+                                <span className="adm-toggle-lbl">{p.is_active !== false ? 'Active' : 'Inactive'}</span>
+                              </button>
+                            </td>
+                            <td>
+                              <div style={{display:'flex',gap:6,justifyContent:'flex-end'}}>
+                                <button className="adm-btn adm-btn-secondary adm-btn-icon adm-btn-sm" onClick={()=>setModalProd(p)} title="Edit"><Edit2 style={{width:14,height:14}} /></button>
+                                <button className="adm-btn adm-btn-danger adm-btn-icon adm-btn-sm" onClick={()=>setConfirm(p)} title="Delete"><Trash2 style={{width:14,height:14}} /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </tbody>
+                )}
+              </Droppable>
+            </table>
+          </div>
+        </div>
+
+        {/* ── Mobile cards ── */}
+        <Droppable droppableId="admin-products-mobile-droppable">
+          {(provided) => (
+            <div ref={provided.innerRef} {...provided.droppableProps} style={{display: isMobile ? 'flex' : 'none', flexDirection:'column', gap:'10px'}}>
+              {filtered.length === 0 ? (
+                <div className="adm-empty-state"><Package /><p>No products found</p></div>
+              ) : filtered.map((p, idx) => {
+                const thumb = (() => {
+                  let t = p.image_url;
+                  if (t) { try { const arr = JSON.parse(t); if (Array.isArray(arr) && arr.length > 0) t = arr[0]; } catch(e) {} }
+                  return t;
+                })();
+                const disc = (() => {
+                  const m = parseFloat(p.mrp), pr = parseFloat(p.price);
+                  if (!isNaN(m) && !isNaN(pr) && m > 0 && m >= pr) return `${Math.round(((m - pr) / m) * 100)}%`;
+                  return p.discount ? `${p.discount}%` : null;
+                })();
+                const isActive = p.is_active !== false;
+                return (
+                  <Draggable key={String(p.id)} draggableId={String(p.id)} index={idx}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        style={{
+                          ...provided.draggableProps.style,
+                          background: snapshot.isDragging ? '#f0f9ff' : '#fff',
+                          borderRadius:'14px',
+                          border:'1px solid #e8edf2',
+                          boxShadow: snapshot.isDragging ? '0 6px 16px rgba(0,0,0,0.15)' : '0 2px 8px rgba(0,0,0,0.06)',
+                          overflow:'hidden'
+                        }}
+                      >
+                        {/* Drag Handle Row */}
+                        <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', background:'#f8fafc', padding:'6px 12px', borderBottom:'1px solid #f1f5f9'}}>
+                          <div {...provided.dragHandleProps} style={{cursor:'grab', display:'flex', alignItems:'center', gap:'6px', color:'#64748b', fontSize:'0.75rem', fontWeight:600}}>
+                            <GripVertical style={{width:16, height:16}} /> Drag to reorder
+                          </div>
+                          <div style={{fontSize:'0.72rem', color:'#94a3b8', fontFamily:'monospace', fontWeight:700}}>
+                            #{p.product_code}
+                          </div>
+                        </div>
+                        {/* Top row */}
+                        <div style={{display:'flex', gap:'12px', padding:'12px 12px 10px'}}>
+                          {/* Image */}
+                          <div style={{width:'58px', height:'58px', borderRadius:'10px', background:'#f8fafc', border:'1px solid #e2e8f0', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden'}}>
+                            {thumb
+                              ? <img src={thumb} alt="" style={{width:'100%', height:'100%', objectFit:'cover'}} onError={e=>{e.target.style.display='none'}} />
+                              : <Box style={{width:22, height:22, color:'#94a3b8'}} />
+                            }
+                          </div>
+                          {/* Info */}
+                          <div style={{flex:1, minWidth:0}}>
+                            <div style={{fontSize:'0.88rem', fontWeight:700, color:'#0f172a', lineHeight:1.3, marginBottom:'2px'}}>{p.name}</div>
+                            <div style={{fontSize:'0.7rem', color:'#94a3b8', fontFamily:'monospace', marginBottom:'4px'}}>Code: {p.product_code}</div>
+                            <span style={{fontSize:'0.68rem', fontWeight:700, color:'#6366f1', background:'#eef2ff', borderRadius:'6px', padding:'1px 7px'}}>{p.category}</span>
+                          </div>
+                          {/* Status toggle */}
+                          <button
+                            className={`adm-toggle-sw ${isActive ? 'on' : ''} ${toggling === p.id ? 'toggling' : ''}`}
+                            onClick={() => toggleActive(p)}
+                            disabled={toggling === p.id}
+                            style={{alignSelf:'flex-start', flexShrink:0}}
+                          >
+                            <span className="adm-toggle-track"><span className="adm-toggle-thumb" /></span>
+                          </button>
+                        </div>
+                        {/* Price row */}
+                        <div style={{display:'flex', alignItems:'center', gap:'8px', padding:'8px 12px', background:'#fafbfc', borderTop:'1px solid #f1f5f9', borderBottom:'1px solid #f1f5f9'}}>
+                          <div style={{flex:1}}>
+                            <div style={{fontSize:'0.68rem', color:'#94a3b8', fontWeight:600, marginBottom:'1px'}}>MRP</div>
+                            <div style={{fontSize:'0.82rem', color:'#64748b', textDecoration:'line-through'}}>{p.mrp ? `₹${p.mrp}` : '—'}</div>
+                          </div>
+                          {disc && (
+                            <div style={{flex:1}}>
+                              <div style={{fontSize:'0.68rem', color:'#94a3b8', fontWeight:600, marginBottom:'1px'}}>DISCOUNT</div>
+                              <div style={{fontSize:'0.82rem', color:'#f59e0b', fontWeight:700}}>{disc}</div>
+                            </div>
+                          )}
+                          <div style={{flex:1}}>
+                            <div style={{fontSize:'0.68rem', color:'#94a3b8', fontWeight:600, marginBottom:'1px'}}>PRICE</div>
+                            <div style={{fontSize:'0.95rem', color:'#10b981', fontWeight:800}}>{p.price ? `₹${p.price}` : '—'}</div>
+                          </div>
+                          <div style={{flex:1}}>
+                            <div style={{fontSize:'0.68rem', color:'#94a3b8', fontWeight:600, marginBottom:'1px'}}>UNIT</div>
+                            <div style={{fontSize:'0.78rem', color:'#64748b'}}>{p.order_unit || p.quantity || p.unit || '—'}</div>
+                          </div>
+                        </div>
+                        {/* Actions row */}
+                        <div style={{display:'flex', alignItems:'center', justifyContent:'flex-end', gap:'8px', padding:'8px 12px'}}>
+                          <button className="adm-btn adm-btn-secondary adm-btn-sm" onClick={()=>setModalProd(p)} style={{display:'flex', alignItems:'center', gap:'5px'}}>
+                            <Edit2 style={{width:13,height:13}} /> Edit
+                          </button>
+                          <button className="adm-btn adm-btn-danger adm-btn-sm" onClick={()=>setConfirm(p)} style={{display:'flex', alignItems:'center', gap:'5px'}}>
+                            <Trash2 style={{width:13,height:13}} /> Delete
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </Draggable>
+                );
+              })}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
       </div>
-    </div>
+    </DragDropContext>
   );
 }
 

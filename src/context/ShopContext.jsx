@@ -73,7 +73,9 @@ export const ShopProvider = ({ children }) => {
         }
 
         // Exclude system internal entries (__HERO_BANNER__, __SITE_ANNOUNCEMENT__) from public catalog
-        const cleanProducts = (data || []).filter(p => !p.category || !p.category.startsWith('__'));
+        const cleanProducts = (data || [])
+          .filter(p => !p.category || !p.category.startsWith('__'))
+          .sort((a, b) => (parseInt(a.product_code, 10) || 0) - (parseInt(b.product_code, 10) || 0));
         setProducts(cleanProducts);
       }
     } catch (e) {
