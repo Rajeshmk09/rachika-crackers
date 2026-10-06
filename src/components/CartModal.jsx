@@ -23,7 +23,7 @@ export default function CartModal() {
   const [orderForm, setOrderForm] = useState({ name: '', phone: '', address: '', isTamilNadu: true });
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [error, setError] = useState('');
-  const [settings, setSettings] = useState({ min_order_tn: 3000, min_order_other: 5000 });
+  const [settings, setSettings] = useState({ min_order_tn: 0, min_order_other: 0 });
   const [tipAnchor, setTipAnchor] = useState(null);
 
   // Load minimum order settings
@@ -34,8 +34,8 @@ export default function CartModal() {
         if (cached) {
           const s = JSON.parse(cached);
           setSettings({
-            min_order_tn: parseFloat(s.min_order_tn) || 3000,
-            min_order_other: parseFloat(s.min_order_other) || 5000
+            min_order_tn: parseFloat(s.min_order_tn) || 0,
+            min_order_other: parseFloat(s.min_order_other) || 0
           });
         }
         const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://iplfsscpeixfxzbouhlp.supabase.co';
@@ -48,8 +48,8 @@ export default function CartModal() {
           if (data && data.length > 0) {
             const s = JSON.parse(data[0].description || '{}');
             const newSettings = {
-              min_order_tn: parseFloat(s.min_order_tn) || 3000,
-              min_order_other: parseFloat(s.min_order_other) || 5000
+              min_order_tn: parseFloat(s.min_order_tn) || 0,
+              min_order_other: parseFloat(s.min_order_other) || 0
             };
             setSettings(newSettings);
             try { localStorage.setItem('sethupyropark_site_settings', JSON.stringify(s)); } catch {}
@@ -60,6 +60,15 @@ export default function CartModal() {
     if (cartModalOpen) {
       loadSettings();
     }
+
+    const onUpdate = (e) => {
+      setSettings({
+        min_order_tn: parseFloat(e.detail?.min_order_tn) || 0,
+        min_order_other: parseFloat(e.detail?.min_order_other) || 0
+      });
+    };
+    window.addEventListener('site_settings_updated', onUpdate);
+    return () => window.removeEventListener('site_settings_updated', onUpdate);
   }, [cartModalOpen]);
 
   // Handle body scroll locking
@@ -553,16 +562,14 @@ Kindly confirm my order. Thank you!`;
                     className={`form-region-btn ${orderForm.isTamilNadu ? 'active' : ''}`}
                     onClick={() => setOrderForm(prev => ({ ...prev, isTamilNadu: true }))}
                   >
-                    Tamil Nadu<br />
-                    <span style={{ fontSize: '0.7rem', fontWeight: 'normal', opacity: 0.8 }}>Min: ₹{settings.min_order_tn.toLocaleString('en-IN')}</span>
+                    Tamil Nadu{settings.min_order_tn > 0 && <><br /><span style={{ fontSize: '0.7rem', fontWeight: 'normal', opacity: 0.8 }}>Min: ₹{settings.min_order_tn.toLocaleString('en-IN')}</span></>}
                   </button>
                   <button
                     type="button"
                     className={`form-region-btn ${!orderForm.isTamilNadu ? 'active' : ''}`}
                     onClick={() => setOrderForm(prev => ({ ...prev, isTamilNadu: false }))}
                   >
-                    Other States<br />
-                    <span style={{ fontSize: '0.7rem', fontWeight: 'normal', opacity: 0.8 }}>Min: ₹{settings.min_order_other.toLocaleString('en-IN')}</span>
+                    Other States{settings.min_order_other > 0 && <><br /><span style={{ fontSize: '0.7rem', fontWeight: 'normal', opacity: 0.8 }}>Min: ₹{settings.min_order_other.toLocaleString('en-IN')}</span></>}
                   </button>
                 </div>
               </div>
